@@ -298,26 +298,29 @@ export function evaluateTimetable(timetable: Timetable) {
 // Set random seed
 const rng = seedrandom("abcdefghijklmnopqrstuvwxyz");
 
-let currentGenTimetables: Timetable[] = [];
-for (let i = 0; i < 200; i++) {
-  const timetable: Timetable = {
-    courses: {},
-  };
-  for (const course of wantCourses) {
-    const courseIndexSchedules = courseIndexScheduleMap.get(course.course);
-    if (!courseIndexSchedules) {
-      throw new Error(`Course ${course.course} not found`);
-    }
-    const randomIndex = Math.floor(rng.quick() * courseIndexSchedules.length);
-    const courseIndexSchedule = courseIndexSchedules[randomIndex];
-    timetable.courses[course.course] = {
-      index: courseIndexSchedule.index,
-      timeslots: courseIndexSchedule.timeslots,
-    };
-  }
-  currentGenTimetables.push(timetable);
-  console.log(evaluateTimetable(timetable));
-}
+let currentGenTimetables: Timetable[] = nextEvolution([], {
+  mutationProbability: 0,
+  numberOfTimetables: 200,
+});
+// for (let i = 0; i < 200; i++) {
+//   const timetable: Timetable = {
+//     courses: {},
+//   };
+//   for (const course of wantCourses) {
+//     const courseIndexSchedules = courseIndexScheduleMap.get(course.course);
+//     if (!courseIndexSchedules) {
+//       throw new Error(`Course ${course.course} not found`);
+//     }
+//     const randomIndex = Math.floor(rng.quick() * courseIndexSchedules.length);
+//     const courseIndexSchedule = courseIndexSchedules[randomIndex];
+//     timetable.courses[course.course] = {
+//       index: courseIndexSchedule.index,
+//       timeslots: courseIndexSchedule.timeslots,
+//     };
+//   }
+//   currentGenTimetables.push(timetable);
+//   console.log(evaluateTimetable(timetable));
+// }
 
 function nextEvolution(
   timetables: Timetable[],
@@ -342,7 +345,7 @@ function nextEvolution(
       if (!courseIndexSchedules) {
         throw new Error(`Course ${course.course} not found`);
       }
-      if (rng.quick() < options.mutationProbability || parents.length <= 0) {
+      if (parents.length <= 0 || rng.quick() < options.mutationProbability) {
         const randomIndex = Math.floor(
           rng.quick() * courseIndexSchedules.length
         );
@@ -376,6 +379,11 @@ for (let i = 0; i < MAX_EVOLUTIONS; i++) {
   console.log(`Evolution ${i}`);
   console.log(analysis);
   printTimetable(analysis.bestTimetable, { precision: "30m" });
+  console.log(
+    Object.entries(analysis.bestTimetable.courses)
+      .map(([courseCode, course]) => `${courseCode} ${course.index}`)
+      .join(", ")
+  );
 }
 
 // console.log(
