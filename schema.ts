@@ -6,15 +6,8 @@ export const TimeSchema = z.object({
   minute: z.number().min(0).max(59),
 });
 
-export const DaySchema = z.enum([
-  "MON",
-  "TUE",
-  "WED",
-  "THU",
-  "FRI",
-  "SAT",
-  "SUN",
-]);
+export const Days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] as const;
+export const DaySchema = z.enum(Days);
 export const TypeSchema = z.enum(["LAB", "LEC", "TUT", "LEC/STUDIO"]);
 
 export const ClassSchema = z.object({
