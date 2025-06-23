@@ -56,6 +56,62 @@ function analyzeTimetables(timetables: Timetable[]) {
   };
 }
 
+function printTimetable(
+  timetable: Timetable,
+  options: {
+    precision: "30m" | "1h";
+  }
+) {
+  const map = new Array<Array<string>>(7);
+  const s = options.precision === "30m" ? 48 : 24;
+  const precision = options.precision === "30m" ? 30 : 60;
+  for (let i = 0; i < 7; i++) {
+    map[i] = new Array<string>(s);
+    for (let j = 0; j < s; j++) {
+      map[i][j] = " ";
+    }
+  }
+
+  const dayTimeSlotMap = new Map<Day, Timeslot[]>();
+
+  // First, we need to map the timeslots to the day
+  for (const course of Object.values(timetable.courses)) {
+    for (const timeslot of course.timeslots) {
+      const dayTimeSlot = dayTimeSlotMap.get(timeslot.day);
+      if (dayTimeSlot) {
+        dayTimeSlot.push(timeslot);
+      } else {
+        dayTimeSlotMap.set(timeslot.day, [timeslot]);
+      }
+    }
+  }
+
+  for (let i = 0; i < Days.length; i++) {
+    const day = Days[i];
+    const dayTimeSlot = dayTimeSlotMap.get(day);
+    if (dayTimeSlot) {
+      for (const timeslot of dayTimeSlot) {
+        let start =
+          (timeslot.from.hour * 60 + timeslot.from.minute) / precision;
+        let end = (timeslot.to.hour * 60 + timeslot.to.minute) / precision;
+        // To integer
+        start = Math.floor(start);
+        end = Math.floor(end);
+        for (let j = start; j < end; j++) {
+          map[i][j] = "X";
+        }
+      }
+    }
+  }
+
+  for (let i = 0; i < map.length; i++) {
+    for (let j = 0; j < map[i].length; j++) {
+      process.stdout.write(map[i][j]);
+    }
+    console.log();
+  }
+}
+
 type CourseCode = string;
 
 type CourseIndexSchedule = {
@@ -210,12 +266,17 @@ export function evaluateTimetable(timetable: Timetable) {
     }
   }
 
+  // If the day has only 1 class, then fuck that. Its getting a 0.
   // If there are no timeslots for a day, we add 100 to the score
   // If the day starts after 10:00, we add 30 to the score
   // If the day ends before 14:00, we add 60 to the score. Else if before 17:00, we add 30 to the score
   for (const day of Days) {
     const dayTimeSlot = dayTimeSlotMap.get(day);
     if (dayTimeSlot && dayTimeSlot.length > 0) {
+      if (dayTimeSlot.length === 1) {
+        continue;
+      }
+
       const firstTimeSlot = dayTimeSlot[0];
       if (firstTimeSlot.from.hour > 10) {
         score += 40;
@@ -305,14 +366,16 @@ function nextEvolution(
   return children;
 }
 
-const MAX_EVOLUTIONS = 100;
+const MAX_EVOLUTIONS = 10;
 for (let i = 0; i < MAX_EVOLUTIONS; i++) {
   currentGenTimetables = nextEvolution(currentGenTimetables, {
     mutationProbability: 0.1,
     numberOfTimetables: 200,
   });
+  const analysis = analyzeTimetables(currentGenTimetables);
   console.log(`Evolution ${i}`);
-  console.log(analyzeTimetables(currentGenTimetables));
+  console.log(analysis);
+  printTimetable(analysis.bestTimetable, { precision: "30m" });
 }
 
 // console.log(
