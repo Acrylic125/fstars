@@ -330,9 +330,17 @@ function nextEvolution(
   }
 ): Timetable[] {
   const scores = timetables.map((timetable) => evaluateTimetable(timetable));
-  const rankedTimetables = timetables.sort((a, b) => {
+  let rankedTimetables = timetables.sort((a, b) => {
     return scores[timetables.indexOf(b)] - scores[timetables.indexOf(a)];
   });
+  // Remove duplicates from rankedTimetables
+  rankedTimetables = rankedTimetables.filter(
+    (timetable, index, self) =>
+      index ===
+      self.findIndex(
+        (t) => JSON.stringify(t.courses) === JSON.stringify(timetable.courses)
+      )
+  );
   const N = 6;
   const parents = rankedTimetables.slice(0, N);
   const children: Timetable[] = [];
@@ -369,7 +377,7 @@ function nextEvolution(
   return children;
 }
 
-const MAX_EVOLUTIONS = 10;
+const MAX_EVOLUTIONS = 100;
 for (let i = 0; i < MAX_EVOLUTIONS; i++) {
   currentGenTimetables = nextEvolution(currentGenTimetables, {
     mutationProbability: 0.1,
