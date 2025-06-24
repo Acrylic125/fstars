@@ -1,44 +1,15 @@
 import fs from "fs";
 import path from "path";
-import {
-  Class,
-  Course,
-  CourseListSchema,
-  CourseSchema,
-  Day,
-  Days,
-  Time,
-  TypeSchema,
-} from "./schema";
-import { z } from "zod";
+import { Class, CourseListSchema, Day, Days, Time, TypeSchema } from "./schema";
 import seedrandom from "seedrandom";
+import { Timeslot } from "./utils";
+import { z } from "zod";
 
-type Timeslot = {
-  day: Day;
-  from: Time;
-  to: Time;
-  type: z.infer<typeof TypeSchema>;
-};
-
-function doesTimeslotOverlap(timeslot1: Timeslot, timeslot2: Timeslot) {
-  if (timeslot1.day !== timeslot2.day) {
-    return false;
-  }
-  const fromTime = timeslot1.from.hour * 60 + timeslot1.from.minute;
-  const toTime = timeslot1.to.hour * 60 + timeslot1.to.minute;
-  const otherFromTime = timeslot2.from.hour * 60 + timeslot2.from.minute;
-  const otherToTime = timeslot2.to.hour * 60 + timeslot2.to.minute;
-  if (fromTime > otherToTime || toTime < otherFromTime) {
-    return false;
-  }
-  return true;
-}
-
-function toSeconds(time: Time) {
+function toMinutes(time: Time) {
   return time.hour * 60 + time.minute;
 }
 
-function analyzeTimetables(timetables: Timetable[]) {
+export function analyzeTimetables(timetables: Timetable[]) {
   const scores = timetables.map((timetable) => evaluateTimetable(timetable));
   const numberOfFailures = scores.filter((score) => score === -1).length;
   const numberOfSuccesses = scores.filter((score) => score !== -1).length;
@@ -56,7 +27,7 @@ function analyzeTimetables(timetables: Timetable[]) {
   };
 }
 
-function printTimetable(
+export function printTimetable(
   timetable: Timetable,
   options: {
     precision: "30m" | "1h";
@@ -112,71 +83,15 @@ function printTimetable(
   }
 }
 
-type CourseCode = string;
+export type CourseCode = string;
 
-type CourseIndexSchedule = {
+export type CourseIndexSchedule = {
   course: CourseCode;
   index: string;
   timeslots: Timeslot[];
 };
 
-const resultsPath = path.resolve(__dirname, "results.json");
-const allCourseRawSchedule = CourseListSchema.parse(
-  JSON.parse(fs.readFileSync(resultsPath, "utf8"))
-);
-
-const wantCourseCodes = ["SC2001", "SC2005", "SC2203", "SC2006", "SC2008"];
-
-const wantCourses = allCourseRawSchedule.filter((course) =>
-  wantCourseCodes.includes(course.course)
-);
-
-const courseIndexScheduleMap: Map<CourseCode, CourseIndexSchedule[]> =
-  new Map();
-for (const course of wantCourses) {
-  const courseIndexSchedules: CourseIndexSchedule[] = [];
-  for (const index of course.indices) {
-    const timeslots: Timeslot[] = [];
-    for (const _class of index.classes) {
-      const findOverlappingTimeslot = timeslots.find((timeslot) =>
-        doesTimeslotOverlap(timeslot, {
-          day: _class.day,
-          from: _class.timeFrom,
-          to: _class.timeTo,
-          type: _class.type,
-        })
-      );
-      if (findOverlappingTimeslot) {
-        if (findOverlappingTimeslot.type === _class.type) {
-          //   console.log(
-          //     `Course ${course.course} Index ${index.index} Timeslot ${findOverlappingTimeslot.type} ${findOverlappingTimeslot.day} ${findOverlappingTimeslot.from.hour}:${findOverlappingTimeslot.from.minute} - ${findOverlappingTimeslot.to.hour}:${findOverlappingTimeslot.to.minute} overlaps with existing timeslot ${_class.type} ${_class.day} ${_class.timeFrom.hour}:${_class.timeFrom.minute} - ${_class.timeTo.hour}:${_class.timeTo.minute}`
-          //   );
-          continue;
-        }
-        throw new Error("Timeslot overlaps with existing timeslot");
-      }
-      timeslots.push({
-        day: _class.day,
-        from: _class.timeFrom,
-        to: _class.timeTo,
-        type: _class.type,
-      });
-    }
-    courseIndexSchedules.push({
-      course: course.course,
-      index: index.index,
-      timeslots,
-    });
-  }
-  courseIndexScheduleMap.set(course.course, courseIndexSchedules);
-}
-
-let rankedRestrictiveCourses = Array.from(courseIndexScheduleMap.values());
-rankedRestrictiveCourses.sort((a, b) => {
-  return a.length - b.length;
-});
-
-type Timetable = {
+export type Timetable = {
   courses: {
     [courseCode: string]: {
       index: string;
@@ -203,7 +118,7 @@ export function evaluateTimetable(timetable: Timetable) {
   // Before we continue, lets sort the timeslots by time
   for (const [day, dayTimeSlot] of dayTimeSlotMap.entries()) {
     const sorted = dayTimeSlot.sort((a, b) => {
-      return toSeconds(a.from) - toSeconds(b.from);
+      return toMinutes(a.from) - toMinutes(b.from);
     });
     dayTimeSlotMap.set(day, sorted);
   }
@@ -218,7 +133,7 @@ export function evaluateTimetable(timetable: Timetable) {
     for (const timeslot of dayTimeSlot) {
       if (
         lastTimeSlot &&
-        toSeconds(lastTimeSlot.to) > toSeconds(timeslot.from)
+        toMinutes(lastTimeSlot.to) > toMinutes(timeslot.from)
       ) {
         return -1;
       }
@@ -226,15 +141,15 @@ export function evaluateTimetable(timetable: Timetable) {
       if (lastTimeSlot) {
         // Check if this timeslot is consecutive with the last one
         // Consider slots consecutive if gap is <= 30 mins
-        const gap = toSeconds(timeslot.from) - toSeconds(lastTimeSlot.to);
+        const gap = toMinutes(timeslot.from) - toMinutes(lastTimeSlot.to);
         if (gap <= 30) {
           if (!consecutiveStart) {
             consecutiveStart = true;
             curConsecutiveTimeInSeconds =
-              toSeconds(lastTimeSlot.to) - toSeconds(lastTimeSlot.from);
+              toMinutes(lastTimeSlot.to) - toMinutes(lastTimeSlot.from);
           }
           curConsecutiveTimeInSeconds +=
-            toSeconds(timeslot.to) - toSeconds(timeslot.from);
+            toMinutes(timeslot.to) - toMinutes(timeslot.from);
         } else {
           // Gap too large, check previous consecutive block if any
           if (consecutiveStart) {
@@ -298,33 +213,10 @@ export function evaluateTimetable(timetable: Timetable) {
 // Set random seed
 const rng = seedrandom("abcdefghijklmnopqrstuvwxyz");
 
-let currentGenTimetables: Timetable[] = nextEvolution([], {
-  mutationProbability: 0,
-  numberOfTimetables: 200,
-});
-// for (let i = 0; i < 200; i++) {
-//   const timetable: Timetable = {
-//     courses: {},
-//   };
-//   for (const course of wantCourses) {
-//     const courseIndexSchedules = courseIndexScheduleMap.get(course.course);
-//     if (!courseIndexSchedules) {
-//       throw new Error(`Course ${course.course} not found`);
-//     }
-//     const randomIndex = Math.floor(rng.quick() * courseIndexSchedules.length);
-//     const courseIndexSchedule = courseIndexSchedules[randomIndex];
-//     timetable.courses[course.course] = {
-//       index: courseIndexSchedule.index,
-//       timeslots: courseIndexSchedule.timeslots,
-//     };
-//   }
-//   currentGenTimetables.push(timetable);
-//   console.log(evaluateTimetable(timetable));
-// }
-
-function nextEvolution(
+export function nextEvolution(
   timetables: Timetable[],
   options: {
+    courses: Map<CourseCode, CourseIndexSchedule[]>;
     mutationProbability: number;
     numberOfTimetables: number;
   }
@@ -348,25 +240,24 @@ function nextEvolution(
     const child: Timetable = {
       courses: {},
     };
-    for (const course of wantCourses) {
-      const courseIndexSchedules = courseIndexScheduleMap.get(course.course);
-      if (!courseIndexSchedules) {
-        throw new Error(`Course ${course.course} not found`);
-      }
+    for (const [
+      courseCode,
+      courseIndexSchedules,
+    ] of options.courses.entries()) {
       if (parents.length <= 0 || rng.quick() < options.mutationProbability) {
         const randomIndex = Math.floor(
           rng.quick() * courseIndexSchedules.length
         );
         const courseIndexSchedule = courseIndexSchedules[randomIndex];
-        child.courses[course.course] = {
+        child.courses[courseCode] = {
           index: courseIndexSchedule.index,
           timeslots: courseIndexSchedule.timeslots,
         };
       } else {
         const randomParent = parents[Math.floor(rng.quick() * parents.length)];
-        const parentCourse = randomParent.courses[course.course];
+        const parentCourse = randomParent.courses[courseCode];
         // Inherit from parent
-        child.courses[course.course] = {
+        child.courses[courseCode] = {
           index: parentCourse.index,
           timeslots: parentCourse.timeslots,
         };
@@ -376,71 +267,3 @@ function nextEvolution(
   }
   return children;
 }
-
-const MAX_EVOLUTIONS = 100;
-for (let i = 0; i < MAX_EVOLUTIONS; i++) {
-  currentGenTimetables = nextEvolution(currentGenTimetables, {
-    mutationProbability: 0.1,
-    numberOfTimetables: 200,
-  });
-  const analysis = analyzeTimetables(currentGenTimetables);
-  console.log(`Evolution ${i}`);
-  console.log(analysis);
-  printTimetable(analysis.bestTimetable, { precision: "30m" });
-  console.log(
-    Object.entries(analysis.bestTimetable.courses)
-      .map(([courseCode, course]) => `${courseCode} ${course.index}`)
-      .join(", ")
-  );
-}
-
-// console.log(
-//   evaluateTimetable({
-//     courses: {
-//       SC2001: {
-//         index: "1",
-//         timeslots: [
-//           {
-//             day: "MON",
-//             from: { hour: 10, minute: 0 },
-//             to: { hour: 11, minute: 0 },
-//             type: "LEC",
-//           },
-//         ],
-//       },
-//       SC2005: {
-//         index: "1",
-//         timeslots: [
-//           {
-//             day: "MON",
-//             from: { hour: 11, minute: 0 },
-//             to: { hour: 14, minute: 0 },
-//             type: "LEC",
-//           },
-//         ],
-//       },
-//     },
-//   })
-// );
-
-// function calcIndexFlexibilityScore(
-//   index: CourseIndexSchedule,
-//   compare: {
-//     course: CourseCode;
-//     indices: CourseIndexSchedule[];
-//   }[]
-// ) {
-//   let overlaps = 0;
-// }
-
-// function generateTimetable(): Timetable {
-//   const timetable: Timetable = {
-//     courses: {},
-//   };
-
-//   return timetable;
-// }
-
-// console.log(rankedRestrictiveCourses);
-
-// console.log(JSON.stringify(wantCourses, null, 2));

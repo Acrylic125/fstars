@@ -10,6 +10,7 @@ import {
   ClassSchema,
   CourseSchema,
 } from "./schema";
+import { parseTeachingWeeks } from "./utils";
 // Helper function to parse time string (e.g., "1830" -> { hour: 18, minute: 30 })
 function parseTime(timeStr: string): Time {
   const hour = parseInt(timeStr.substring(0, 2));
@@ -26,13 +27,14 @@ function parseTimeRange(timeRange: string): { timeFrom: Time; timeTo: Time } {
   };
 }
 
-const htmlPath = path.resolve(__dirname, "scrape.html");
-const html = fs.readFileSync(htmlPath, "utf8");
-const $ = cheerio.load(html);
+// const htmlPath = path.resolve(__dirname, "scrape.html");
+// const html = fs.readFileSync(htmlPath, "utf8");
+// const $ = cheerio.load(html);
 
 function scrapePageForCourses(html: string) {
   const results: Course[] = [];
   // Find all course sections
+  const $ = cheerio.load(html);
   $("table").each((tableIndex, table) => {
     const $table = $(table);
 
@@ -67,6 +69,9 @@ function scrapePageForCourses(html: string) {
           const type = $row.find("td:nth-child(2) b").text().trim();
           const day = $row.find("td:nth-child(4) b").text().trim();
           const time = $row.find("td:nth-child(5) b").text().trim();
+          const venue = $row.find("td:nth-child(6) b").text().trim();
+          const remarks = $row.find("td:nth-child(7) b").text().trim();
+          const weeks = parseTeachingWeeks(remarks);
 
           // Only process rows with valid data
           if (
@@ -83,6 +88,9 @@ function scrapePageForCourses(html: string) {
                 day: day as Day,
                 timeFrom: timeRange.timeFrom,
                 timeTo: timeRange.timeTo,
+                venue,
+                weeks: weeks ?? [],
+                remarks,
               };
 
               // Validate with Zod
@@ -142,12 +150,14 @@ for (const rawSchedule of rawSchedules) {
     const cur = checkDuplicates.get(course.course);
     if (cur) {
       if (cur === serializedCourse) {
-        console.log(`Skipping duplicate course: ${course.course}`);
+        // console.log(`Skipping duplicate course: ${course.course}`);
         continue;
       }
       console.warn(
         `Duplicate course found: ${course.course} with different serialized course.`
       );
+      console.log(cur);
+      console.log(serializedCourse);
       continue;
     }
     checkDuplicates.set(course.course, serializedCourse); // update the map

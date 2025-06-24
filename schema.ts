@@ -8,13 +8,16 @@ export const TimeSchema = z.object({
 
 export const Days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] as const;
 export const DaySchema = z.enum(Days);
-export const TypeSchema = z.enum(["LAB", "LEC", "TUT", "LEC/STUDIO"]);
+export const TypeSchema = z.enum(["LAB", "LEC", "TUT", "LEC/STUDIO", "SEM"]);
 
 export const ClassSchema = z.object({
   type: TypeSchema,
   day: DaySchema,
   timeFrom: TimeSchema,
   timeTo: TimeSchema,
+  venue: z.string(),
+  weeks: z.array(z.number()),
+  remarks: z.string(),
 });
 
 export const IndexSchema = z.object({
