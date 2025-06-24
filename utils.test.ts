@@ -1,4 +1,3 @@
-import { evaluateTimetable } from "./planner-2";
 import { parseTeachingWeeks } from "./utils";
 
 describe("parseTeachingWeeks", () => {
