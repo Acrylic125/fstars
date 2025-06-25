@@ -11,6 +11,7 @@ import {
   CourseSchema,
 } from "./schema";
 import { parseTeachingWeeks } from "./utils";
+import { CourseCode, CourseIndexSchedule } from "./genetic-planner";
 // Helper function to parse time string (e.g., "1830" -> { hour: 18, minute: 30 })
 function parseTime(timeStr: string): Time {
   const hour = parseInt(timeStr.substring(0, 2));
@@ -26,10 +27,6 @@ function parseTimeRange(timeRange: string): { timeFrom: Time; timeTo: Time } {
     timeTo: parseTime(to),
   };
 }
-
-// const htmlPath = path.resolve(__dirname, "scrape.html");
-// const html = fs.readFileSync(htmlPath, "utf8");
-// const $ = cheerio.load(html);
 
 function scrapePageForCourses(html: string) {
   const results: Course[] = [];
@@ -107,6 +104,7 @@ function scrapePageForCourses(html: string) {
           ([index, classes]) => ({
             index,
             classes,
+            sources: [],
           })
         );
 
@@ -136,39 +134,45 @@ function scrapePageForCourses(html: string) {
 const rawSchedulesDir = path.resolve(__dirname, "raw-schedules");
 const rawSchedules = fs.readdirSync(rawSchedulesDir);
 
-const results: Course[] = [];
+const courseSchedules = new Map<CourseCode, Course>();
 // course code -> serialized course
-const checkDuplicates = new Map<string, string>();
+// const checkDuplicates = new Map<string, string>();
 for (const rawSchedule of rawSchedules) {
   const html = fs.readFileSync(
     path.resolve(rawSchedulesDir, rawSchedule),
     "utf8"
   );
+  const filename = rawSchedule.split(".")[0];
   const courses = scrapePageForCourses(html);
   for (const course of courses) {
-    const serializedCourse = JSON.stringify(course);
-    const cur = checkDuplicates.get(course.course);
+    const cur = courseSchedules.get(course.course);
     if (cur) {
-      if (cur === serializedCourse) {
-        // console.log(`Skipping duplicate course: ${course.course}`);
-        continue;
-      }
-      console.warn(
-        `Duplicate course found: ${course.course} with different serialized course.`
+      const curIndexPositions = new Map<string, number>(
+        cur.indices.map((index, i) => {
+          return [index.index, i];
+        })
       );
-      console.log(cur);
-      console.log(serializedCourse);
+      for (const index of course.indices) {
+        const i = curIndexPositions.get(index.index);
+        if (i !== undefined) {
+          console.log(`Already have index, ${index.index}. Adding source`);
+          const curIndex = cur.indices[i];
+          curIndex.sources.push(filename);
+          continue;
+        }
+        cur.indices.push(index);
+      }
       continue;
     }
-    checkDuplicates.set(course.course, serializedCourse); // update the map
-    results.push(course);
+    for (const index of course.indices) {
+      index.sources.push(filename);
+    }
+    courseSchedules.set(course.course, course);
   }
 }
 
-// console.log("Parsed Courses:");
-// console.log(JSON.stringify(results, null, 2));
-
-// Save results to results.json
+const results = Array.from(courseSchedules.values());
+// console.log(results)
 fs.writeFileSync(
   path.resolve(__dirname, "all-results.json"),
   JSON.stringify(results, null, 2)

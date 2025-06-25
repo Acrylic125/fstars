@@ -9,16 +9,26 @@ const ALL_3_YEARS = [1, 2, 3];
 const ACAD_SEM = "2025;1";
 
 type CourseSource = {
+  name: string;
   code: string;
   subCodes?: string[];
   years: number[];
 };
 
 const COURSE_SOURCES: CourseSource[] = [
-  { code: "CSC", years: ALL_4_YEARS },
-  { code: "DSAI", years: ALL_4_YEARS },
-  { code: "ADM", years: [1] },
-  { code: "ADM", subCodes: ["DA", "MA"], years: [2, 3, 4] },
+  { name: "Computer Science", code: "CSC", years: ALL_4_YEARS },
+  {
+    name: "Data Science and Artificial Intelligence",
+    code: "DSAI",
+    years: ALL_4_YEARS,
+  },
+  { name: "Arts, Design and Media", code: "ADM", years: [1] },
+  {
+    name: "Arts, Design and Media",
+    code: "ADM",
+    subCodes: ["DA", "MA"],
+    years: [2, 3, 4],
+  },
 ];
 
 const rng = seedrandom("1234567890");
@@ -80,7 +90,7 @@ async function loadCourseSources(
             method: "POST",
           });
           const html = await response.text();
-          const filePath = `${options.dir}/${code}-${subCode}-${year}.html`;
+          const filePath = `${options.dir}/${courseSource.name} (${subCode}) Year ${year} ${subCode}.html`;
           fs.writeFileSync(filePath, html);
           await wait();
         }
@@ -94,7 +104,7 @@ async function loadCourseSources(
         method: "POST",
       });
       const html = await response.text();
-      const filePath = `${options.dir}/${code}-${year}.html`;
+      const filePath = `${options.dir}/${courseSource.name} Year ${year}.html`;
       fs.writeFileSync(filePath, html);
       await wait();
       // https://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?acadsem=2025;1&r_course_yr=ECDS;;1111;F&r_subj_code=Enter+Keywords+or+Course+Code&r_search_type=F&boption=CLoad&staff_access=false

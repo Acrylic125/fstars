@@ -15,6 +15,15 @@ export const ClassSchema = z.object({
   day: DaySchema,
   timeFrom: TimeSchema,
   timeTo: TimeSchema,
+  // forCourses: z
+  //   .array(
+  //     z.object({
+  //       code: z.string(),
+  //       subCode: z.string().optional(),
+  //       years: z.array(z.number()).optional(),
+  //     })
+  //   )
+  //   .optional(),
   venue: z.string(),
   weeks: z.array(z.number()),
   remarks: z.string(),
@@ -23,6 +32,7 @@ export const ClassSchema = z.object({
 export const IndexSchema = z.object({
   index: z.string(),
   classes: z.array(ClassSchema),
+  sources: z.array(z.string()),
 });
 
 export const CourseSchema = z.object({

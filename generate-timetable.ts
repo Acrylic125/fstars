@@ -13,7 +13,7 @@ import { doesTimeslotOverlap, Timeslot } from "./utils";
 
 const MAX_EVOLUTIONS = 100;
 
-const resultsPath = path.resolve(__dirname, "results.json");
+const resultsPath = path.resolve(__dirname, "all-results.json");
 const allCourseRawSchedule = CourseListSchema.parse(
   JSON.parse(fs.readFileSync(resultsPath, "utf8"))
 );
@@ -30,6 +30,9 @@ for (const course of wantCourses) {
   const courseIndexSchedules: CourseIndexSchedule[] = [];
   for (const index of course.indices) {
     const timeslots: Timeslot[] = [];
+    if (!index.sources.includes("Computer Science Year 2")) {
+      continue;
+    }
     for (const _class of index.classes) {
       const findOverlappingTimeslot = timeslots.find((timeslot) =>
         doesTimeslotOverlap(timeslot, {
