@@ -6,6 +6,7 @@ export type Timeslot = {
   from: Time;
   to: Time;
   type: z.infer<typeof TypeSchema>;
+  weeks: number[];
 };
 
 export function doesTimeslotOverlap(timeslot1: Timeslot, timeslot2: Timeslot) {
@@ -75,4 +76,38 @@ export function parseTeachingWeeks(str: string): number[] | null {
   } catch (error) {
     return null;
   }
+}
+
+export function binSearch(arr: number[], target: number): number {
+  let left = 0;
+  let right = arr.length - 1;
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    if (arr[mid] === target) {
+      return mid;
+    } else if (arr[mid] < target) {
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+  return -1;
+}
+
+export type TimeMinuteRange =
+  | [null, number]
+  | [number, number]
+  | [number, null];
+
+export function isMinuteInRange(minute: number, range: TimeMinuteRange) {
+  if (range[0] === null && range[1] === null) {
+    return true;
+  }
+  if (range[0] === null) {
+    return minute <= range[1];
+  }
+  if (range[1] === null) {
+    return minute >= range[0];
+  }
+  return minute >= range[0] && minute <= range[1];
 }
