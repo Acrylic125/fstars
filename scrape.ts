@@ -86,7 +86,7 @@ function scrapePageForCourses(html: string) {
                 timeFrom: timeRange.timeFrom,
                 timeTo: timeRange.timeTo,
                 venue,
-                weeks: weeks ?? [],
+                weeks: weeks ?? Array.from({ length: 14 }, (_, i) => i + 1),
                 remarks,
               };
 
