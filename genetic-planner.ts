@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { Class, CourseListSchema, Day, Days, Time, TypeSchema } from "./schema";
 import seedrandom from "seedrandom";
-import { binSearch, TimeMinuteRange, Timeslot } from "./utils";
+import { binSearch, isMinuteInRange, TimeMinuteRange, Timeslot } from "./utils";
 import { z } from "zod";
 
 function toMinutes(time: Time) {
@@ -239,6 +239,14 @@ export function evaluateTimetable(
           // Check if this timeslot is consecutive with the last one
           // Consider slots consecutive if gap is <= 30 mins
           const gap = toMinutes(timeslot.from) - toMinutes(lastTimeSlot.to);
+
+          for (const gapScore of scoring.gap) {
+            if (isMinuteInRange(gap, gapScore.range)) {
+              score += gapScore.score;
+              break;
+            }
+          }
+
           if (gap <= 30) {
             if (!consecutiveStart) {
               consecutiveStart = true;
@@ -250,12 +258,16 @@ export function evaluateTimetable(
           } else {
             // Gap too large, check previous consecutive block if any
             if (consecutiveStart) {
-              if (curConsecutiveTimeInSeconds <= 180 * 60) {
-                // 3 hours
-                score += 80;
-              } else if (curConsecutiveTimeInSeconds <= 240 * 60) {
-                // 4 hours
-                score += 40;
+              for (const consecutiveClassesScore of scoring.consecutiveClasses) {
+                if (
+                  isMinuteInRange(
+                    curConsecutiveTimeInSeconds,
+                    consecutiveClassesScore.range
+                  )
+                ) {
+                  score += consecutiveClassesScore.score;
+                  break;
+                }
               }
               consecutiveStart = false;
               curConsecutiveTimeInSeconds = 0;
@@ -268,12 +280,16 @@ export function evaluateTimetable(
 
       // Check final consecutive block
       if (consecutiveStart) {
-        if (curConsecutiveTimeInSeconds <= 180 * 60) {
-          // 3 hours
-          score += 80;
-        } else if (curConsecutiveTimeInSeconds <= 240 * 60) {
-          // 4 hours
-          score += 40;
+        for (const consecutiveClassesScore of scoring.consecutiveClasses) {
+          if (
+            isMinuteInRange(
+              curConsecutiveTimeInSeconds,
+              consecutiveClassesScore.range
+            )
+          ) {
+            score += consecutiveClassesScore.score;
+            break;
+          }
         }
       }
     }
@@ -284,23 +300,43 @@ export function evaluateTimetable(
     // If the day ends before 14:00, we add 60 to the score. Else if before 17:00, we add 30 to the score
     for (const day of Days) {
       const dayTimeSlot = dayTimeSlotMap.get(day);
+
+      let dayLengthInMin = 0;
+      let dayStartInMin = 0;
+      let dayEndInMin = 0;
+
       if (dayTimeSlot && dayTimeSlot.length > 0) {
         if (dayTimeSlot.length === 1) {
           continue;
         }
 
         const firstTimeSlot = dayTimeSlot[0];
-        if (firstTimeSlot.from.hour > 10) {
-          score += 40;
-        }
+        dayStartInMin = toMinutes(firstTimeSlot.from);
         const lastTimeSlot = dayTimeSlot[dayTimeSlot.length - 1];
-        if (lastTimeSlot.to.hour < 14) {
-          score += 60;
-        } else if (lastTimeSlot.to.hour < 17) {
-          score += 30;
+        dayEndInMin = toMinutes(lastTimeSlot.to);
+
+        dayLengthInMin = dayEndInMin - dayStartInMin;
+      }
+
+      for (const dayLengthScore of scoring.dayLength) {
+        if (isMinuteInRange(dayLengthInMin, dayLengthScore.range)) {
+          score += dayLengthScore.score;
+          break;
         }
-      } else {
-        score += 150;
+      }
+
+      for (const dayStartScore of scoring.dayStart) {
+        if (isMinuteInRange(dayStartInMin, dayStartScore.range)) {
+          score += dayStartScore.score;
+          break;
+        }
+      }
+
+      for (const dayEndScore of scoring.dayEnd) {
+        if (isMinuteInRange(dayEndInMin, dayEndScore.range)) {
+          score += dayEndScore.score;
+          break;
+        }
       }
     }
   }

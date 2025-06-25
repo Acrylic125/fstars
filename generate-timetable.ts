@@ -33,9 +33,13 @@ for (const course of wantCourses) {
     if (!index.sources.includes("Computer Science Year 2")) {
       continue;
     }
+    if (course.course === "SC2008" && index.index === "10220") {
+      continue;
+    }
     if (
       course.course === "SC2001" &&
-      (index.index === "10193" ||
+      (index.index === "10121" ||
+        index.index === "10193" ||
         index.index === "10148" ||
         index.index === "10147" ||
         index.index === "10153")
