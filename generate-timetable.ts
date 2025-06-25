@@ -33,6 +33,15 @@ for (const course of wantCourses) {
     if (!index.sources.includes("Computer Science Year 2")) {
       continue;
     }
+    if (
+      course.course === "SC2001" &&
+      (index.index === "10193" ||
+        index.index === "10148" ||
+        index.index === "10147" ||
+        index.index === "10153")
+    ) {
+      continue;
+    }
     for (const _class of index.classes) {
       const findOverlappingTimeslot = timeslots.find((timeslot) =>
         doesTimeslotOverlap(timeslot, {
@@ -40,6 +49,7 @@ for (const course of wantCourses) {
           from: _class.timeFrom,
           to: _class.timeTo,
           type: _class.type,
+          weeks: _class.weeks,
         })
       );
       if (findOverlappingTimeslot) {
@@ -56,6 +66,7 @@ for (const course of wantCourses) {
         from: _class.timeFrom,
         to: _class.timeTo,
         type: _class.type,
+        weeks: _class.weeks,
       });
     }
     courseIndexSchedules.push({
@@ -79,7 +90,7 @@ let currentGenTimetables: Timetable[] = nextEvolution([], {
 });
 for (let i = 0; i < MAX_EVOLUTIONS; i++) {
   currentGenTimetables = nextEvolution(currentGenTimetables, {
-    mutationProbability: 0.1,
+    mutationProbability: 0.3,
     numberOfTimetables: 200,
     courses: courseIndexScheduleMap,
   });

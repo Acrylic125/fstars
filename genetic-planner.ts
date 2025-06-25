@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { Class, CourseListSchema, Day, Days, Time, TypeSchema } from "./schema";
 import seedrandom from "seedrandom";
-import { Timeslot } from "./utils";
+import { binSearch, TimeMinuteRange, Timeslot } from "./utils";
 import { z } from "zod";
 
 function toMinutes(time: Time) {
@@ -100,110 +100,208 @@ export type Timetable = {
   };
 };
 
-export function evaluateTimetable(timetable: Timetable) {
-  const dayTimeSlotMap = new Map<Day, Timeslot[]>();
+const ALL_WEEKS = Array.from({ length: 14 }, (_, i) => i + 1);
 
-  // First, we need to map the timeslots to the day
-  for (const course of Object.values(timetable.courses)) {
-    for (const timeslot of course.timeslots) {
-      const dayTimeSlot = dayTimeSlotMap.get(timeslot.day);
-      if (dayTimeSlot) {
-        dayTimeSlot.push(timeslot);
-      } else {
-        dayTimeSlotMap.set(timeslot.day, [timeslot]);
-      }
-    }
+const scores = {
+  veryImportant: 256,
+  important: 128,
+  niceToHave: 64,
+  no: 0,
+  absolutelyNot: -10000,
+};
+
+export function evaluateTimetable(
+  timetable: Timetable,
+  scoring: {
+    dayLength: {
+      score: number;
+      range: TimeMinuteRange;
+    }[];
+    dayStart: {
+      score: number;
+      range: TimeMinuteRange;
+    }[];
+    dayEnd: {
+      score: number;
+      range: TimeMinuteRange;
+    }[];
+    consecutiveClasses: {
+      score: number;
+      range: TimeMinuteRange;
+    }[];
+    gap: {
+      score: number;
+      range: TimeMinuteRange;
+    }[];
+  } = {
+    dayLength: [
+      {
+        range: [null, 0],
+        score: scores.veryImportant,
+      },
+      {
+        range: [0, 60 * 3],
+        score: scores.no,
+      },
+      {
+        range: [60 * 3, null],
+        score: scores.niceToHave,
+      },
+    ],
+    dayStart: [
+      {
+        range: [10 * 60, null],
+        score: scores.niceToHave,
+      },
+    ],
+    dayEnd: [
+      {
+        range: [null, 14 * 60],
+        score: scores.niceToHave,
+      },
+    ],
+    consecutiveClasses: [
+      {
+        range: [0, 60],
+        score: scores.no,
+      },
+      {
+        range: [60, 240],
+        score: scores.niceToHave,
+      },
+      {
+        range: [240, null],
+        score: scores.no,
+      },
+    ],
+    gap: [
+      {
+        range: [0, 60],
+        score: scores.important,
+      },
+      {
+        range: [60, 120],
+        score: scores.niceToHave,
+      },
+      {
+        range: [120, 180],
+        score: scores.no,
+      },
+      {
+        range: [180, null],
+        score: scores.absolutelyNot,
+      },
+    ],
   }
-
-  // Before we continue, lets sort the timeslots by time
-  for (const [day, dayTimeSlot] of dayTimeSlotMap.entries()) {
-    const sorted = dayTimeSlot.sort((a, b) => {
-      return toMinutes(a.from) - toMinutes(b.from);
-    });
-    dayTimeSlotMap.set(day, sorted);
-  }
-
+) {
   let score = 0;
-  // Next, we check if there are any timeslots that overlap
-  for (const dayTimeSlot of dayTimeSlotMap.values()) {
-    let lastTimeSlot: Timeslot | null = null;
-    let curConsecutiveTimeInSeconds = 0;
-    let consecutiveStart = false;
+  for (const week of ALL_WEEKS) {
+    const dayTimeSlotMap = new Map<Day, Timeslot[]>();
 
-    for (const timeslot of dayTimeSlot) {
-      if (
-        lastTimeSlot &&
-        toMinutes(lastTimeSlot.to) > toMinutes(timeslot.from)
-      ) {
-        return -1;
-      }
-
-      if (lastTimeSlot) {
-        // Check if this timeslot is consecutive with the last one
-        // Consider slots consecutive if gap is <= 30 mins
-        const gap = toMinutes(timeslot.from) - toMinutes(lastTimeSlot.to);
-        if (gap <= 30) {
-          if (!consecutiveStart) {
-            consecutiveStart = true;
-            curConsecutiveTimeInSeconds =
-              toMinutes(lastTimeSlot.to) - toMinutes(lastTimeSlot.from);
-          }
-          curConsecutiveTimeInSeconds +=
-            toMinutes(timeslot.to) - toMinutes(timeslot.from);
+    // First, we need to map the timeslots to the day
+    for (const course of Object.values(timetable.courses)) {
+      for (const timeslot of course.timeslots) {
+        if (binSearch(timeslot.weeks, week) === -1) {
+          continue;
+        }
+        const dayTimeSlot = dayTimeSlotMap.get(timeslot.day);
+        if (dayTimeSlot) {
+          dayTimeSlot.push(timeslot);
         } else {
-          // Gap too large, check previous consecutive block if any
-          if (consecutiveStart) {
-            if (curConsecutiveTimeInSeconds <= 180 * 60) {
-              // 3 hours
-              score += 40;
-            } else if (curConsecutiveTimeInSeconds <= 240 * 60) {
-              // 4 hours
-              score += 20;
-            }
-            consecutiveStart = false;
-            curConsecutiveTimeInSeconds = 0;
-          }
+          dayTimeSlotMap.set(timeslot.day, [timeslot]);
         }
       }
-
-      lastTimeSlot = timeslot;
     }
 
-    // Check final consecutive block
-    if (consecutiveStart) {
-      if (curConsecutiveTimeInSeconds <= 180 * 60) {
-        // 3 hours
-        score += 40;
-      } else if (curConsecutiveTimeInSeconds <= 240 * 60) {
-        // 4 hours
-        score += 20;
+    // Before we continue, lets sort the timeslots by time
+    for (const [day, dayTimeSlot] of dayTimeSlotMap.entries()) {
+      const sorted = dayTimeSlot.sort((a, b) => {
+        return toMinutes(a.from) - toMinutes(b.from);
+      });
+      dayTimeSlotMap.set(day, sorted);
+    }
+
+    // Next, we check if there are any timeslots that overlap
+    for (const dayTimeSlot of dayTimeSlotMap.values()) {
+      let lastTimeSlot: Timeslot | null = null;
+      let curConsecutiveTimeInSeconds = 0;
+      let consecutiveStart = false;
+
+      for (const timeslot of dayTimeSlot) {
+        if (
+          lastTimeSlot &&
+          toMinutes(lastTimeSlot.to) > toMinutes(timeslot.from)
+        ) {
+          return -1;
+        }
+
+        if (lastTimeSlot) {
+          // Check if this timeslot is consecutive with the last one
+          // Consider slots consecutive if gap is <= 30 mins
+          const gap = toMinutes(timeslot.from) - toMinutes(lastTimeSlot.to);
+          if (gap <= 30) {
+            if (!consecutiveStart) {
+              consecutiveStart = true;
+              curConsecutiveTimeInSeconds =
+                toMinutes(lastTimeSlot.to) - toMinutes(lastTimeSlot.from);
+            }
+            curConsecutiveTimeInSeconds +=
+              toMinutes(timeslot.to) - toMinutes(timeslot.from);
+          } else {
+            // Gap too large, check previous consecutive block if any
+            if (consecutiveStart) {
+              if (curConsecutiveTimeInSeconds <= 180 * 60) {
+                // 3 hours
+                score += 80;
+              } else if (curConsecutiveTimeInSeconds <= 240 * 60) {
+                // 4 hours
+                score += 40;
+              }
+              consecutiveStart = false;
+              curConsecutiveTimeInSeconds = 0;
+            }
+          }
+        }
+
+        lastTimeSlot = timeslot;
+      }
+
+      // Check final consecutive block
+      if (consecutiveStart) {
+        if (curConsecutiveTimeInSeconds <= 180 * 60) {
+          // 3 hours
+          score += 80;
+        } else if (curConsecutiveTimeInSeconds <= 240 * 60) {
+          // 4 hours
+          score += 40;
+        }
       }
     }
-  }
 
-  // If the day has only 1 class, then fuck that. Its getting a 0.
-  // If there are no timeslots for a day, we add 100 to the score
-  // If the day starts after 10:00, we add 30 to the score
-  // If the day ends before 14:00, we add 60 to the score. Else if before 17:00, we add 30 to the score
-  for (const day of Days) {
-    const dayTimeSlot = dayTimeSlotMap.get(day);
-    if (dayTimeSlot && dayTimeSlot.length > 0) {
-      if (dayTimeSlot.length === 1) {
-        continue;
-      }
+    // If the day has only 1 class, then fuck that. Its getting a 0.
+    // If there are no timeslots for a day, we add 100 to the score
+    // If the day starts after 10:00, we add 30 to the score
+    // If the day ends before 14:00, we add 60 to the score. Else if before 17:00, we add 30 to the score
+    for (const day of Days) {
+      const dayTimeSlot = dayTimeSlotMap.get(day);
+      if (dayTimeSlot && dayTimeSlot.length > 0) {
+        if (dayTimeSlot.length === 1) {
+          continue;
+        }
 
-      const firstTimeSlot = dayTimeSlot[0];
-      if (firstTimeSlot.from.hour > 10) {
-        score += 40;
+        const firstTimeSlot = dayTimeSlot[0];
+        if (firstTimeSlot.from.hour > 10) {
+          score += 40;
+        }
+        const lastTimeSlot = dayTimeSlot[dayTimeSlot.length - 1];
+        if (lastTimeSlot.to.hour < 14) {
+          score += 60;
+        } else if (lastTimeSlot.to.hour < 17) {
+          score += 30;
+        }
+      } else {
+        score += 150;
       }
-      const lastTimeSlot = dayTimeSlot[dayTimeSlot.length - 1];
-      if (lastTimeSlot.to.hour < 14) {
-        score += 60;
-      } else if (lastTimeSlot.to.hour < 17) {
-        score += 30;
-      }
-    } else {
-      score += 120;
     }
   }
 
