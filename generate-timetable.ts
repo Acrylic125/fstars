@@ -39,6 +39,8 @@ for (const course of wantCourses) {
     if (
       course.course === "SC2001" &&
       (index.index === "10121" ||
+        index.index === "10122" ||
+        index.index === "10139" ||
         index.index === "10193" ||
         index.index === "10148" ||
         index.index === "10147" ||
@@ -101,6 +103,7 @@ for (let i = 0; i < MAX_EVOLUTIONS; i++) {
   const analysis = analyzeTimetables(currentGenTimetables);
   console.log(`Evolution ${i}`);
   console.log(analysis);
+  // console.log(JSON.stringify(analysis.bestTimetable));
   printTimetable(analysis.bestTimetable, { precision: "30m" });
   console.log(
     Object.entries(analysis.bestTimetable.courses)

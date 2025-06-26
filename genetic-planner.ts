@@ -133,6 +133,12 @@ export function evaluateTimetable(
       score: number;
       range: TimeMinuteRange;
     }[];
+    favourIndexes: {
+      [courseCode: string]: {
+        index: string;
+        score: number;
+      }[];
+    };
   } = {
     dayLength: [
       {
@@ -192,15 +198,92 @@ export function evaluateTimetable(
         score: scores.absolutelyNot,
       },
     ],
+    favourIndexes: {
+      SC2001: [
+        {
+          index: "10134",
+          score: scores.niceToHave,
+        },
+      ],
+      // SC2005: [
+      //   {
+      //     index: "10183",
+      //     score: scores.important,
+      //   },
+      // ],
+      // SC2008: [
+      //   {
+      //     index: "10226",
+      //     score: scores.niceToHave,
+      //   },
+      //   {
+      //     index: "10221",
+      //     score: scores.niceToHave,
+      //   },
+      // ],
+      // SC2001: [
+      //   {
+      //     index: "10127",
+      //     score: scores.veryImportant * 10,
+      //   },
+      // ],
+      SC2005: [
+        {
+          index: "10178",
+          score: scores.veryImportant * 10,
+        },
+      ],
+      SC2006: [
+        {
+          index: "10196",
+          score: scores.veryImportant * 10,
+        },
+      ],
+      SC2008: [
+        {
+          index: "10221",
+          score: scores.veryImportant * 10,
+        },
+      ],
+      SC2203: [
+        // {
+        //   index: "10257",
+        //   score: scores.niceToHave,
+        // },
+        {
+          index: "10261",
+          score: scores.niceToHave * 10,
+        },
+      ],
+    },
   }
 ) {
+  const temp =
+    JSON.stringify(timetable) ===
+    `{"courses":{"SC2001":{"index":"10141","timeslots":[{"day":"MON","from":{"hour":12,"minute":30},"to":{"hour":14,"minute":20},"type":"LEC/STUDIO","weeks":[1,2,3,4,5,6,7,8,9,10,11,12,13,14]},{"day":"MON","from":{"hour":16,"minute":30},"to":{"hour":17,"minute":20},"type":"TUT","weeks":[2,3,4,5,6,7,8,9,11,12,13]},{"day":"TUE","from":{"hour":12,"minute":30},"to":{"hour":14,"minute":20},"type":"LAB","weeks":[1,3,5,7,9,11,13]}]},"SC2005":{"index":"10178","timeslots":[{"day":"FRI","from":{"hour":11,"minute":30},"to":{"hour":12,"minute":20},"type":"LEC/STUDIO","weeks":[10]},{"day":"THU","from":{"hour":12,"minute":30},"to":{"hour":13,"minute":20},"type":"LEC/STUDIO","weeks":[1,2,3,4,6,7,8,9,11,12,13]},{"day":"MON","from":{"hour":9,"minute":30},"to":{"hour":10,"minute":20},"type":"TUT","weeks":[10]},{"day":"TUE","from":{"hour":14,"minute":30},"to":{"hour":16,"minute":20},"type":"LAB","weeks":[2,4,6,8,10,12]}]},"SC2006":{"index":"10196","timeslots":[{"day":"MON","from":{"hour":8,"minute":30},"to":{"hour":9,"minute":20},"type":"LEC/STUDIO","weeks":[10]},{"day":"THU","from":{"hour":13,"minute":30},"to":{"hour":14,"minute":20},"type":"LEC/STUDIO","weeks":[1,2,3,4,5,6,7,8,9,11,12,13]},{"day":"FRI","from":{"hour":12,"minute":30},"to":{"hour":13,"minute":20},"type":"TUT","weeks":[2,3,4,5,6,7,8,9,11,12,13]},{"day":"WED","from":{"hour":14,"minute":30},"to":{"hour":16,"minute":20},"type":"LAB","weeks":[1,3,5,7,9,11,13]}]},"SC2008":{"index":"10221","timeslots":[{"day":"TUE","from":{"hour":10,"minute":30},"to":{"hour":12,"minute":20},"type":"LEC/STUDIO","weeks":[1,2,3,4,5,6,7,8,9,11,12,13]},{"day":"TUE","from":{"hour":16,"minute":30},"to":{"hour":17,"minute":20},"type":"TUT","weeks":[10]},{"day":"MON","from":{"hour":14,"minute":30},"to":{"hour":16,"minute":20},"type":"LAB","weeks":[2,4,6,8,10,12]}]},"SC2203":{"index":"10261","timeslots":[{"day":"TUE","from":{"hour":8,"minute":30},"to":{"hour":10,"minute":20},"type":"LEC/STUDIO","weeks":[10]},{"day":"TUE","from":{"hour":13,"minute":30},"to":{"hour":14,"minute":20},"type":"TUT","weeks":[10]}]}}}`;
   let score = 0;
   for (const week of ALL_WEEKS) {
     const dayTimeSlotMap = new Map<Day, Timeslot[]>();
 
     // First, we need to map the timeslots to the day
-    for (const course of Object.values(timetable.courses)) {
+    for (const [courseCode, course] of Object.entries(timetable.courses)) {
+      for (const favourIndex of scoring.favourIndexes[courseCode] ?? []) {
+        if (course.index === favourIndex.index) {
+          score += favourIndex.score;
+          break;
+        }
+      }
       for (const timeslot of course.timeslots) {
+        // Check if timeslot.weeks is sorted in asc.
+        // if (timeslot.weeks.length > 0) {
+        //   for (let i = 0; i < timeslot.weeks.length - 1; i++) {
+        //     if (timeslot.weeks[i] > timeslot.weeks[i + 1]) {
+        //       throw new Error(
+        //         `Timeslot ${timeslot} has weeks ${timeslot.weeks} which is not sorted in asc. This is not allowed.`
+        //       );
+        //     }
+        //   }
+        // }
         if (binSearch(timeslot.weeks, week) === -1) {
           continue;
         }
@@ -218,6 +301,9 @@ export function evaluateTimetable(
       const sorted = dayTimeSlot.sort((a, b) => {
         return toMinutes(a.from) - toMinutes(b.from);
       });
+      if (temp && day === "TUE") {
+        console.log(sorted);
+      }
       dayTimeSlotMap.set(day, sorted);
     }
 
