@@ -49,24 +49,31 @@ for (const course of wantCourses) {
       continue;
     }
     for (const _class of index.classes) {
-      const findOverlappingTimeslot = timeslots.find((timeslot) =>
-        doesTimeslotOverlap(timeslot, {
-          day: _class.day,
-          from: _class.timeFrom,
-          to: _class.timeTo,
-          type: _class.type,
-          weeks: _class.weeks,
-        })
-      );
-      if (findOverlappingTimeslot) {
-        if (findOverlappingTimeslot.type === _class.type) {
-          //   console.log(
-          //     `Course ${course.course} Index ${index.index} Timeslot ${findOverlappingTimeslot.type} ${findOverlappingTimeslot.day} ${findOverlappingTimeslot.from.hour}:${findOverlappingTimeslot.from.minute} - ${findOverlappingTimeslot.to.hour}:${findOverlappingTimeslot.to.minute} overlaps with existing timeslot ${_class.type} ${_class.day} ${_class.timeFrom.hour}:${_class.timeFrom.minute} - ${_class.timeTo.hour}:${_class.timeTo.minute}`
-          //   );
-          continue;
-        }
-        throw new Error("Timeslot overlaps with existing timeslot");
-      }
+      // const findOverlappingTimeslot = timeslots.find((timeslot) =>
+      //   doesTimeslotOverlap(timeslot, {
+      //     day: _class.day,
+      //     from: _class.timeFrom,
+      //     to: _class.timeTo,
+      //     type: _class.type,
+      //     weeks: _class.weeks,
+      //   })
+      // );
+      // if (findOverlappingTimeslot) {
+      //   if (
+      //     findOverlappingTimeslot.type === _class.type &&
+      //     findOverlappingTimeslot.day === _class.day &&
+      //     // Check if they are of different weeks
+      //     !findOverlappingTimeslot.weeks.some((week) =>
+      //       _class.weeks.includes(week)
+      //     )
+      //   ) {
+      //     console.log(
+      //       `Course ${course.course} Index ${index.index} Timeslot ${findOverlappingTimeslot.type} ${findOverlappingTimeslot.day} ${findOverlappingTimeslot.from.hour}:${findOverlappingTimeslot.from.minute} - ${findOverlappingTimeslot.to.hour}:${findOverlappingTimeslot.to.minute} overlaps with existing timeslot ${_class.type} ${_class.day} ${_class.timeFrom.hour}:${_class.timeFrom.minute} - ${_class.timeTo.hour}:${_class.timeTo.minute}`
+      //     );
+      //     continue;
+      //   }
+      //   throw new Error("Timeslot overlaps with existing timeslot");
+      // }
       timeslots.push({
         day: _class.day,
         from: _class.timeFrom,
