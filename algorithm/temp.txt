@@ -1,0 +1,305 @@
+eek 1
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 12, minute: 30 },
+    to: { hour: 14, minute: 20 },
+    type: 'LAB',
+    weeks: [
+      1,  3,  5, 7,
+      9, 11, 13
+    ]
+  }
+]
+Week 2
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 14, minute: 30 },
+    to: { hour: 16, minute: 20 },
+    type: 'LAB',
+    weeks: [ 2, 4, 6, 8, 10, 12 ]
+  }
+]
+Week 3
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 12, minute: 30 },
+    to: { hour: 14, minute: 20 },
+    type: 'LAB',
+    weeks: [
+      1,  3,  5, 7,
+      9, 11, 13
+    ]
+  }
+]
+Week 4
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 14, minute: 30 },
+    to: { hour: 16, minute: 20 },
+    type: 'LAB',
+    weeks: [ 2, 4, 6, 8, 10, 12 ]
+  }
+]
+Week 5
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 12, minute: 30 },
+    to: { hour: 14, minute: 20 },
+    type: 'LAB',
+    weeks: [
+      1,  3,  5, 7,
+      9, 11, 13
+    ]
+  }
+]
+Week 6
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 14, minute: 30 },
+    to: { hour: 16, minute: 20 },
+    type: 'LAB',
+    weeks: [ 2, 4, 6, 8, 10, 12 ]
+  }
+]
+Week 7
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 12, minute: 30 },
+    to: { hour: 14, minute: 20 },
+    type: 'LAB',
+    weeks: [
+      1,  3,  5, 7,
+      9, 11, 13
+    ]
+  }
+]
+Week 8
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 14, minute: 30 },
+    to: { hour: 16, minute: 20 },
+    type: 'LAB',
+    weeks: [ 2, 4, 6, 8, 10, 12 ]
+  }
+]
+Week 9
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 12, minute: 30 },
+    to: { hour: 14, minute: 20 },
+    type: 'LAB',
+    weeks: [
+      1,  3,  5, 7,
+      9, 11, 13
+    ]
+  }
+]
+Week 10
+[
+  {
+    day: 'TUE',
+    from: { hour: 8, minute: 30 },
+    to: { hour: 10, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [ 10 ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 13, minute: 30 },
+    to: { hour: 14, minute: 20 },
+    type: 'TUT',
+    weeks: [ 10 ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 14, minute: 30 },
+    to: { hour: 16, minute: 20 },
+    type: 'LAB',
+    weeks: [ 2, 4, 6, 8, 10, 12 ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 16, minute: 30 },
+    to: { hour: 17, minute: 20 },
+    type: 'TUT',
+    weeks: [ 10 ]
+  }
+]
+Week 11
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 12, minute: 30 },
+    to: { hour: 14, minute: 20 },
+    type: 'LAB',
+    weeks: [
+      1,  3,  5, 7,
+      9, 11, 13
+    ]
+  }
+]
+Week 12
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 14, minute: 30 },
+    to: { hour: 16, minute: 20 },
+    type: 'LAB',
+    weeks: [ 2, 4, 6, 8, 10, 12 ]
+  }
+]
+Week 13
+[
+  {
+    day: 'TUE',
+    from: { hour: 10, minute: 30 },
+    to: { hour: 12, minute: 20 },
+    type: 'LEC/STUDIO',
+    weeks: [
+       1,  2, 3, 4,  5,
+       6,  7, 8, 9, 11,
+      12, 13
+    ]
+  },
+  {
+    day: 'TUE',
+    from: { hour: 12, minute: 30 },
+    to: { hour: 14, minute: 20 },
+    type: 'LAB',
+    weeks: [
+      1,  3,  5, 7,
+      9, 11, 13
+    ]
+  }
+]
+Week 14
