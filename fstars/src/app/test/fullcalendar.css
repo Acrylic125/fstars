@@ -1,0 +1,69 @@
+@reference "../globals.css";
+
+/* FullCalendar-specific styles */
+.fc th {
+  @apply border-none;
+}
+
+.fc {
+  @apply bg-background;
+}
+
+.fc-theme-standard .fc-scrollgrid {
+  @apply border-none;
+}
+
+.fc-scrollgrid-sync-inner,
+.fc-theme-standard td {
+  @apply border-gray-700;
+}
+
+.fc-timegrid-axis,
+.fc-col-header-cell,
+.fc-scrollgrid-sync-inner {
+  @apply bg-gray-800;
+}
+
+.fc-col-header-cell,
+.fc-timegrid-slot-label {
+  @apply bg-gray-800 text-white;
+}
+
+.event-subtext {
+  @apply text-xs md:text-sm text-gray-700;
+}
+.fc-error .event-subtext {
+  @apply text-red-500;
+}
+
+.event-title {
+  @apply font-bold text-xs md:text-sm text-gray-950;
+}
+.fc-error .event-title {
+  @apply text-red-600;
+}
+
+.event-title-container {
+  @apply h-full;
+}
+
+/* https://stackoverflow.com/questions/49903888/remove-today-highlight-from-fullcalendar */
+.fc-day-today {
+  background-color: inherit !important;
+}
+
+.fc-event {
+  @apply p-1 overflow-hidden;
+}
+
+.fc-event-main {
+  @apply flex flex-col justify-between;
+}
+
+.fc-timegrid-event-harness-inset .fc-timegrid-event {
+  @apply shadow-none;
+}
+
+.fc-error {
+  @apply ring-3 ring-red-400;
+}
