@@ -1,3 +1,4 @@
+import { MainNavbar } from "@/components/nav/main-navbar";
 import Image from "next/image";
 import React from "react";
 
@@ -270,10 +271,13 @@ const sampleTimeTable: Timetable = {
 
 export default function Home() {
   return (
-    <div className="flex flex-col h-screen max-w-ui mx-auto px-12 py-8 md:px-20 md:py-12 gap-4">
-      <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
-        Timetable
-      </h1>
-    </div>
+    <main>
+      <MainNavbar />
+      <div className="flex flex-col h-screen max-w-ui mx-auto px-12 py-8 md:px-20 md:py-12 gap-4">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
+          Timetable
+        </h1>
+      </div>
+    </main>
   );
 }
