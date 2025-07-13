@@ -2,16 +2,16 @@ import { create } from "zustand";
 import { persist, PersistStorage } from "zustand/middleware";
 import superjson from "superjson";
 
-type TimetableId = string;
+export type TimetableId = string;
 
-type Program = {
+export type Program = {
   name: string;
   code: string;
   subCode?: string;
   year: number;
 };
 
-type Timetable = {
+export type Timetable = {
   id: TimetableId;
   name: string;
   program: Program;

@@ -18,8 +18,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Program } from "../timetable/timetable-store";
 
-type Program = {
+type AvailableProgram = {
   name: string;
   code: string;
   subCodes?: string[];
@@ -30,7 +31,7 @@ const ALL_4_YEARS = [1, 2, 3, 4];
 const ALL_3_YEARS = [1, 2, 3];
 const ACAD_SEM = "2025;1";
 
-const PROGRAMS: Program[] = [
+const AVAILABLE_PROGRAMS: AvailableProgram[] = [
   { name: "Computer Science", code: "CSC", years: ALL_4_YEARS },
   {
     name: "Data Science and Artificial Intelligence",
@@ -46,29 +47,39 @@ const PROGRAMS: Program[] = [
   },
 ];
 
-const frameworks: {
-  value: string;
+type ProgramOption = {
   label: string;
-}[] = generateCourseOptions(PROGRAMS);
+  program: Program;
+};
 
-function generateCourseOptions(sources: Program[]) {
-  const options: {
-    value: string;
-    label: string;
-  }[] = [];
+const programOptions: ProgramOption[] = generateOptions(AVAILABLE_PROGRAMS);
+
+function generateOptions(sources: AvailableProgram[]) {
+  const options: ProgramOption[] = [];
   for (const source of sources) {
     for (const year of source.years) {
       if (source.subCodes) {
         for (const subCode of source.subCodes) {
+          const program: Program = {
+            code: source.code,
+            name: source.name,
+            year: year,
+            subCode: subCode,
+          };
           options.push({
-            value: `${source.code}-${subCode}-${year}`,
-            label: `${source.name} (${subCode}) Year ${year}`,
+            label: asProgramName(program),
+            program: program,
           });
         }
       } else {
+        const program: Program = {
+          code: source.code,
+          name: source.name,
+          year: year,
+        };
         options.push({
-          value: `${source.code}-${year}`,
-          label: `${source.name} Year ${year}`,
+          label: asProgramName(program),
+          program: program,
         });
       }
     }
@@ -76,12 +87,22 @@ function generateCourseOptions(sources: Program[]) {
   return options;
 }
 
+export type ProgramName = string;
+
+export function asProgramName(program: Program): ProgramName {
+  if (program.subCode) {
+    return `${program.name} (${program.subCode}) Year ${program.year}`;
+  } else {
+    return `${program.name} Year ${program.year}`;
+  }
+}
+
 export function SelectProgramCombobox({
   value,
   onChange,
 }: {
-  value: string | null;
-  onChange: (value: string | null) => void;
+  value: ProgramName | null;
+  onChange: (value: Program | null) => void;
 }) {
   const [open, setOpen] = React.useState(false);
 
@@ -107,22 +128,21 @@ export function SelectProgramCombobox({
           <CommandList>
             <CommandEmpty>No program found.</CommandEmpty>
             <CommandGroup>
-              {frameworks.map((framework) => (
+              {programOptions.map((program) => (
                 <CommandItem
-                  key={framework.value}
-                  value={framework.label}
-                  onSelect={(currentValue) => {
-                    onChange(currentValue === value ? null : currentValue);
+                  key={program.label}
+                  value={program.label}
+                  onSelect={() => {
+                    onChange(program.program);
                     setOpen(false);
                   }}
+                  className={cn(
+                    value === program.label
+                      ? "bg-primary text-primary-foreground active:bg-primary/90 hover:bg-primary/90 focus:bg-primary/90 data-[selected=true]:bg-primary/90 data-[selected=true]:text-primary-foreground"
+                      : ""
+                  )}
                 >
-                  {framework.label}
-                  <Check
-                    className={cn(
-                      "ml-auto",
-                      value === framework.value ? "opacity-100" : "opacity-0"
-                    )}
-                  />
+                  {program.label}
                 </CommandItem>
               ))}
             </CommandGroup>
