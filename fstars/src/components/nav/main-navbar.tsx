@@ -1,10 +1,11 @@
 "use client";
 
-import { MoonIcon, SunIcon } from "lucide-react";
+import { MoonIcon, PlusIcon, SunIcon } from "lucide-react";
 import { FullLogo } from "../icons/full-logo";
 import { useThemeStore } from "../theme-store";
 import { Button } from "../ui/button";
 import { useShallow } from "zustand/react/shallow";
+import Link from "next/link";
 
 export function MainNavbar() {
   const { theme, setTheme } = useThemeStore(
@@ -31,6 +32,13 @@ export function MainNavbar() {
             ) : (
               <MoonIcon className="h-4 w-4" />
             )}
+          </Button>
+
+          <Button variant="default" asChild>
+            <Link href="/new">
+              <PlusIcon className="h-4 w-4" />
+              New
+            </Link>
           </Button>
         </div>
       </div>
