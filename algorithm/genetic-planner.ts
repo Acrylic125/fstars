@@ -1,6 +1,13 @@
 import fs from "fs";
 import path from "path";
-import { Class, CourseListSchema, Day, Days, Time, TypeSchema } from "./schema";
+import {
+  Class,
+  ProgramCourseListSchema,
+  Day,
+  Days,
+  Time,
+  TypeSchema,
+} from "./schema";
 import seedrandom from "seedrandom";
 import { binSearch, isMinuteInRange, TimeMinuteRange, Timeslot } from "./utils";
 import { z } from "zod";

@@ -8,13 +8,13 @@ import {
 } from "./genetic-planner";
 import path from "path";
 import fs from "fs";
-import { CourseListSchema } from "./schema";
+import { ProgramCourseListSchema } from "./schema";
 import { doesTimeslotOverlap, Timeslot } from "./utils";
 
 const MAX_EVOLUTIONS = 100;
 
 const resultsPath = path.resolve(__dirname, "all-results.json");
-const allCourseRawSchedule = CourseListSchema.parse(
+const allCourseRawSchedule = ProgramCourseListSchema.parse(
   JSON.parse(fs.readFileSync(resultsPath, "utf8"))
 );
 
