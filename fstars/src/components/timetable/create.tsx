@@ -1,6 +1,5 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
 import {
   asProgramName,
   SelectProgramCombobox,
@@ -17,8 +16,15 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { nanoid, z } from "zod";
+import { z } from "zod";
+import { nanoid } from "nanoid";
 import { useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { Timetable, useTimetableStore } from "./timetable-store";
+import { useShallow } from "zustand/react/shallow";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { AlertCircleIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   program: z.object(
@@ -34,6 +40,7 @@ const formSchema = z.object({
 });
 
 export function CreateTimetable() {
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -41,6 +48,13 @@ export function CreateTimetable() {
       name: "",
     },
   });
+  const timetableStore = useTimetableStore(
+    useShallow((state) => {
+      return {
+        createTimetable: state.createTimetable,
+      };
+    })
+  );
 
   const programValue = form.watch("program");
   // Update name field when program changes
@@ -54,10 +68,26 @@ export function CreateTimetable() {
     }
   }, [programValue, form]);
 
+  const createTimetableMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof formSchema>) => {
+      const id = nanoid(16);
+      const timetable: Timetable = {
+        id,
+        name: data.name,
+        program: data.program,
+        acadYear: {
+          yearCode: "25/26",
+          semesterCode: "1",
+        },
+        courses: new Map(),
+        selectedGeneratorId: "default",
+      };
+      timetableStore.createTimetable(timetable);
+    },
+  });
+
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    const id = nanoid();
-    console.log("Form submitted:", data);
-    // Handle form submission here
+    createTimetableMutation.mutate(data);
   };
 
   return (
@@ -115,8 +145,20 @@ export function CreateTimetable() {
             )}
           />
 
+          {createTimetableMutation.isError && (
+            <Alert variant="error">
+              <AlertCircleIcon />
+              <AlertTitle>Unable to create timetable.</AlertTitle>
+              <AlertDescription>
+                <p>{createTimetableMutation.error.message}</p>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex flex-row gap-2">
-            <Button type="submit">Create</Button>
+            <Button type="submit" disabled={createTimetableMutation.isPending}>
+              {createTimetableMutation.isPending ? "Creating..." : "Create"}
+            </Button>
           </div>
         </form>
       </Form>
