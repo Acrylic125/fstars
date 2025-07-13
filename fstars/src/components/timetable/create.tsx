@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { nanoid, z } from "zod";
 import { useEffect } from "react";
 
 const formSchema = z.object({
@@ -55,6 +55,7 @@ export function CreateTimetable() {
   }, [programValue, form]);
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
+    const id = nanoid();
     console.log("Form submitted:", data);
     // Handle form submission here
   };
