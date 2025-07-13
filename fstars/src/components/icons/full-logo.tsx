@@ -15,7 +15,7 @@ export function FullLogo(props: React.SVGProps<SVGSVGElement>) {
         y={0.5}
         // fill="#1E2939"
         // stroke="#45556C"
-        className="fill-card stroke-border"
+        className="fill-neutral-100 stroke-neutral-300 dark:fill-neutral-800 dark:stroke-neutral-700"
         rx={11.5}
       />
       <path

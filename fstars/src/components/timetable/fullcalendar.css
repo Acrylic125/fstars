@@ -15,29 +15,29 @@
 
 .fc-scrollgrid-sync-inner,
 .fc-theme-standard td {
-  @apply border-gray-700;
+  @apply border-neutral-700;
 }
 
 .fc-timegrid-axis,
 .fc-col-header-cell,
 .fc-scrollgrid-sync-inner {
-  @apply bg-gray-800;
+  @apply bg-neutral-800;
 }
 
 .fc-col-header-cell,
 .fc-timegrid-slot-label {
-  @apply bg-gray-800 text-white;
+  @apply bg-neutral-800 text-white;
 }
 
 .event-subtext {
-  @apply text-xs md:text-sm text-gray-700;
+  @apply text-xs md:text-sm text-neutral-700;
 }
 .fc-error .event-subtext {
   @apply text-red-500;
 }
 
 .event-title {
-  @apply font-bold text-xs md:text-sm text-gray-950;
+  @apply font-bold text-xs md:text-sm text-neutral-950;
 }
 .fc-error .event-title {
   @apply text-red-600;
