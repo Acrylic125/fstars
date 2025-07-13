@@ -3,7 +3,7 @@
 import {
   asProgramName,
   SelectProgramCombobox,
-} from "@/components/combobox/select-program-combox";
+} from "@/components/timetable/select-program-combox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,7 +20,7 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Timetable, useTimetableStore } from "./timetable-store";
+import { Plan, Timetable, useTimetableStore } from "./timetable-store";
 import { useShallow } from "zustand/react/shallow";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertCircleIcon } from "lucide-react";
@@ -71,6 +71,14 @@ export function CreateTimetable() {
   const createTimetableMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
       const id = nanoid(16);
+
+      const defaultPlanId = nanoid(16);
+      const defaultPlan: Plan = {
+        id: defaultPlanId,
+        name: "Default Plan",
+        courses: new Map(),
+      };
+
       const timetable: Timetable = {
         id,
         name: data.name,
@@ -80,7 +88,9 @@ export function CreateTimetable() {
           semesterCode: "1",
         },
         courses: new Map(),
+        plans: new Map([[defaultPlanId, defaultPlan]]),
         selectedGeneratorId: "default",
+        selectedPlanId: defaultPlanId,
       };
       timetableStore.createTimetable(timetable);
       router.push(`/timetable/${id}`);
