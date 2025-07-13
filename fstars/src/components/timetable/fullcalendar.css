@@ -1,4 +1,4 @@
-@reference "../globals.css";
+@reference "../../app/globals.css";
 
 /* FullCalendar-specific styles */
 .fc th {

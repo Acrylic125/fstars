@@ -54,35 +54,36 @@ const demoEvents = [
   },
 ];
 
-export function Timetable() {
+export function TimetableView() {
   return (
-    <div className="h-[200em">
-      <FullCalendar
-        plugins={[timeGridPlugin]}
-        initialView="timeGridWeek"
-        headerToolbar={false}
-        events={[...demoEvents]}
-        eventContent={(arg) => {
-          return {
-            html: `
+    <FullCalendar
+      plugins={[timeGridPlugin]}
+      initialView="timeGridWeek"
+      headerToolbar={false}
+      expandRows={true}
+      events={[...demoEvents]}
+      eventContent={(arg) => {
+        return {
+          html: `
             <div class="event-title-container">
             <div class="event-title">${arg.event.title}</div>
             <div class="event-subtext">${arg.event.extendedProps.location}</div>
             </div>
             <div class="event-subtext">${arg.timeText}</div>
             `,
-          };
-        }}
-        allDaySlot={false}
-        nowIndicator={false}
-        now={undefined}
-        height="auto"
-        slotMinTime="08:00:00"
-        slotMaxTime="20:00:00"
-        dayHeaderFormat={{ weekday: "short" }}
-        slotLabelFormat={{ hour: "numeric", minute: "2-digit", hour12: false }}
-        contentHeight="auto"
-      />
-    </div>
+        };
+      }}
+      allDaySlot={false}
+      nowIndicator={false}
+      now={undefined}
+      height="100%"
+      // contentHeight="auto"
+      // height="auto"
+      slotMinTime="08:00:00"
+      slotMaxTime="20:00:00"
+      dayHeaderFormat={{ weekday: "short" }}
+      slotLabelFormat={{ hour: "numeric", minute: "2-digit", hour12: false }}
+      // contentHeight="auto"
+    />
   );
 }

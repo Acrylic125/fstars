@@ -83,6 +83,7 @@ export function CreateTimetable() {
         selectedGeneratorId: "default",
       };
       timetableStore.createTimetable(timetable);
+      router.push(`/timetable/${id}`);
     },
   });
 

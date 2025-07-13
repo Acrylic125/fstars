@@ -40,7 +40,7 @@ const storage: PersistStorage<TimetableStore> = {
   getItem: (name) => {
     const str = localStorage.getItem(name);
     if (!str) return null;
-    return superjson.parse(str);
+    return superjson.parse(str) as { state: TimetableStore };
   },
   setItem: (name, value) => {
     localStorage.setItem(name, superjson.stringify(value));
