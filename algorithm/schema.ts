@@ -32,18 +32,46 @@ export const ClassSchema = z.object({
 export const IndexSchema = z.object({
   index: z.string(),
   classes: z.array(ClassSchema),
-  sources: z.array(z.string()),
+  sources: z.array(
+    z.object({
+      name: z.string(),
+      code: z.string(),
+      subCode: z.string().optional(),
+      year: z.number(),
+    })
+  ),
 });
 
 export const CourseSchema = z.object({
-  course: z.string(),
+  course: z.object({
+    code: z.string(),
+    name: z.string(),
+  }),
+  au: z.number(),
   indices: z.array(IndexSchema),
 });
 
 export const CourseListSchema = z.array(CourseSchema);
+
+export const ProgramSchema = z.object({
+  name: z.string(),
+  code: z.string(),
+  subCode: z.string().optional(),
+  year: z.number(),
+});
+
+export const MetadataEntrySchema = z.object({
+  program: ProgramSchema,
+  path: z.string(),
+});
+
+export const MetadataSchema = z.array(MetadataEntrySchema);
 
 export type Time = z.infer<typeof TimeSchema>;
 export type Day = z.infer<typeof DaySchema>;
 export type Class = z.infer<typeof ClassSchema>;
 export type Index = z.infer<typeof IndexSchema>;
 export type Course = z.infer<typeof CourseSchema>;
+
+export type Program = z.infer<typeof ProgramSchema>;
+export type MetadataEntry = z.infer<typeof MetadataEntrySchema>;

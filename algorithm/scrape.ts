@@ -9,6 +9,7 @@ import {
   Course,
   ClassSchema,
   CourseSchema,
+  MetadataSchema,
 } from "./schema";
 import { parseTeachingWeeks } from "./utils";
 import { CourseCode, CourseIndexSchedule } from "./genetic-planner";
@@ -32,7 +33,7 @@ function scrapePageForCourses(html: string) {
   const results: Course[] = [];
   // Find all course sections
   const $ = cheerio.load(html);
-  $("table").each((tableIndex, table) => {
+  $("table").each((tableIndex: number, table: any) => {
     const $table = $(table);
 
     // Look for course code in the first table (course info table)
@@ -42,6 +43,24 @@ function scrapePageForCourses(html: string) {
     if (courseCodeElement.length > 0) {
       const courseCode = courseCodeElement.text().trim();
 
+      // Extract course name from the second td with blue font
+      const courseNameElement = $table.find(
+        "td:nth-child(2) b font[color='#0000FF']"
+      );
+      const courseName = courseNameElement.text().trim();
+
+      // Extract AU from the third td with blue font
+      const auElement = $table.find("td:nth-child(3) b font[color='#0000FF']");
+      const auText = auElement.text().trim();
+      const _au = auText.replace(" AU", ""); // Remove " AU" suffix
+      let au = parseInt(_au);
+      if (isNaN(au)) {
+        console.warn(
+          `Invalid AU for ${courseCode}: ${auText} will default to 0`
+        );
+        au = 0;
+      }
+
       // Find the next table which contains the schedule
       const nextTable = $table.next("table");
       if (nextTable.length > 0) {
@@ -50,7 +69,7 @@ function scrapePageForCourses(html: string) {
         let lastIndex = "";
 
         // Parse schedule rows
-        $scheduleTable.find("tr").each((rowIndex, row) => {
+        $scheduleTable.find("tr").each((rowIndex: number, row: any) => {
           const $row = $(row);
           const cells = $row.find("td");
 
@@ -101,7 +120,7 @@ function scrapePageForCourses(html: string) {
         });
 
         const indices: Index[] = Object.entries(indexMap).map(
-          ([index, classes]) => ({
+          ([index, classes]: [string, Class[]]) => ({
             index,
             classes,
             sources: [],
@@ -110,7 +129,11 @@ function scrapePageForCourses(html: string) {
 
         if (indices.length > 0) {
           const courseData: Course = {
-            course: courseCode,
+            course: {
+              code: courseCode,
+              name: courseName,
+            },
+            au: au,
             indices,
           };
 
@@ -131,33 +154,33 @@ function scrapePageForCourses(html: string) {
   return results;
 }
 
-const rawSchedulesDir = path.resolve(__dirname, "raw-schedules");
-const rawSchedules = fs.readdirSync(rawSchedulesDir);
+const rawSchedulesDir = path.resolve("./raw-schedules");
+const metadata = MetadataSchema.parse(
+  JSON.parse(
+    fs.readFileSync(path.resolve(rawSchedulesDir, "metadata.json"), "utf8")
+  )
+);
 
 const courseSchedules = new Map<CourseCode, Course>();
 // course code -> serialized course
 // const checkDuplicates = new Map<string, string>();
-for (const rawSchedule of rawSchedules) {
-  const html = fs.readFileSync(
-    path.resolve(rawSchedulesDir, rawSchedule),
-    "utf8"
-  );
-  const filename = rawSchedule.split(".")[0];
+for (const entry of metadata) {
+  const html = fs.readFileSync(path.resolve(entry.path), "utf8");
   const courses = scrapePageForCourses(html);
   for (const course of courses) {
-    const cur = courseSchedules.get(course.course);
+    const cur = courseSchedules.get(course.course.code);
     if (cur) {
       const curIndexPositions = new Map<string, number>(
-        cur.indices.map((index, i) => {
+        cur.indices.map((index: Index, i: number) => {
           return [index.index, i];
         })
       );
       for (const index of course.indices) {
         const i = curIndexPositions.get(index.index);
         if (i !== undefined) {
-          console.log(`Already have index, ${index.index}. Adding source`);
+          // console.log(`Already have index, ${index.index}. Adding source`);
           const curIndex = cur.indices[i];
-          curIndex.sources.push(filename);
+          curIndex.sources.push(entry.program);
           continue;
         }
         cur.indices.push(index);
@@ -165,15 +188,15 @@ for (const rawSchedule of rawSchedules) {
       continue;
     }
     for (const index of course.indices) {
-      index.sources.push(filename);
+      index.sources.push(entry.program);
     }
-    courseSchedules.set(course.course, course);
+    courseSchedules.set(course.course.code, course);
   }
 }
 
 const results = Array.from(courseSchedules.values());
 // console.log(results)
 fs.writeFileSync(
-  path.resolve(__dirname, "all-results.json"),
+  path.resolve("./all-results.json"),
   JSON.stringify(results, null, 2)
 );

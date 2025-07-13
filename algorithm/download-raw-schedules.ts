@@ -1,5 +1,7 @@
 import fs from "fs";
 import seedrandom from "seedrandom";
+import { z } from "zod";
+import { MetadataSchema } from "./schema";
 
 const SOURCE_BASE_URL =
   "https://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1";
@@ -69,6 +71,7 @@ async function loadCourseSources(
     gapBetweenRequests: [number, number];
   }
 ) {
+  const metadata: z.infer<typeof MetadataSchema> = [];
   const wait = async () => {
     const gapBetweenRequests =
       rng.quick() *
@@ -92,6 +95,15 @@ async function loadCourseSources(
           const html = await response.text();
           const filePath = `${options.dir}/${courseSource.name} (${subCode}) Year ${year} ${subCode}.html`;
           fs.writeFileSync(filePath, html);
+          metadata.push({
+            program: {
+              name: courseSource.name,
+              code,
+              subCode,
+              year,
+            },
+            path: filePath,
+          });
           await wait();
         }
         continue;
@@ -106,6 +118,14 @@ async function loadCourseSources(
       const html = await response.text();
       const filePath = `${options.dir}/${courseSource.name} Year ${year}.html`;
       fs.writeFileSync(filePath, html);
+      metadata.push({
+        program: {
+          name: courseSource.name,
+          code,
+          year,
+        },
+        path: filePath,
+      });
       await wait();
       // https://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?acadsem=2025;1&r_course_yr=ECDS;;1111;F&r_subj_code=Enter+Keywords+or+Course+Code&r_search_type=F&boption=CLoad&staff_access=false
     }
@@ -115,6 +135,7 @@ async function loadCourseSources(
     //   const html = await response.text();
     //   console.log(html);
   }
+  return metadata;
 }
 
 // Create folder "raw-schedules" if not exist
@@ -124,9 +145,13 @@ if (!fs.existsSync("raw-schedules")) {
 
 // Do a fetch for each course source
 (async () => {
-  await loadCourseSources(COURSE_SOURCES, {
+  const metadata = await loadCourseSources(COURSE_SOURCES, {
     // Dont dox NTU and raise suspicion lmao.
     gapBetweenRequests: [500, 2000],
     dir: "raw-schedules",
   });
+  fs.writeFileSync(
+    "raw-schedules/metadata.json",
+    JSON.stringify(metadata, null, 2)
+  );
 })();

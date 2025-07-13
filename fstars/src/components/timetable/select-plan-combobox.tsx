@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, PlusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -10,6 +10,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -47,14 +48,13 @@ export function SelectPlanCombobox({
       {/* https://github.com/shadcn-ui/ui/issues/1690 */}
       <PopoverContent className="p-0 min-w-[var(--radix-popover-trigger-width)] max-w-sm">
         <Command>
-          <CommandInput
-            placeholder="Search program..."
-            className="h-10 text-base"
-          />
+          <CommandInput placeholder="Search plan..." className="h-10" />
           <CommandList>
             <CommandEmpty>
               <div className="px-4 text-muted-foreground">
-                No plan found. Click the + to create a new plan.
+                No plan found. Click{" "}
+                <span className="font-semibold text-primary">New Plan</span> to
+                create a new plan.
               </div>
             </CommandEmpty>
             <CommandGroup>
@@ -76,7 +76,24 @@ export function SelectPlanCombobox({
                 </CommandItem>
               ))}
             </CommandGroup>
+            {/* <CommandSeparator /> */}
+            {/* <CommandGroup>
+              <CommandItem>
+                <PlusIcon className="h-4 w-4" />
+                New Plan
+              </CommandItem>
+            </CommandGroup> */}
           </CommandList>
+          <CommandSeparator />
+          <div className="flex flex-row items-center justify-between pb-1">
+            <Button
+              variant="ghost"
+              className="w-full flex flex-row items-center justify-start"
+            >
+              <PlusIcon className="h-4 w-4" />
+              New Plan
+            </Button>
+          </div>
         </Command>
       </PopoverContent>
     </Popover>
