@@ -1,14 +1,4 @@
-import {
-  index,
-  integer,
-  pgTable,
-  primaryKey,
-  serial,
-  unique,
-  varchar,
-  foreignKey,
-} from "drizzle-orm/pg-core";
-import { Days } from "../schema";
+import { integer, pgTable, serial, unique, varchar } from "drizzle-orm/pg-core";
 
 export const programsTable = pgTable(
   "programs",
