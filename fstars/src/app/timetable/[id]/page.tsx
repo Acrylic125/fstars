@@ -20,7 +20,7 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
               </div>
             </div>
           </div>
-          <div className="w-xs md:w-md flex flex-col items-center h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] overflow-auto py-8 pl-2 pr-4 md:pl-4 md:pr-8">
+          <div className="w-md md:w-lg lg:w-xl flex flex-col items-center h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] overflow-auto py-8 pl-2 pr-4 md:pl-4 md:pr-8">
             <TimetableCoursesPanel id={id} />
           </div>
         </div>

@@ -26,6 +26,10 @@ import { type AppRouter } from "@/server/router";
 
 const skeletons = Array.from({ length: 5 }, (_, i) => i);
 
+export type RequestAddCourse = (
+  course: inferRouterOutputs<AppRouter>["findCourses"][number]
+) => void;
+
 export function SelectCourseCombobox({
   program,
   acadYear,
@@ -34,9 +38,7 @@ export function SelectCourseCombobox({
 }: {
   program: Program;
   acadYear: AcadYear;
-  requestAddCourse?: (
-    course: inferRouterOutputs<AppRouter>["findCourses"][number]
-  ) => void;
+  requestAddCourse?: RequestAddCourse;
   disabled?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);

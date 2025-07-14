@@ -40,6 +40,14 @@ type TimetableStore = {
   timetables: Map<TimetableId, Timetable>;
   createTimetable: (timetable: Timetable) => void;
   changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => void;
+  addCourseToPlan: (
+    timetableId: TimetableId,
+    planId: PlanId,
+    course: {
+      code: string;
+      index: string;
+    }
+  ) => void;
 };
 
 const storage: PersistStorage<TimetableStore> = {
@@ -69,6 +77,28 @@ export const useTimetableStore = create<TimetableStore>()(
           const timetable = state.timetables.get(timetableId);
           if (!timetable) return {};
           timetable.selectedPlanId = planId;
+
+          return {
+            timetables: new Map(state.timetables).set(timetable.id, timetable),
+          };
+        });
+      },
+      addCourseToPlan: (
+        timetableId: TimetableId,
+        planId: PlanId,
+        course: {
+          code: string;
+          index: string;
+        }
+      ) => {
+        set((state) => {
+          const timetable = state.timetables.get(timetableId);
+          if (!timetable) return {};
+          const plan = timetable.plans.get(planId);
+          if (!plan) return {};
+          plan.courses.set(course.code, {
+            index: course.index,
+          });
 
           return {
             timetables: new Map(state.timetables).set(timetable.id, timetable),

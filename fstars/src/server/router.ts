@@ -11,6 +11,17 @@ import { and, eq, exists, inArray, like, or, sql } from "drizzle-orm";
 import { AcadYearSchema, ProgramSchema } from "@/lib/types";
 
 export const appRouter = createTRPCRouter({
+  getCoursesByCodes: publicProcedure
+    .input(z.object({ codes: z.array(z.string()).max(10) }))
+    .query(async ({ input }) => {
+      console.log("getCoursesByCodes", input.codes);
+      if (input.codes.length === 0) return [];
+      const courses = await db
+        .select()
+        .from(coursesTable)
+        .where(inArray(coursesTable.code, input.codes));
+      return courses;
+    }),
   findCourses: publicProcedure
     .input(
       z.object({
