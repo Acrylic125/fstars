@@ -48,6 +48,11 @@ type TimetableStore = {
       index: string;
     }
   ) => void;
+  removeCourseFromPlan: (
+    timetableId: TimetableId,
+    planId: PlanId,
+    courseCode: string
+  ) => void;
 };
 
 const storage: PersistStorage<TimetableStore> = {
@@ -96,12 +101,59 @@ export const useTimetableStore = create<TimetableStore>()(
           if (!timetable) return {};
           const plan = timetable.plans.get(planId);
           if (!plan) return {};
-          plan.courses.set(course.code, {
-            index: course.index,
-          });
+
+          // Create new plan object with updated courses
+          const updatedPlan = {
+            ...plan,
+            courses: new Map(plan.courses).set(course.code, {
+              index: course.index,
+            }),
+          };
+
+          // Create new timetable object with updated plans
+          const updatedTimetable = {
+            ...timetable,
+            plans: new Map(timetable.plans).set(planId, updatedPlan),
+          };
 
           return {
-            timetables: new Map(state.timetables).set(timetable.id, timetable),
+            timetables: new Map(state.timetables).set(
+              timetableId,
+              updatedTimetable
+            ),
+          };
+        });
+      },
+      removeCourseFromPlan: (
+        timetableId: TimetableId,
+        planId: PlanId,
+        courseCode: string
+      ) => {
+        set((state) => {
+          const timetable = state.timetables.get(timetableId);
+          if (!timetable) return {};
+          const plan = timetable.plans.get(planId);
+          if (!plan) return {};
+
+          // Create new plan object with updated courses
+          const courses = new Map(plan.courses);
+          courses.delete(courseCode);
+          const updatedPlan = {
+            ...plan,
+            courses,
+          };
+
+          // Create new timetable object with updated plans
+          const updatedTimetable = {
+            ...timetable,
+            plans: new Map(timetable.plans).set(planId, updatedPlan),
+          };
+
+          return {
+            timetables: new Map(state.timetables).set(
+              timetableId,
+              updatedTimetable
+            ),
           };
         });
       },
