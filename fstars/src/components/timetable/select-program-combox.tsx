@@ -17,6 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Program } from "@/lib/types";
+import { Button } from "../ui/button";
 
 type AvailableProgram = {
   name: string;
@@ -107,14 +108,19 @@ export function SelectProgramCombobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="flex-row w-full h-12 bg-input/30 border border-input rounded-md flex items-center justify-between px-3">
+        <Button
+          variant="ghost"
+          className="flex-row w-full h-12 border border-input rounded-md flex items-center justify-between px-3"
+        >
           <span
             className={cn(value ? "text-foreground" : "text-muted-foreground")}
           >
             {value ? value : "No Program Specified"}
           </span>
           <ChevronsUpDown className="opacity-50" />
-        </div>
+        </Button>
+        {/* <div className="flex-row w-full h-12 bg-input/30 border border-input rounded-md flex items-center justify-between px-3">
+        </div> */}
       </PopoverTrigger>
       {/* https://github.com/shadcn-ui/ui/issues/1690 */}
       <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">

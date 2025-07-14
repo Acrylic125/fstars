@@ -15,18 +15,18 @@
 
 .fc-scrollgrid-sync-inner,
 .fc-theme-standard td {
-  @apply border-neutral-700;
+  @apply border-neutral-300 dark:border-neutral-700;
 }
 
 .fc-timegrid-axis,
 .fc-col-header-cell,
 .fc-scrollgrid-sync-inner {
-  @apply bg-neutral-800;
+  @apply bg-neutral-100 dark:bg-neutral-800;
 }
 
 .fc-col-header-cell,
 .fc-timegrid-slot-label {
-  @apply bg-neutral-800 text-white;
+  @apply bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white;
 }
 
 .event-subtext {
@@ -65,5 +65,5 @@
 }
 
 .fc-error {
-  @apply ring-3 ring-red-400;
+  @apply ring-3 ring-red-300 dark:ring-red-400;
 }
