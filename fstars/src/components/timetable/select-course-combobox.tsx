@@ -1,15 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown, PlusIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { PlusIcon } from "lucide-react";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -20,34 +18,54 @@ import { Button } from "../ui/button";
 import { trpc } from "@/server/client";
 import { useDebounce } from "use-debounce";
 import { ScrollArea } from "../ui/scroll-area";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Skeleton } from "../ui/skeleton";
+import { AcadYear, Program } from "@/lib/types";
+import { inferRouterOutputs } from "@trpc/server";
+import { type AppRouter } from "@/server/router";
+
+const skeletons = Array.from({ length: 5 }, (_, i) => i);
 
 export function SelectCourseCombobox({
-  value,
-  onChange,
+  program,
+  acadYear,
+  requestAddCourse,
+  disabled,
 }: {
-  value: string | null;
-  onChange: (value: string | null) => void;
+  program: Program;
+  acadYear: AcadYear;
+  requestAddCourse?: (
+    course: inferRouterOutputs<AppRouter>["findCourses"][number]
+  ) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
 
   const [phrase, setPhrase] = React.useState("");
-  const [debouncedPhrase] = useDebounce(phrase, 500);
-  const findCoursesRes = trpc.findCourses.useQuery({
-    phrase: debouncedPhrase,
-  });
+  const [debouncedPhrase] = useDebounce(phrase, 300);
+  const findCoursesRes = trpc.findCourses.useQuery(
+    {
+      phrase: debouncedPhrase,
+      program,
+      acadYear,
+    },
+    {
+      enabled: !disabled,
+    }
+  );
 
   const courseOptions = findCoursesRes.data ?? [];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="secondary" size="icon">
+        <Button variant="secondary" size="icon" disabled={disabled}>
           <PlusIcon className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
       {/* https://github.com/shadcn-ui/ui/issues/1690 */}
       <PopoverContent className="p-0 w-md">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search course..."
             className="h-10"
@@ -55,21 +73,35 @@ export function SelectCourseCombobox({
             value={phrase}
           />
           <ScrollArea>
-            <CommandEmpty>No program found.</CommandEmpty>
+            <CommandEmpty>
+              {findCoursesRes.isError ? (
+                <div className="px-4">
+                  <Alert variant="error" className="flex flex-col gap-1">
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>
+                      {findCoursesRes.error.message}
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              ) : (
+                "No course found"
+              )}
+            </CommandEmpty>
             <CommandGroup className="max-h-72 overflow-y-auto">
+              {findCoursesRes.isLoading &&
+                skeletons.map((i) => (
+                  <CommandItem key={i} className="animate-pulse">
+                    <Skeleton className="h-6 w-full" />
+                  </CommandItem>
+                ))}
               {courseOptions.map((course) => (
                 <CommandItem
                   key={course.id}
                   value={course.name}
                   onSelect={() => {
-                    // onChange(program.program);
                     setOpen(false);
+                    requestAddCourse?.(course);
                   }}
-                  // className={cn(
-                  //   value === program.label
-                  //     ? "bg-primary text-primary-foreground active:bg-primary/90 hover:bg-primary/90 focus:bg-primary/90 data-[selected=true]:bg-primary/90 data-[selected=true]:text-primary-foreground"
-                  //     : ""
-                  // )}
                 >
                   {course.code} {course.name}
                 </CommandItem>

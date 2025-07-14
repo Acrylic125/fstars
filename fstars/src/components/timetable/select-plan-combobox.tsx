@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plan, PlanId, Program } from "./timetable-store";
+import { Plan } from "./timetable-store";
 import { Button } from "../ui/button";
 
 export function SelectPlanCombobox({

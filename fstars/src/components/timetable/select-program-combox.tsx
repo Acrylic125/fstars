@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Program } from "./timetable-store";
+import { Program } from "@/lib/types";
 
 type AvailableProgram = {
   name: string;

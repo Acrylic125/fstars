@@ -1,4 +1,21 @@
-import { integer, pgTable, serial, unique, varchar } from "drizzle-orm/pg-core";
+import { SQL, sql } from "drizzle-orm";
+import {
+  integer,
+  pgTable,
+  serial,
+  unique,
+  varchar,
+  index,
+  customType,
+} from "drizzle-orm/pg-core";
+
+export const tsvector = customType<{
+  data: string;
+}>({
+  dataType() {
+    return `tsvector`;
+  },
+});
 
 export const programsTable = pgTable(
   "programs",
@@ -21,8 +38,19 @@ export const coursesTable = pgTable(
     au: integer().notNull(),
     ay: varchar({ length: 16 }).notNull(),
     semester: varchar({ length: 16 }).notNull(),
+    searchText: tsvector("search_text")
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`setweight(to_tsvector('english', ${coursesTable.code}), 'A')
+          ||
+          setweight(to_tsvector('english', ${coursesTable.name}), 'B')`
+      ),
   },
-  (t) => [unique("idx_code_ay_semester").on(t.code, t.ay, t.semester)]
+  (t) => [
+    unique("idx_code_ay_semester").on(t.code, t.ay, t.semester),
+    index("idx_courses_search_text").using("gin", t.searchText),
+  ]
 );
 
 export const courseIndexTable = pgTable(

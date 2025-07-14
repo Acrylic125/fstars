@@ -3,8 +3,6 @@ import { useShallow } from "zustand/react/shallow";
 import { useTimetableStore } from "./timetable-store";
 import { asProgramName } from "./select-program-combox";
 import { Skeleton } from "../ui/skeleton";
-import { Button } from "../ui/button";
-import { PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 import { SelectPlanCombobox } from "./select-plan-combobox";
 import { SelectCourseCombobox } from "./select-course-combobox";
@@ -57,6 +55,8 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
       }
 
       return {
+        program: timetable.program,
+        acadYear: timetable.acadYear,
         courses: timetable.courses,
         plans: timetable.plans,
         selectedPlanId: timetable.selectedPlanId,
@@ -90,7 +90,30 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
         >
           Hello
         </Button> */}
-        <SelectCourseCombobox />
+        {timetable ? (
+          <SelectCourseCombobox
+            program={timetable.program}
+            acadYear={timetable.acadYear}
+            requestAddCourse={(course) => {
+              // timetable.changeTimetablePlan(id, course.id);
+            }}
+            disabled={selectedPlan === null}
+          />
+        ) : (
+          <SelectCourseCombobox
+            program={{
+              name: "",
+              code: "",
+              subCode: "",
+              year: 0,
+            }}
+            acadYear={{
+              yearCode: "",
+              semesterCode: "",
+            }}
+            disabled
+          />
+        )}
       </div>
     </div>
   );

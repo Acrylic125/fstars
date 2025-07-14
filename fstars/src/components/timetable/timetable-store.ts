@@ -1,17 +1,11 @@
 import { create } from "zustand";
 import { persist, PersistStorage } from "zustand/middleware";
 import superjson from "superjson";
+import { AcadYear, Program } from "@/lib/types";
 
 export type TimetableId = string;
 export type PlanId = string;
 export type CourseId = string;
-
-export type Program = {
-  name: string;
-  code: string;
-  subCode?: string;
-  year: number;
-};
 
 export type Plan = {
   id: PlanId;
@@ -28,10 +22,7 @@ export type Timetable = {
   id: TimetableId;
   name: string;
   program: Program;
-  acadYear: {
-    yearCode: string;
-    semesterCode: string;
-  };
+  acadYear: AcadYear;
   courses: Map<
     string,
     {
