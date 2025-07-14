@@ -17,9 +17,12 @@ export function MainNavbar() {
 
   return (
     <nav className="flex flex-col items-center border-b border-border">
-      <div className="w-full h-14 md:h-16 max-w-ui flex flex-row items-center justify-between py-1.5 px-2">
+      <div className="w-full h-14 md:h-16 max-w-ui flex flex-row items-center justify-between py-1.5 px-4 md:px-8">
         <div className="flex flex-row items-center gap-2 h-full">
           <FullLogo className="h-full" />
+          <Button variant="ghost" asChild className="h-full">
+            <Link href="/timetable">Timetable</Link>
+          </Button>
         </div>
         <div className="flex flex-row items-center gap-2">
           <Button
