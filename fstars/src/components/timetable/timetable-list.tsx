@@ -4,7 +4,6 @@ import { useShallow } from "zustand/react/shallow";
 import { useTimetableStore } from "./timetable-store";
 import { useMemo } from "react";
 import Link from "next/link";
-import { Button } from "../ui/button";
 
 export function TimetableList() {
   const { timetables } = useTimetableStore(
