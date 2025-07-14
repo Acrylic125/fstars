@@ -7,6 +7,7 @@ import { Button } from "../ui/button";
 import { PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 import { SelectPlanCombobox } from "./select-plan-combobox";
+import { SelectCourseCombobox } from "./select-course-combobox";
 
 export function TimetableHeader({ id }: { id: string }) {
   const timetable = useTimetableStore(
@@ -89,9 +90,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
         >
           Hello
         </Button> */}
-        <Button variant="secondary" size="icon">
-          <PlusIcon className="w-4 h-4" />
-        </Button>
+        <SelectCourseCombobox />
       </div>
     </div>
   );
