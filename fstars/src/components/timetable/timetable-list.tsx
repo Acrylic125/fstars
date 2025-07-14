@@ -27,6 +27,7 @@ export function TimetableList() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
       {timetablesCached.map((timetable) => (
         <Link
+          key={timetable.id}
           href={`/timetable/${timetable.id}`}
           className="w-full border border-border rounded-md p-4 bg-card transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ring-secondary hover:ring-[3px]"
         >
