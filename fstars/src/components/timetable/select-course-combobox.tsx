@@ -19,6 +19,7 @@ import {
 import { Button } from "../ui/button";
 import { trpc } from "@/server/client";
 import { useDebounce } from "use-debounce";
+import { ScrollArea } from "../ui/scroll-area";
 
 export function SelectCourseCombobox({
   value,
@@ -47,29 +48,34 @@ export function SelectCourseCombobox({
       {/* https://github.com/shadcn-ui/ui/issues/1690 */}
       <PopoverContent className="p-0 w-md">
         <Command>
-          <CommandInput placeholder="Search course..." className="h-10" />
-          <CommandList>
+          <CommandInput
+            placeholder="Search course..."
+            className="h-10"
+            onValueChange={setPhrase}
+            value={phrase}
+          />
+          <ScrollArea>
             <CommandEmpty>No program found.</CommandEmpty>
-            <CommandGroup>
-              {programOptions.map((program) => (
+            <CommandGroup className="max-h-72 overflow-y-auto">
+              {courseOptions.map((course) => (
                 <CommandItem
-                  key={program.label}
-                  value={program.label}
+                  key={course.id}
+                  value={course.name}
                   onSelect={() => {
-                    onChange(program.program);
+                    // onChange(program.program);
                     setOpen(false);
                   }}
-                  className={cn(
-                    value === program.label
-                      ? "bg-primary text-primary-foreground active:bg-primary/90 hover:bg-primary/90 focus:bg-primary/90 data-[selected=true]:bg-primary/90 data-[selected=true]:text-primary-foreground"
-                      : ""
-                  )}
+                  // className={cn(
+                  //   value === program.label
+                  //     ? "bg-primary text-primary-foreground active:bg-primary/90 hover:bg-primary/90 focus:bg-primary/90 data-[selected=true]:bg-primary/90 data-[selected=true]:text-primary-foreground"
+                  //     : ""
+                  // )}
                 >
-                  {program.label}
+                  {course.code} {course.name}
                 </CommandItem>
               ))}
             </CommandGroup>
-          </CommandList>
+          </ScrollArea>
         </Command>
       </PopoverContent>
     </Popover>
