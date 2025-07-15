@@ -23,6 +23,8 @@ import {
   ChevronUpIcon,
   TrashIcon,
 } from "lucide-react";
+import { colorByIndex } from "./utils";
+import { SelectIndexCombobox } from "./select-index-combobox";
 
 export function TimetableHeader({ id }: { id: string }) {
   const timetable = useTimetableStore(
@@ -93,19 +95,21 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
     if (!timetable?.plans) return [];
     return Array.from(timetable.plans.values());
   }, [timetable?.plans]);
-  const coursesReq = trpc.getCoursesByCodes.useQuery(
+  const coursesRes = trpc.getCoursesByCodes.useQuery(
     {
       codes: selectedPlan?.courses ?? [],
     },
     {
       enabled: !!selectedPlan,
+      placeholderData: (prev) => prev,
     }
   );
   const coursesMap = useMemo(() => {
-    if (!coursesReq.data)
+    if (!coursesRes.data) {
       return new Map<string, { code: string; name: string; au: number }>();
+    }
     return new Map(
-      coursesReq.data.map((course) => [
+      coursesRes.data.map((course) => [
         course.code,
         {
           code: course.code,
@@ -114,7 +118,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
         },
       ])
     );
-  }, [coursesReq.data]);
+  }, [coursesRes.data]);
 
   const addCourseToPlan: RequestAddCourse = useCallback(
     (course) => {
@@ -166,7 +170,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
         {selectedPlan ? (
           <>
             {selectedPlan.courses.length > 0 ? (
-              selectedPlan.courses.map((courseCode) => {
+              selectedPlan.courses.map((courseCode, index) => {
                 const course = coursesMap.get(courseCode);
                 const courseIndex = selectedPlan.plan.courses.get(courseCode);
                 return (
@@ -176,14 +180,22 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
                         role="button"
                         tabIndex={0}
                         aria-label={`${courseCode} - ${course?.name ?? ""}`}
-                        className="w-full flex flex-row items-center gap-2 px-4 py-2 hover:bg-neutral-100 focus-visible:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:bg-neutral-800 outline-0 ring-0"
+                        className="w-full flex flex-row items-center gap-2 px-4 py-2 hover:bg-neutral-100 focus-visible:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:bg-neutral-800 outline-0 ring-0 cursor-pointer [&_svg]:pointer-events-none select-none"
                       >
                         <div
                           className="flex-1 grid grid-cols-5 gap-2 w-full"
                           key={courseCode}
                         >
                           <div className="flex-1 flex flex-row gap-2 items-center justify-start col-span-3">
-                            <div className="w-2 h-4 bg-amber-300 rounded-xs block" />
+                            <div
+                              className="w-2 h-4 rounded-xs block"
+                              style={{
+                                backgroundColor: colorByIndex(index, {
+                                  max: selectedPlan.courses.length,
+                                  scheme: "default",
+                                }).backgroundColor,
+                              }}
+                            />
                             <div className="flex flex-row gap-1 flex-1 overflow-hidden text-nowrap text-sm">
                               {courseCode}
                               {!!course ? (
@@ -193,15 +205,26 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
                               ) : null}
                             </div>
                           </div>
-                          <Button
-                            variant="outline"
-                            className="col-span-2 flex flex-row gap-2 px-2 items-center justify-start overflow-ellipsis whitespace-nowrap break-words text-muted-foreground"
-                          >
-                            {courseIndex?.index
-                              ? courseIndex.index
-                              : "Not Selected"}
-                            <ChevronsUpDown />
-                          </Button>
+                          {timetable ? (
+                            <SelectIndexCombobox
+                              courseCode={courseCode}
+                              timetableId={id}
+                              planId={selectedPlan.plan.id}
+                              acadYear={timetable.acadYear}
+                              courseIndex={courseIndex?.index}
+                            />
+                          ) : (
+                            <SelectIndexCombobox
+                              courseCode={courseCode}
+                              timetableId={id}
+                              planId={selectedPlan.plan.id}
+                              acadYear={{
+                                yearCode: "",
+                                semesterCode: "",
+                              }}
+                              disabled
+                            />
+                          )}
                         </div>
                         <div className="text-muted-foreground hidden lg:block">
                           <ChevronDownIcon className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
@@ -211,10 +234,10 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <div className="flex flex-row justify-between w-full pr-4 pl-6">
-                        <div className="w-2 h-4 bg-amber-300 rounded-xs block opacity-0" />
+                        <div className="w-2 h-4 rounded-xs block opacity-0" />
                         {!!course && (
                           <div className="flex flex-col gap-2 py-2 flex-1">
-                            <span className="text-muted-foreground text-sm flex-1">
+                            <span className="text-muted-foreground font-medium text-sm flex-1">
                               {course.name}
                             </span>
 

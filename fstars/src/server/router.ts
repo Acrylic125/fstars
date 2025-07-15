@@ -22,6 +22,52 @@ export const appRouter = createTRPCRouter({
         .where(inArray(coursesTable.code, input.codes));
       return courses;
     }),
+  findCourseIndexes: publicProcedure
+    .input(
+      z.object({
+        phrase: z.string(),
+        courseCode: z.string(),
+        acadYear: AcadYearSchema,
+      })
+    )
+    .query(async ({ input }) => {
+      if (input.phrase === "") {
+        const courseIndexes = await db
+          .select({
+            id: courseIndexTable.id,
+            index: courseIndexTable.index,
+          })
+          .from(courseIndexTable)
+          .innerJoin(
+            coursesTable,
+            eq(coursesTable.id, courseIndexTable.courseId)
+          )
+          .where(
+            and(
+              eq(coursesTable.code, input.courseCode),
+              eq(coursesTable.ay, input.acadYear.yearCode),
+              eq(coursesTable.semester, input.acadYear.semesterCode)
+            )
+          );
+        return courseIndexes;
+      }
+      const courseIndexes = await db
+        .select({
+          id: courseIndexTable.id,
+          index: courseIndexTable.index,
+        })
+        .from(courseIndexTable)
+        .innerJoin(coursesTable, eq(coursesTable.id, courseIndexTable.courseId))
+        .where(
+          and(
+            like(courseIndexTable.index, `%${input.phrase}%`),
+            eq(coursesTable.code, input.courseCode),
+            eq(coursesTable.ay, input.acadYear.yearCode),
+            eq(coursesTable.semester, input.acadYear.semesterCode)
+          )
+        );
+      return courseIndexes;
+    }),
   findCourses: publicProcedure
     .input(
       z.object({
@@ -66,34 +112,6 @@ export const appRouter = createTRPCRouter({
             )
           )
           .limit(10);
-        // const res = await db
-        //   .select({
-        //     courses: coursesTable,
-        //   })
-        //   .from(coursesTable)
-        //   // Check if there is a course index that has the program as it's source.
-        //   .innerJoin(
-        //     courseIndexTable,
-        //     eq(courseIndexTable.courseId, coursesTable.id)
-        //   )
-        //   .innerJoin(
-        //     courseIndexSourcesTable,
-        //     eq(courseIndexSourcesTable.indexId, courseIndexTable.id)
-        //   )
-        //   .innerJoin(
-        //     programsTable,
-        //     eq(programsTable.id, courseIndexSourcesTable.source)
-        //   )
-        //   .where(
-        //     and(
-        //       eq(coursesTable.ay, input.acadYear.yearCode),
-        //       eq(coursesTable.semester, input.acadYear.semesterCode),
-        //       eq(programsTable.code, input.program.code),
-        //       eq(programsTable.subCode, input.program.subCode ?? ""),
-        //       eq(programsTable.year, input.program.year)
-        //     )
-        //   )
-        //   .limit(10);
 
         return res.map((course) => course.courses);
       }

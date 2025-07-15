@@ -26,7 +26,6 @@ export type Timetable = {
   courses: Map<
     string,
     {
-      isEnabled: boolean;
       code: string;
       ignoreIndexes: Set<string>;
     }
