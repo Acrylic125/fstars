@@ -2,17 +2,13 @@
 import { useShallow } from "zustand/react/shallow";
 import { useThemeStore } from "./theme-store";
 import { cn } from "@/lib/utils";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type AppRouter } from "@/server/router";
 import { createTRPCReact, httpBatchLink } from "@trpc/react-query";
 import { makeQueryClient } from "@/server/query-client";
 import { useState } from "react";
+import { getTrpcUrl } from "@/server/utils";
+import { trpc } from "@/server/client";
 
 export function ThemeProvider({
   children,
@@ -37,7 +33,6 @@ export function ThemeProvider({
   );
 }
 
-export const trpc = createTRPCReact<AppRouter>();
 let clientQueryClientSingleton: QueryClient;
 function getQueryClient() {
   if (typeof window === "undefined") {
@@ -46,15 +41,6 @@ function getQueryClient() {
   }
   // Browser: use singleton pattern to keep the same query client
   return (clientQueryClientSingleton ??= makeQueryClient());
-}
-
-function getUrl() {
-  const base = (() => {
-    if (typeof window !== "undefined") return "";
-    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-    return "http://localhost:3000";
-  })();
-  return `${base}/api/trpc`;
 }
 
 export function Providers({
@@ -70,7 +56,7 @@ export function Providers({
       links: [
         httpBatchLink({
           // transformer: superjson, <-- if you use a data transformer
-          url: getUrl(),
+          url: getTrpcUrl(),
         }),
       ],
     })

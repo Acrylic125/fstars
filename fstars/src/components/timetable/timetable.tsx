@@ -94,6 +94,7 @@ export function TimetableCoursesRow({
       };
     })
   );
+
   return (
     <Collapsible className="group/collapsible">
       <CollapsibleTrigger asChild>
@@ -196,16 +197,18 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
         courses: timetable.courses,
         plans: timetable.plans,
         selectedPlanId: timetable.selectedPlanId,
+        selectedPlan: timetable.plans.get(timetable.selectedPlanId),
       };
     })
   );
   const selectedPlan = useMemo(() => {
-    if (!timetableStore?.plans) return null;
-    const plan = timetableStore.plans.get(timetableStore.selectedPlanId);
-    if (!plan) return null;
-    return { plan, courses: Array.from(plan.courses.keys()) };
-  }, [timetableStore?.plans, timetableStore?.selectedPlanId]);
-  const coursesRes = trpc.getCoursesByCodes.useQuery(
+    if (!timetableStore?.selectedPlan) return null;
+    return {
+      plan: timetableStore.selectedPlan,
+      courses: Array.from(timetableStore.selectedPlan.courses.keys()),
+    };
+  }, [timetableStore?.selectedPlan]);
+  const selectedPlanCourses = trpc.getCoursesByCodes.useQuery(
     {
       codes: selectedPlan?.courses ?? [],
     },
@@ -214,12 +217,14 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
       placeholderData: (prev) => prev,
     }
   );
-  const coursesMap = useMemo(() => {
-    if (!coursesRes.data) {
+  const selectedPlanCoursesMap = useMemo(() => {
+    if (!selectedPlanCourses.data) {
       return new Map<string, Course>();
     }
-    return new Map(coursesRes.data.map((course) => [course.code, course]));
-  }, [coursesRes.data]);
+    return new Map(
+      selectedPlanCourses.data.map((course) => [course.code, course])
+    );
+  }, [selectedPlanCourses.data]);
 
   return (
     <div className="w-full border border-border bg-card rounded-lg pt-4 pb-0 flex flex-col">
@@ -256,7 +261,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
           <>
             {selectedPlan.courses.length > 0 ? (
               selectedPlan.courses.map((courseCode, index) => {
-                const course = coursesMap.get(courseCode);
+                const course = selectedPlanCoursesMap.get(courseCode);
                 const courseIndex = selectedPlan.plan.courses.get(courseCode);
                 return (
                   <TimetableCoursesRow

@@ -17,7 +17,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plan, TimetableId, useTimetableStore } from "./timetable-store";
+import {
+  Plan,
+  PlanId,
+  TimetableId,
+  useTimetableStore,
+} from "./timetable-store";
 import { Button } from "../ui/button";
 import { useShallow } from "zustand/react/shallow";
 import { useMemo } from "react";

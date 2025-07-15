@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { ChevronsUpDown, PlusIcon } from "lucide-react";
 import {
   Command,
@@ -20,14 +19,12 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Skeleton } from "../ui/skeleton";
 import { AcadYear, Program } from "@/lib/types";
-import { PlanId, TimetableId } from "./timetable-store";
+import { PlanId, TimetableId, useTimetableStore } from "./timetable-store";
 import { Checkbox } from "../ui/checkbox";
+import { useShallow } from "zustand/react/shallow";
+import { useRef, useState } from "react";
 
 const skeletons = Array.from({ length: 5 }, (_, i) => i);
-
-// export type RequestAddCourse = (
-//   index: inferRouterOutputs<AppRouter>["findCourseIndexes"][number]
-// ) => void;
 
 export function SelectIndexCombobox({
   courseCode,
@@ -44,9 +41,24 @@ export function SelectIndexCombobox({
   disabled?: boolean;
   courseIndex?: string;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const timetableStore = useTimetableStore(
+    useShallow((state) => {
+      const timetable = state.timetables.get(timetableId);
+      if (!timetable) {
+        return null;
+      }
+      const courseOptions = timetable.courses.get(courseCode);
+      const plan = timetable.plans.get(planId);
+      return {
+        courseInfo: courseOptions,
+        plan: plan,
+        toggleIgnoreIndexes: state.toggleIgnoreIndexes,
+      };
+    })
+  );
+  const [open, setOpen] = useState(false);
 
-  const findCoursesRes = trpc.findCourseIndexes.useQuery(
+  const findIndexesRes = trpc.findCourseIndexes.useQuery(
     {
       phrase: "",
       courseCode,
@@ -56,8 +68,13 @@ export function SelectIndexCombobox({
       enabled: !disabled && open,
     }
   );
+  const lastCheckedCheckboxIndexesRef = useRef<{
+    index: string;
+    checked: boolean;
+  } | null>(null);
 
-  const indexOptions = findCoursesRes.data ?? [];
+  const indexOptions = findIndexesRes.data ?? [];
+  console.log(indexOptions.length);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -84,12 +101,12 @@ export function SelectIndexCombobox({
           <CommandInput placeholder="Search index..." className="h-10" />
           <ScrollArea>
             <CommandEmpty>
-              {findCoursesRes.isError ? (
+              {findIndexesRes.isError ? (
                 <div className="px-4">
                   <Alert variant="error" className="flex flex-col gap-1">
                     <AlertTitle>Error</AlertTitle>
                     <AlertDescription>
-                      {findCoursesRes.error.message}
+                      {findIndexesRes.error.message}
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -98,22 +115,35 @@ export function SelectIndexCombobox({
               )}
             </CommandEmpty>
             <CommandGroup className="max-h-72 overflow-y-auto">
-              {findCoursesRes.isLoading &&
+              {findIndexesRes.isLoading &&
                 skeletons.map((i) => (
                   <CommandItem key={i} className="animate-pulse">
                     <Skeleton className="h-6 w-full" />
                   </CommandItem>
                 ))}
               {indexOptions.map((course) => (
-                <CommandItem
-                  key={course.id}
-                  value={course.index}
-                  onSelect={(e) => {
-                    // setOpen(false);
-                    // requestAddCourse?.(course);
-                  }}
-                >
+                <CommandItem key={course.id} value={course.index}>
                   <Checkbox
+                    checked={
+                      !timetableStore?.courseInfo?.ignoreIndexes.has(
+                        course.index
+                      )
+                    }
+                    onCheckedChange={(_checked) => {
+                      const checked = _checked === true;
+                      lastCheckedCheckboxIndexesRef.current = {
+                        index: course.index,
+                        checked,
+                      };
+                      timetableStore?.toggleIgnoreIndexes(
+                        {
+                          timetableId,
+                          courseCode,
+                        },
+                        [course.index],
+                        !checked
+                      );
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                     }}

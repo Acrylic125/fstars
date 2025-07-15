@@ -7,20 +7,63 @@ import {
   coursesTable,
   programsTable,
 } from "@/db/schema";
-import { and, eq, exists, inArray, like, or, sql } from "drizzle-orm";
+import { and, eq, exists, inArray, like, not, or, sql } from "drizzle-orm";
 import { AcadYearSchema, ProgramSchema } from "@/lib/types";
 
 export const appRouter = createTRPCRouter({
   getCoursesByCodes: publicProcedure
     .input(z.object({ codes: z.array(z.string()).max(10) }))
     .query(async ({ input }) => {
-      console.log("getCoursesByCodes", input.codes);
       if (input.codes.length === 0) return [];
       const courses = await db
         .select()
         .from(coursesTable)
         .where(inArray(coursesTable.code, input.codes));
       return courses;
+    }),
+  getProgramExcludedCourseIndexes: publicProcedure
+    .input(
+      z.object({
+        courseCode: z.string(),
+        program: ProgramSchema,
+        acadYear: AcadYearSchema,
+      })
+    )
+    .query(async ({ input }) => {
+      const courseIndexes = await db
+        .select({
+          id: courseIndexTable.id,
+          index: courseIndexTable.index,
+        })
+        .from(courseIndexTable)
+        .innerJoin(coursesTable, eq(coursesTable.id, courseIndexTable.courseId))
+        .where(
+          and(
+            not(
+              exists(
+                db
+                  .select({ id: courseIndexSourcesTable.id })
+                  .from(courseIndexSourcesTable)
+                  .innerJoin(
+                    programsTable,
+                    eq(programsTable.id, courseIndexSourcesTable.source)
+                  )
+                  .where(
+                    and(
+                      eq(courseIndexSourcesTable.indexId, courseIndexTable.id),
+                      eq(programsTable.code, input.program.code),
+                      eq(programsTable.subCode, input.program.subCode ?? ""),
+                      eq(programsTable.year, input.program.year)
+                    )
+                  )
+              )
+            ),
+            eq(coursesTable.code, input.courseCode),
+            eq(coursesTable.ay, input.acadYear.yearCode),
+            eq(coursesTable.semester, input.acadYear.semesterCode)
+          )
+        );
+      return courseIndexes;
     }),
   findCourseIndexes: publicProcedure
     .input(

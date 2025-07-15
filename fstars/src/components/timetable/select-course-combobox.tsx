@@ -23,8 +23,14 @@ import { Skeleton } from "../ui/skeleton";
 import { AcadYear, Program } from "@/lib/types";
 import { inferRouterOutputs } from "@trpc/server";
 import { type AppRouter } from "@/server/router";
-import { PlanId, TimetableId, useTimetableStore } from "./timetable-store";
+import {
+  CourseCode,
+  PlanId,
+  TimetableId,
+  useTimetableStore,
+} from "./timetable-store";
 import { useShallow } from "zustand/react/shallow";
+import { useMutation } from "@tanstack/react-query";
 
 const skeletons = Array.from({ length: 5 }, (_, i) => i);
 
@@ -49,6 +55,8 @@ export function SelectCourseCombobox({
 
   const [phrase, setPhrase] = React.useState("");
   const [debouncedPhrase] = useDebounce(phrase, 300);
+  const utils = trpc.useUtils();
+
   const findCoursesRes = trpc.findCourses.useQuery(
     {
       phrase: debouncedPhrase,
@@ -59,6 +67,7 @@ export function SelectCourseCombobox({
       enabled: !disabled,
     }
   );
+
   const timetableStore = useTimetableStore(
     useShallow((state) => {
       return {
@@ -67,16 +76,25 @@ export function SelectCourseCombobox({
     })
   );
 
-  const addCourseToPlan: RequestAddCourse = React.useCallback(
-    (course) => {
-      if (!timetableStore) return;
-      timetableStore.addCourseToPlan(timetableId, selectedPlanId, {
-        code: course.code,
-        index: "",
+  const addCourseMutation = useMutation({
+    mutationFn: async (courseCode: CourseCode) => {
+      const res = await utils.client.getProgramExcludedCourseIndexes.query({
+        courseCode,
+        program,
+        acadYear,
       });
+      timetableStore.addCourseToPlan(
+        timetableId,
+        selectedPlanId,
+        {
+          code: courseCode,
+          index: "",
+        },
+        res.map((r) => r.index)
+      );
+      return res;
     },
-    [timetableId, selectedPlanId, timetableStore]
-  );
+  });
 
   const courseOptions = findCoursesRes.data ?? [];
 
@@ -124,7 +142,7 @@ export function SelectCourseCombobox({
                   value={course.name}
                   onSelect={() => {
                     setOpen(false);
-                    addCourseToPlan(course);
+                    addCourseMutation.mutate(course.code);
                   }}
                 >
                   {course.code} {course.name}

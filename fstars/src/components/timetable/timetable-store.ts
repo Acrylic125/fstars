@@ -5,13 +5,13 @@ import { AcadYear, Program } from "@/lib/types";
 
 export type TimetableId = string;
 export type PlanId = string;
-export type CourseId = string;
+export type CourseCode = string;
 
 export type Plan = {
   id: PlanId;
   name: string;
   courses: Map<
-    CourseId,
+    CourseCode,
     {
       index: string;
     }
@@ -24,15 +24,24 @@ export type Timetable = {
   program: Program;
   acadYear: AcadYear;
   courses: Map<
-    string,
+    CourseCode,
     {
-      code: string;
+      code: CourseCode;
       ignoreIndexes: Set<string>;
     }
   >;
   plans: Map<PlanId, Plan>;
   selectedGeneratorId: string;
   selectedPlanId: PlanId;
+};
+
+export type TimetableRef = {
+  timetableId: TimetableId;
+};
+
+export type CourseInTimetableRef = {
+  timetableId: TimetableId;
+  courseCode: CourseCode;
 };
 
 type TimetableStore = {
@@ -45,12 +54,18 @@ type TimetableStore = {
     course: {
       code: string;
       index: string;
-    }
+    },
+    defaultIgnoreIndexes: string[]
   ) => void;
   removeCourseFromPlan: (
     timetableId: TimetableId,
     planId: PlanId,
     courseCode: string
+  ) => void;
+  toggleIgnoreIndexes: (
+    ref: CourseInTimetableRef,
+    indexes: string[],
+    ignored: boolean
   ) => void;
 };
 
@@ -93,7 +108,8 @@ export const useTimetableStore = create<TimetableStore>()(
         course: {
           code: string;
           index: string;
-        }
+        },
+        defaultIgnoreIndexes: string[]
       ) => {
         set((state) => {
           const timetable = state.timetables.get(timetableId);
@@ -113,6 +129,10 @@ export const useTimetableStore = create<TimetableStore>()(
           const updatedTimetable = {
             ...timetable,
             plans: new Map(timetable.plans).set(planId, updatedPlan),
+            courses: new Map(timetable.courses).set(course.code, {
+              code: course.code,
+              ignoreIndexes: new Set(defaultIgnoreIndexes),
+            }),
           };
 
           return {
@@ -151,6 +171,52 @@ export const useTimetableStore = create<TimetableStore>()(
           return {
             timetables: new Map(state.timetables).set(
               timetableId,
+              updatedTimetable
+            ),
+          };
+        });
+      },
+      toggleIgnoreIndexes: (
+        ref: CourseInTimetableRef,
+        indexes: string[],
+        ignored: boolean
+      ) => {
+        set((state) => {
+          const timetable = state.timetables.get(ref.timetableId);
+          if (!timetable) return {};
+
+          const course = timetable.courses.get(ref.courseCode);
+          if (!course) return {};
+
+          const ignoreIndexes = new Set(course.ignoreIndexes);
+          console.log("ignoreIndexes", ignoreIndexes);
+          console.log("indexes", indexes);
+          console.log("ignored", ignored);
+          if (ignored) {
+            for (const index of indexes) {
+              ignoreIndexes.add(index);
+            }
+          } else {
+            for (const index of indexes) {
+              ignoreIndexes.delete(index);
+            }
+          }
+
+          const updatedCourse = {
+            ...course,
+            ignoreIndexes,
+          };
+          const updatedTimetable = {
+            ...timetable,
+            courses: new Map(timetable.courses).set(
+              ref.courseCode,
+              updatedCourse
+            ),
+          };
+
+          return {
+            timetables: new Map(state.timetables).set(
+              ref.timetableId,
               updatedTimetable
             ),
           };
