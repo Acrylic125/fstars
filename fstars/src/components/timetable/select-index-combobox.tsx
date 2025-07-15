@@ -23,6 +23,8 @@ import { PlanId, TimetableId, useTimetableStore } from "./timetable-store";
 import { Checkbox } from "../ui/checkbox";
 import { useShallow } from "zustand/react/shallow";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { stopPropagation } from "@/lib/events";
+import { cn } from "@/lib/utils";
 
 const skeletons = Array.from({ length: 5 }, (_, i) => i);
 
@@ -51,6 +53,7 @@ export function SelectIndexCombobox({
         courseInfo: course,
         plan: plan,
         toggleIgnoreIndexes: state.toggleIgnoreIndexes,
+        selectCourseIndex: state.selectCourseIndex,
       };
     })
   );
@@ -99,21 +102,16 @@ export function SelectIndexCombobox({
         <Button
           variant="outline"
           className="col-span-2 flex flex-row gap-2 px-2 items-center justify-start overflow-ellipsis whitespace-nowrap break-words text-muted-foreground"
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
+          onClick={stopPropagation}
         >
-          {courseIndex ? courseIndex : "Not Selected"}
+          <div className="truncate w-full text-left">
+            {courseIndex ? courseIndex : "Not Selected"}
+          </div>
           <ChevronsUpDown />
         </Button>
       </PopoverTrigger>
       {/* https://github.com/shadcn-ui/ui/issues/1690 */}
-      <PopoverContent
-        className="p-0 w-xs"
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
+      <PopoverContent className="p-0 w-xs" onClick={stopPropagation}>
         <Command>
           <CommandInput placeholder="Search index..." className="h-10" />
           <ScrollArea>
@@ -139,13 +137,31 @@ export function SelectIndexCombobox({
                   </CommandItem>
                 ))}
               {indexOptions.map((course, index) => (
-                <CommandItem key={course.id} value={course.index}>
+                <CommandItem
+                  key={course.id}
+                  value={course.index}
+                  className={cn("flex flex-row gap-2", {
+                    "bg-accent text-accent-foreground":
+                      course.index === courseIndex,
+                  })}
+                  onSelect={(e) => {
+                    timetableStore?.selectCourseIndex(
+                      {
+                        timetableId,
+                        planId,
+                        courseCode,
+                      },
+                      course.index
+                    );
+                  }}
+                >
                   <Checkbox
                     checked={
                       !timetableStore?.courseInfo?.ignoreIndexes.has(
                         course.index
                       )
                     }
+                    onClick={stopPropagation}
                     onCheckedChange={(_checked) => {
                       const checked = _checked === true;
                       const lastChecked = lastCheckedCheckboxIndexesRef.current;

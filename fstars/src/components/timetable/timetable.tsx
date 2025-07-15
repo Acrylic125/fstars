@@ -94,7 +94,7 @@ export function TimetableCoursesRow({
   );
 
   return (
-    <Collapsible className="group/collapsible">
+    <Collapsible className="group/collapsible w-full">
       <CollapsibleTrigger asChild>
         <div
           role="button"

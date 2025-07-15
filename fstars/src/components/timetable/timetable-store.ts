@@ -217,13 +217,16 @@ export const useTimetableStore = create<TimetableStore>()(
       },
       selectCourseIndex: (ref: TimetablePlanCourseRef, index: CourseIndex) => {
         set((state) => {
+          console.log("selectCourseIndex", ref, index);
           const timetable = state.timetables.get(ref.timetableId);
           if (!timetable) return {};
           const plan = timetable.plans.get(ref.planId);
           if (!plan) return {};
+          console.log("selectCourseIndex", ref, index);
 
           const course = plan.courses.get(ref.courseCode);
           if (!course) return {};
+          console.log("selectCourseIndex", ref, index);
 
           const updatedCourse = {
             ...course,
