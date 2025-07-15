@@ -141,7 +141,7 @@ export function SelectIndexCombobox({
                   key={course.id}
                   value={course.index}
                   className={cn("flex flex-row gap-2", {
-                    "bg-accent text-accent-foreground":
+                    "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:bg-primary/90 data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground data-[selected=true]:hover:bg-primary/90 data-[selected=true]:focus-visible:bg-primary/90":
                       course.index === courseIndex,
                   })}
                   onSelect={(e) => {
@@ -161,6 +161,9 @@ export function SelectIndexCombobox({
                         course.index
                       )
                     }
+                    className={cn({
+                      "dark:bg-neutral-800": course.index === courseIndex,
+                    })}
                     onClick={stopPropagation}
                     onCheckedChange={(_checked) => {
                       const checked = _checked === true;
