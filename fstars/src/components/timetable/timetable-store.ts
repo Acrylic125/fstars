@@ -6,6 +6,7 @@ import { AcadYear, Program } from "@/lib/types";
 export type TimetableId = string;
 export type PlanId = string;
 export type CourseCode = string;
+export type CourseIndex = string;
 
 export type Plan = {
   id: PlanId;
@@ -13,7 +14,8 @@ export type Plan = {
   courses: Map<
     CourseCode,
     {
-      index: string;
+      index: CourseIndex;
+      ignoreIndexes: Set<string>;
     }
   >;
 };
@@ -23,13 +25,6 @@ export type Timetable = {
   name: string;
   program: Program;
   acadYear: AcadYear;
-  courses: Map<
-    CourseCode,
-    {
-      code: CourseCode;
-      ignoreIndexes: Set<string>;
-    }
-  >;
   plans: Map<PlanId, Plan>;
   selectedGeneratorId: string;
   selectedPlanId: PlanId;
@@ -39,8 +34,14 @@ export type TimetableRef = {
   timetableId: TimetableId;
 };
 
-export type CourseInTimetableRef = {
+export type TimetablePlanRef = {
   timetableId: TimetableId;
+  planId: PlanId;
+};
+
+export type TimetablePlanCourseRef = {
+  timetableId: TimetableId;
+  planId: PlanId;
   courseCode: CourseCode;
 };
 
@@ -49,24 +50,20 @@ type TimetableStore = {
   createTimetable: (timetable: Timetable) => void;
   changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => void;
   addCourseToPlan: (
-    timetableId: TimetableId,
-    planId: PlanId,
+    ref: TimetablePlanRef,
     course: {
       code: string;
-      index: string;
-    },
-    defaultIgnoreIndexes: string[]
+      index: CourseIndex;
+      ignoreIndexes: string[];
+    }
   ) => void;
-  removeCourseFromPlan: (
-    timetableId: TimetableId,
-    planId: PlanId,
-    courseCode: string
-  ) => void;
+  removeCourseFromPlan: (ref: TimetablePlanCourseRef) => void;
   toggleIgnoreIndexes: (
-    ref: CourseInTimetableRef,
+    ref: TimetablePlanCourseRef,
     indexes: string[],
     ignored: boolean
   ) => void;
+  selectCourseIndex: (ref: TimetablePlanCourseRef, index: CourseIndex) => void;
 };
 
 const storage: PersistStorage<TimetableStore> = {
@@ -103,18 +100,17 @@ export const useTimetableStore = create<TimetableStore>()(
         });
       },
       addCourseToPlan: (
-        timetableId: TimetableId,
-        planId: PlanId,
+        ref: TimetablePlanRef,
         course: {
           code: string;
-          index: string;
-        },
-        defaultIgnoreIndexes: string[]
+          index: CourseIndex;
+          ignoreIndexes: string[];
+        }
       ) => {
         set((state) => {
-          const timetable = state.timetables.get(timetableId);
+          const timetable = state.timetables.get(ref.timetableId);
           if (!timetable) return {};
-          const plan = timetable.plans.get(planId);
+          const plan = timetable.plans.get(ref.planId);
           if (!plan) return {};
 
           // Create new plan object with updated courses
@@ -122,41 +118,34 @@ export const useTimetableStore = create<TimetableStore>()(
             ...plan,
             courses: new Map(plan.courses).set(course.code, {
               index: course.index,
+              ignoreIndexes: new Set(course.ignoreIndexes),
             }),
           };
 
           // Create new timetable object with updated plans
           const updatedTimetable = {
             ...timetable,
-            plans: new Map(timetable.plans).set(planId, updatedPlan),
-            courses: new Map(timetable.courses).set(course.code, {
-              code: course.code,
-              ignoreIndexes: new Set(defaultIgnoreIndexes),
-            }),
+            plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
           };
 
           return {
             timetables: new Map(state.timetables).set(
-              timetableId,
+              ref.timetableId,
               updatedTimetable
             ),
           };
         });
       },
-      removeCourseFromPlan: (
-        timetableId: TimetableId,
-        planId: PlanId,
-        courseCode: string
-      ) => {
+      removeCourseFromPlan: (ref: TimetablePlanCourseRef) => {
         set((state) => {
-          const timetable = state.timetables.get(timetableId);
+          const timetable = state.timetables.get(ref.timetableId);
           if (!timetable) return {};
-          const plan = timetable.plans.get(planId);
+          const plan = timetable.plans.get(ref.planId);
           if (!plan) return {};
 
           // Create new plan object with updated courses
           const courses = new Map(plan.courses);
-          courses.delete(courseCode);
+          courses.delete(ref.courseCode);
           const updatedPlan = {
             ...plan,
             courses,
@@ -165,19 +154,19 @@ export const useTimetableStore = create<TimetableStore>()(
           // Create new timetable object with updated plans
           const updatedTimetable = {
             ...timetable,
-            plans: new Map(timetable.plans).set(planId, updatedPlan),
+            plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
           };
 
           return {
             timetables: new Map(state.timetables).set(
-              timetableId,
+              ref.timetableId,
               updatedTimetable
             ),
           };
         });
       },
       toggleIgnoreIndexes: (
-        ref: CourseInTimetableRef,
+        ref: TimetablePlanCourseRef,
         indexes: string[],
         ignored: boolean
       ) => {
@@ -185,7 +174,10 @@ export const useTimetableStore = create<TimetableStore>()(
           const timetable = state.timetables.get(ref.timetableId);
           if (!timetable) return {};
 
-          const course = timetable.courses.get(ref.courseCode);
+          const plan = timetable.plans.get(ref.planId);
+          if (!plan) return {};
+
+          const course = plan.courses.get(ref.courseCode);
           if (!course) return {};
 
           const ignoreIndexes = new Set(course.ignoreIndexes);
@@ -206,14 +198,45 @@ export const useTimetableStore = create<TimetableStore>()(
             ...course,
             ignoreIndexes,
           };
+          const updatedPlan = {
+            ...plan,
+            courses: new Map(plan.courses).set(ref.courseCode, updatedCourse),
+          };
           const updatedTimetable = {
             ...timetable,
-            courses: new Map(timetable.courses).set(
-              ref.courseCode,
-              updatedCourse
-            ),
+            plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
           };
 
+          return {
+            timetables: new Map(state.timetables).set(
+              ref.timetableId,
+              updatedTimetable
+            ),
+          };
+        });
+      },
+      selectCourseIndex: (ref: TimetablePlanCourseRef, index: CourseIndex) => {
+        set((state) => {
+          const timetable = state.timetables.get(ref.timetableId);
+          if (!timetable) return {};
+          const plan = timetable.plans.get(ref.planId);
+          if (!plan) return {};
+
+          const course = plan.courses.get(ref.courseCode);
+          if (!course) return {};
+
+          const updatedCourse = {
+            ...course,
+            index,
+          };
+          const updatedPlan = {
+            ...plan,
+            courses: new Map(plan.courses).set(ref.courseCode, updatedCourse),
+          };
+          const updatedTimetable = {
+            ...timetable,
+            plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
+          };
           return {
             timetables: new Map(state.timetables).set(
               ref.timetableId,

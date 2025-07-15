@@ -77,7 +77,6 @@ export function TimetableCoursesRow({
   courseCode,
   acadYear,
   course,
-  courseIndex,
 }: {
   id: string;
   color: string;
@@ -85,7 +84,6 @@ export function TimetableCoursesRow({
   courseCode: string;
   acadYear: AcadYear;
   course?: Course;
-  courseIndex?: string;
 }) {
   const timetableStore = useTimetableStore(
     useShallow((state) => {
@@ -130,7 +128,6 @@ export function TimetableCoursesRow({
                 timetableId={id}
                 planId={planId}
                 acadYear={acadYear}
-                courseIndex={courseIndex}
               />
             ) : (
               <SelectIndexCombobox
@@ -171,7 +168,11 @@ export function TimetableCoursesRow({
               variant="destructiveOutline"
               size="icon"
               onClick={() => {
-                timetableStore?.removeCourseFromPlan(id, planId, courseCode);
+                timetableStore?.removeCourseFromPlan({
+                  timetableId: id,
+                  planId,
+                  courseCode,
+                });
               }}
             >
               <TrashIcon className="w-4 h-4" />
@@ -194,7 +195,6 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
       return {
         program: timetable.program,
         acadYear: timetable.acadYear,
-        courses: timetable.courses,
         plans: timetable.plans,
         selectedPlanId: timetable.selectedPlanId,
         selectedPlan: timetable.plans.get(timetable.selectedPlanId),
@@ -262,7 +262,6 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
             {selectedPlan.courses.length > 0 ? (
               selectedPlan.courses.map((courseCode, index) => {
                 const course = selectedPlanCoursesMap.get(courseCode);
-                const courseIndex = selectedPlan.plan.courses.get(courseCode);
                 return (
                   <TimetableCoursesRow
                     key={courseCode}
@@ -276,7 +275,6 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
                     planId={selectedPlan.plan.id}
                     courseCode={courseCode}
                     course={course}
-                    courseIndex={courseIndex?.index}
                     acadYear={
                       timetableStore?.acadYear ?? {
                         yearCode: "",

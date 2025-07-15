@@ -84,13 +84,15 @@ export function SelectCourseCombobox({
         acadYear,
       });
       timetableStore.addCourseToPlan(
-        timetableId,
-        selectedPlanId,
+        {
+          timetableId,
+          planId: selectedPlanId,
+        },
         {
           code: courseCode,
           index: "",
-        },
-        res.map((r) => r.index)
+          ignoreIndexes: res.map((r) => r.index),
+        }
       );
       return res;
     },

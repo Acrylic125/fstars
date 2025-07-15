@@ -22,7 +22,7 @@ import { AcadYear, Program } from "@/lib/types";
 import { PlanId, TimetableId, useTimetableStore } from "./timetable-store";
 import { Checkbox } from "../ui/checkbox";
 import { useShallow } from "zustand/react/shallow";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const skeletons = Array.from({ length: 5 }, (_, i) => i);
 
@@ -32,14 +32,12 @@ export function SelectIndexCombobox({
   timetableId,
   planId,
   disabled,
-  courseIndex,
 }: {
   courseCode: string;
   acadYear: AcadYear;
   timetableId: TimetableId;
   planId: PlanId;
   disabled?: boolean;
-  courseIndex?: string;
 }) {
   const timetableStore = useTimetableStore(
     useShallow((state) => {
@@ -47,10 +45,10 @@ export function SelectIndexCombobox({
       if (!timetable) {
         return null;
       }
-      const courseOptions = timetable.courses.get(courseCode);
       const plan = timetable.plans.get(planId);
+      const course = plan?.courses.get(courseCode);
       return {
-        courseInfo: courseOptions,
+        courseInfo: course,
         plan: plan,
         toggleIgnoreIndexes: state.toggleIgnoreIndexes,
       };
@@ -87,6 +85,13 @@ export function SelectIndexCombobox({
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
+  const courseIndex = useMemo(() => {
+    const plan = timetableStore?.plan;
+    if (!plan) return "";
+    const course = plan.courses.get(courseCode);
+    if (!course) return "";
+    return course.index;
+  }, [timetableStore?.plan]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -153,6 +158,7 @@ export function SelectIndexCombobox({
                         timetableStore?.toggleIgnoreIndexes(
                           {
                             timetableId,
+                            planId,
                             courseCode,
                           },
                           indexesToToggle,
@@ -167,6 +173,7 @@ export function SelectIndexCombobox({
                       timetableStore?.toggleIgnoreIndexes(
                         {
                           timetableId,
+                          planId,
                           courseCode,
                         },
                         [course.index],
