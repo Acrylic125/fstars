@@ -22,7 +22,7 @@ import { AcadYear, Program } from "@/lib/types";
 import { PlanId, TimetableId, useTimetableStore } from "./timetable-store";
 import { Checkbox } from "../ui/checkbox";
 import { useShallow } from "zustand/react/shallow";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const skeletons = Array.from({ length: 5 }, (_, i) => i);
 
@@ -57,7 +57,6 @@ export function SelectIndexCombobox({
     })
   );
   const [open, setOpen] = useState(false);
-
   const findIndexesRes = trpc.findCourseIndexes.useQuery(
     {
       phrase: "",
@@ -68,13 +67,26 @@ export function SelectIndexCombobox({
       enabled: !disabled && open,
     }
   );
+  const indexOptions = findIndexesRes.data ?? [];
   const lastCheckedCheckboxIndexesRef = useRef<{
-    index: string;
+    index: number;
     checked: boolean;
   } | null>(null);
-
-  const indexOptions = findIndexesRes.data ?? [];
-  console.log(indexOptions.length);
+  const isShiftDownRef = useRef<boolean>(false);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      isShiftDownRef.current = e.shiftKey;
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      isShiftDownRef.current = false;
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -121,7 +133,7 @@ export function SelectIndexCombobox({
                     <Skeleton className="h-6 w-full" />
                   </CommandItem>
                 ))}
-              {indexOptions.map((course) => (
+              {indexOptions.map((course, index) => (
                 <CommandItem key={course.id} value={course.index}>
                   <Checkbox
                     checked={
@@ -131,8 +143,25 @@ export function SelectIndexCombobox({
                     }
                     onCheckedChange={(_checked) => {
                       const checked = _checked === true;
+                      const lastChecked = lastCheckedCheckboxIndexesRef.current;
+                      if (lastChecked !== null && isShiftDownRef.current) {
+                        const loIndex = Math.min(index, lastChecked.index);
+                        const hiIndex = Math.max(index, lastChecked.index);
+                        const indexesToToggle = indexOptions
+                          .slice(loIndex, hiIndex + 1)
+                          .map((i) => i.index);
+                        timetableStore?.toggleIgnoreIndexes(
+                          {
+                            timetableId,
+                            courseCode,
+                          },
+                          indexesToToggle,
+                          !checked
+                        );
+                        return;
+                      }
                       lastCheckedCheckboxIndexesRef.current = {
-                        index: course.index,
+                        index,
                         checked,
                       };
                       timetableStore?.toggleIgnoreIndexes(
@@ -143,9 +172,6 @@ export function SelectIndexCombobox({
                         [course.index],
                         !checked
                       );
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
                     }}
                   />
                   <div className="flex-1">{course.index}</div>
