@@ -32,7 +32,6 @@ const skeletons = Array.from({ length: 5 }, (_, i) => i);
 export function SelectIndexCombobox({
   courseCode,
   acadYear,
-  // requestAddCourse,
   timetableId,
   planId,
   disabled,
@@ -42,7 +41,6 @@ export function SelectIndexCombobox({
   acadYear: AcadYear;
   timetableId: TimetableId;
   planId: PlanId;
-  // requestAddCourse?: RequestAddCourse;
   disabled?: boolean;
   courseIndex?: string;
 }) {

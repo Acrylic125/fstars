@@ -23,6 +23,8 @@ import { Skeleton } from "../ui/skeleton";
 import { AcadYear, Program } from "@/lib/types";
 import { inferRouterOutputs } from "@trpc/server";
 import { type AppRouter } from "@/server/router";
+import { PlanId, TimetableId, useTimetableStore } from "./timetable-store";
+import { useShallow } from "zustand/react/shallow";
 
 const skeletons = Array.from({ length: 5 }, (_, i) => i);
 
@@ -33,12 +35,14 @@ export type RequestAddCourse = (
 export function SelectCourseCombobox({
   program,
   acadYear,
-  requestAddCourse,
+  timetableId,
+  selectedPlanId,
   disabled,
 }: {
   program: Program;
   acadYear: AcadYear;
-  requestAddCourse?: RequestAddCourse;
+  timetableId: TimetableId;
+  selectedPlanId: PlanId;
   disabled?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -54,6 +58,24 @@ export function SelectCourseCombobox({
     {
       enabled: !disabled,
     }
+  );
+  const timetableStore = useTimetableStore(
+    useShallow((state) => {
+      return {
+        addCourseToPlan: state.addCourseToPlan,
+      };
+    })
+  );
+
+  const addCourseToPlan: RequestAddCourse = React.useCallback(
+    (course) => {
+      if (!timetableStore) return;
+      timetableStore.addCourseToPlan(timetableId, selectedPlanId, {
+        code: course.code,
+        index: "",
+      });
+    },
+    [timetableId, selectedPlanId, timetableStore]
   );
 
   const courseOptions = findCoursesRes.data ?? [];
@@ -102,7 +124,7 @@ export function SelectCourseCombobox({
                   value={course.name}
                   onSelect={() => {
                     setOpen(false);
-                    requestAddCourse?.(course);
+                    addCourseToPlan(course);
                   }}
                 >
                   {course.code} {course.name}
