@@ -212,7 +212,7 @@ export function TimetableView({ id }: { id: string }) {
       expandRows={true}
       events={events}
       eventContent={(arg) => {
-        // Annoying type casting.
+        // TODO: Annoying type casting.
         const event = arg.event.extendedProps as ExtendedProps;
         return (
           <Popover>
