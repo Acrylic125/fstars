@@ -42,47 +42,6 @@ function getEventDate(dayOffset: number, hour: number, minute: number) {
   return date;
 }
 
-const demoEvents = [
-  {
-    title: "Event A",
-    start: getEventDate(2, 10, 0), // Tuesday 10am
-    end: getEventDate(2, 12, 0), // Tuesday 12am (midnight)
-    backgroundColor: "#e2d1fe",
-    borderColor: "#e2d1fe",
-    textColor: "#000",
-    className: "bg-opacity-50",
-    location: "Location A",
-  },
-  {
-    title: "Event B",
-    start: getEventDate(3, 9, 30), // Tuesday 9:30am
-    end: getEventDate(3, 10, 30), // Tuesday 10am
-    backgroundColor: "#d1fee8",
-    borderColor: "#d1fee8",
-    textColor: "#000",
-    location: "Location B",
-  },
-  {
-    title: "Event B",
-    start: getEventDate(2, 9, 30), // Tuesday 9:30am
-    end: getEventDate(2, 11, 30), // Tuesday 11:30am
-    backgroundColor: "#d1fee8",
-    borderColor: "#d1fee8",
-    textColor: "#000",
-    location: "Location B",
-  },
-  {
-    title: "Event C",
-    start: getEventDate(5, 13, 0), // Friday 1pm
-    end: getEventDate(5, 15, 0), // Friday 3pm
-    backgroundColor: "#fefbd1",
-    borderColor: "#fefbd1",
-    textColor: "#000",
-    location: "Location C",
-    className: "fc-error",
-  },
-];
-
 export function TimetableView({ id }: { id: string }) {
   const colorScheme: ColorScheme = "default";
   const timetableStore = useTimetableStore(
@@ -125,7 +84,6 @@ export function TimetableView({ id }: { id: string }) {
   );
 
   const events = useMemo(() => {
-    // console.log(selectedCourseClasses.data);
     if (!timetableStore?.courses) {
       return [];
     }

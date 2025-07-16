@@ -206,9 +206,9 @@ async function doInsertIndexSources(ay: string, semester: string) {
 (async () => {
   const ay = "25/26";
   const sem = "1";
-  // await doProgramsInsert();
-  // await doCoursesInsert(ay, sem);
-  // await doCoursesIndexInsert(ay, sem);
-  // await doIndexClassesInsert(ay, sem);
+  await doProgramsInsert();
+  await doCoursesInsert(ay, sem);
+  await doCoursesIndexInsert(ay, sem);
+  await doIndexClassesInsert(ay, sem);
   await doInsertIndexSources(ay, sem);
 })();
