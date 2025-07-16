@@ -87,7 +87,6 @@ export function CreateTimetable() {
           yearCode: "25/26",
           semesterCode: "1",
         },
-        courses: new Map(),
         plans: new Map([[defaultPlanId, defaultPlan]]),
         selectedGeneratorId: "default",
         selectedPlanId: defaultPlanId,
