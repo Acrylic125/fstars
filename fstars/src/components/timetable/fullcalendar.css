@@ -53,7 +53,7 @@
 }
 
 .fc-event {
-  @apply overflow-hidden;
+  @apply border-[3px] overflow-hidden;
 }
 
 .fc-event-main {

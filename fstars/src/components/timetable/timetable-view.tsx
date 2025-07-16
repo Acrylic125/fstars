@@ -12,6 +12,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  isIntersecting,
+  isIntersectingDate,
+  isWithinRange,
+  Time,
+} from "@/generator/utils";
+import { cn } from "@/lib/utils";
 
 type FCEvent = {
   title: string;
@@ -23,6 +30,7 @@ type FCEvent = {
 };
 
 type ExtendedProps = {
+  day: number;
   code: string;
   name: string;
   index: string;
@@ -31,6 +39,7 @@ type ExtendedProps = {
     venue: string;
     weeks: number[];
   }[];
+  isError: boolean;
 };
 
 function getEventDate(dayOffset: number, hour: number, minute: number) {
@@ -93,6 +102,10 @@ export function TimetableView({ id }: { id: string }) {
     }
 
     const aggregatedEventMap: Map<string, FCEvent & ExtendedProps> = new Map();
+    const eventRefsInDay: string[][] = new Array(7);
+    for (let i = 0; i < 7; i++) {
+      eventRefsInDay[i] = [];
+    }
     for (const c of selectedCourseClasses.data) {
       const groupKey = `${c.course.code}-${c.day}-${c.from.hour}:${c.from.minute}-${c.to.hour}${c.to.minute}`;
       const group = aggregatedEventMap.get(groupKey);
@@ -121,8 +134,15 @@ export function TimetableView({ id }: { id: string }) {
               weeks: c.weeks,
             },
           ],
+          isError: false,
+          day: c.day,
         };
         aggregatedEventMap.set(groupKey, event);
+        // Check if groupKey is already in eventRefsInDay[c.day]
+        // if (!eventRefsInDay[c.day].includes(groupKey)) {
+        //   eventRefsInDay[c.day].push(groupKey);
+        // }
+        eventRefsInDay[c.day].push(groupKey);
         continue;
       }
 
@@ -131,6 +151,55 @@ export function TimetableView({ id }: { id: string }) {
         venue: c.venue,
         weeks: c.weeks,
       });
+    }
+
+    // console.log(eventRefsInDay[0]);
+
+    for (const events of eventRefsInDay) {
+      if (events.length <= 0) {
+        continue;
+      }
+      for (let i = 0; i < events.length; i++) {
+        const eventRef = events[i];
+        for (let j = i + 1; j < events.length; j++) {
+          const otherEventRef = events[j];
+          const event = aggregatedEventMap.get(eventRef);
+          const otherEvent = aggregatedEventMap.get(otherEventRef);
+          if (!event || !otherEvent) {
+            console.error("Event not found", eventRef, otherEventRef);
+            continue;
+          }
+          if (
+            isIntersectingDate(
+              {
+                from: event.start,
+                to: event.end,
+              },
+              {
+                from: otherEvent.start,
+                to: otherEvent.end,
+              }
+            )
+          ) {
+            const weeksInEvent = event.entries.reduce((acc, entry) => {
+              return acc.concat(entry.weeks);
+            }, [] as number[]);
+            const weeksInOtherEvent = otherEvent.entries.reduce(
+              (acc, entry) => {
+                return acc.concat(entry.weeks);
+              },
+              [] as number[]
+            );
+            const hasWeeksInCommon = weeksInEvent.some((week) =>
+              weeksInOtherEvent.includes(week)
+            );
+            if (hasWeeksInCommon) {
+              event.isError = true;
+              otherEvent.isError = true;
+            }
+          }
+        }
+      }
     }
     return Array.from(aggregatedEventMap.values());
   }, [timetableStore?.courses, selectedCourseClasses.data, courseCodes]);
@@ -148,17 +217,36 @@ export function TimetableView({ id }: { id: string }) {
         return (
           <Popover>
             <PopoverTrigger asChild>
-              <div className="w-full h-full px-1">
-                <h3 className="text-sm font-bold text-neutral-950">
+              <div
+                className={cn(
+                  "flex flex-col justify-between w-full h-full px-1.5 py-0.5 rounded-xs",
+                  {
+                    "bg-red-600 dark:bg-red-700 text-white": event.isError,
+                  }
+                )}
+              >
+                <h3
+                  className={cn("text-sm font-bold text-neutral-950", {
+                    "text-white": event.isError,
+                  })}
+                >
                   {arg.event.extendedProps.code ?? "No Code"}
                 </h3>
-                {event.entries.map((entry, i) => {
-                  return (
-                    <div className="text-sm truncate text-neutral-600">
-                      {entry.type} | {entry.venue} | {entry.weeks.join(", ")}
-                    </div>
-                  );
-                })}
+                <div className="flex flex-col flex-1">
+                  {event.entries.map((entry, i) => {
+                    return (
+                      <div
+                        className={cn("text-sm truncate text-neutral-600", {
+                          "text-neutral-300": event.isError,
+                        })}
+                        key={i}
+                      >
+                        {entry.type} | {entry.venue} | {entry.weeks.join(", ")}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="text-xs text-neutral-500">{arg.timeText}</div>
               </div>
             </PopoverTrigger>
             <PopoverContent className="w-80 flex flex-col gap-2">
@@ -179,6 +267,9 @@ export function TimetableView({ id }: { id: string }) {
                     </div>
                   );
                 })}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {arg.timeText}
               </div>
             </PopoverContent>
           </Popover>
