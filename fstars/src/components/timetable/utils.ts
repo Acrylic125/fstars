@@ -1,16 +1,18 @@
+export type ColorScheme =
+  | "default"
+  | "grayscale"
+  | "blue-scale"
+  | "red-scale"
+  | "green-scale"
+  | "blue-red-scale"
+  | "blue-green-scale"
+  | "red-green-scale";
+
 export function colorByIndex(
   index: number,
   config: {
     max: number;
-    scheme:
-      | "default"
-      | "grayscale"
-      | "blue-scale"
-      | "red-scale"
-      | "green-scale"
-      | "blue-red-scale"
-      | "blue-green-scale"
-      | "red-green-scale";
+    scheme: ColorScheme;
   }
 ) {
   switch (config.scheme) {

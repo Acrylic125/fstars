@@ -16,7 +16,7 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
             <div className="w-full min-w-5xl h-full pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4 flex flex-col">
               <TimetableHeader id={id} />
               <div className="min-h-[50rem] max-h-[80rem] h-full">
-                <TimetableView />
+                <TimetableView id={id} />
               </div>
             </div>
           </div>

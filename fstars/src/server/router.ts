@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure, router } from "./trpc";
 import { db } from "@/db";
 import {
+  courseIndexClassesTable,
   courseIndexSourcesTable,
   courseIndexTable,
   coursesTable,
@@ -64,6 +65,63 @@ export const appRouter = createTRPCRouter({
           )
         );
       return courseIndexes;
+    }),
+  getCourseIndexClasses: publicProcedure
+    .input(
+      z.object({
+        courses: z.array(
+          z.object({
+            courseCode: z.string(),
+            index: z.string(),
+          })
+        ),
+        acadYear: AcadYearSchema,
+      })
+    )
+    .query(async ({ input }) => {
+      if (input.courses.length === 0) return [];
+      const courseClasses = await db
+        .select({
+          index: courseIndexTable.index,
+          course: {
+            code: coursesTable.code,
+            name: coursesTable.name,
+          },
+          venue: courseIndexClassesTable.venue,
+          remarks: courseIndexClassesTable.remarks,
+          weeks: courseIndexClassesTable.weeks,
+          type: courseIndexClassesTable.type,
+          day: courseIndexClassesTable.day,
+          from: {
+            hour: courseIndexClassesTable.timeFromHour,
+            minute: courseIndexClassesTable.timeFromMinute,
+          },
+          to: {
+            hour: courseIndexClassesTable.timeToHour,
+            minute: courseIndexClassesTable.timeToMinute,
+          },
+        })
+        .from(courseIndexClassesTable)
+        .innerJoin(
+          courseIndexTable,
+          eq(courseIndexTable.id, courseIndexClassesTable.indexId)
+        )
+        .innerJoin(coursesTable, eq(coursesTable.id, courseIndexTable.courseId))
+        .where(
+          and(
+            or(
+              ...input.courses.map((c) =>
+                and(
+                  eq(coursesTable.code, c.courseCode),
+                  eq(courseIndexTable.index, c.index)
+                )
+              )
+            ),
+            eq(coursesTable.ay, input.acadYear.yearCode),
+            eq(coursesTable.semester, input.acadYear.semesterCode)
+          )
+        );
+      return courseClasses;
     }),
   findCourseIndexes: publicProcedure
     .input(

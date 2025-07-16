@@ -53,7 +53,7 @@
 }
 
 .fc-event {
-  @apply p-1 overflow-hidden;
+  @apply overflow-hidden;
 }
 
 .fc-event-main {

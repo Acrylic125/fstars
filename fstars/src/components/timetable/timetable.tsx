@@ -103,7 +103,7 @@ export function TimetableCoursesRow({
           className="w-full flex flex-row items-center gap-2 px-4 py-2 hover:bg-neutral-100 focus-visible:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:bg-neutral-800 outline-0 ring-0 cursor-pointer [&_svg]:pointer-events-none select-none"
         >
           <div
-            className="flex-1 grid grid-cols-5 gap-2 w-full"
+            className="flex-1 grid grid-cols-5 gap-1 w-full"
             key={courseCode}
           >
             <div className="flex-1 flex flex-row gap-2 items-center justify-start col-span-3">
@@ -116,7 +116,7 @@ export function TimetableCoursesRow({
               <div className="flex flex-row gap-1 flex-1 overflow-hidden text-nowrap text-sm">
                 {courseCode}
                 {!!course ? (
-                  <span className="text-muted-foreground group-data-[state=open]/collapsible:hidden">
+                  <span className="text-muted-foreground group-data-[state=open]/collapsible:hidden truncate">
                     {course.name}
                   </span>
                 ) : null}
