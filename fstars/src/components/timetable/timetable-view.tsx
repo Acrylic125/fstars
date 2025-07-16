@@ -136,9 +136,9 @@ export function TimetableView({ id }: { id: string }) {
 
     const aggregatedEventMap: Map<string, FCEvent & ExtendedProps> = new Map();
     for (const c of selectedCourseClasses.data) {
-      const key = `${c.course.code}-${c.day}-${c.from.hour}:${c.from.minute}-${c.to.hour}${c.to.minute}`;
-      const cur = aggregatedEventMap.get(key);
-      if (!cur) {
+      const groupKey = `${c.course.code}-${c.day}-${c.from.hour}:${c.from.minute}-${c.to.hour}${c.to.minute}`;
+      const group = aggregatedEventMap.get(groupKey);
+      if (!group) {
         const i = courseCodes.findIndex(
           (cc) => cc.courseCode === c.course.code
         );
@@ -164,11 +164,11 @@ export function TimetableView({ id }: { id: string }) {
             },
           ],
         };
-        aggregatedEventMap.set(key, event);
+        aggregatedEventMap.set(groupKey, event);
         continue;
       }
 
-      cur.entries.push({
+      group.entries.push({
         type: c.type,
         venue: c.venue,
         weeks: c.weeks,
@@ -178,80 +178,65 @@ export function TimetableView({ id }: { id: string }) {
   }, [timetableStore?.courses, selectedCourseClasses.data, courseCodes]);
 
   return (
-    <>
-      <FullCalendar
-        plugins={[timeGridPlugin]}
-        initialView="timeGridWeek"
-        headerToolbar={false}
-        expandRows={true}
-        events={events}
-        eventContent={(arg) => {
-          // Annoying type casting.
-          const event = arg.event.extendedProps as ExtendedProps;
-          return (
-            <Popover>
-              <PopoverTrigger asChild>
-                <div className="w-full h-full px-1">
-                  <h3 className="text-sm font-bold text-neutral-950">
-                    {arg.event.extendedProps.code ?? "No Code"}
-                  </h3>
-                  {event.entries.map((entry, i) => {
-                    return (
-                      <div className="text-sm truncate text-neutral-600">
-                        {entry.type} | {entry.venue} | {entry.weeks.join(", ")}
-                      </div>
-                    );
-                  })}
-                </div>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 flex flex-col gap-2">
-                <div
-                  className="w-8 h-2 rounded-sm"
-                  style={{
-                    backgroundColor: arg.event.backgroundColor,
-                  }}
-                />
-                <h3 className="text-sm font-bold break-words">
-                  {event.code} {event.name}
+    <FullCalendar
+      plugins={[timeGridPlugin]}
+      initialView="timeGridWeek"
+      headerToolbar={false}
+      expandRows={true}
+      events={events}
+      eventContent={(arg) => {
+        // Annoying type casting.
+        const event = arg.event.extendedProps as ExtendedProps;
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <div className="w-full h-full px-1">
+                <h3 className="text-sm font-bold text-neutral-950">
+                  {arg.event.extendedProps.code ?? "No Code"}
                 </h3>
-                <div className="text-sm">
-                  {event.entries.map((entry, i) => {
-                    return (
-                      <div className="text-sm text-foreground">
-                        {entry.type} @ {entry.venue}, Wk{" "}
-                        {entry.weeks.join(", ")}
-                      </div>
-                    );
-                  })}
-                </div>
-              </PopoverContent>
-            </Popover>
-          );
-        }}
-        allDaySlot={false}
-        nowIndicator={false}
-        now={undefined}
-        height="100%"
-        // contentHeight="auto"
-        // height="auto"
-        slotMinTime="08:00:00"
-        slotMaxTime="20:00:00"
-        dayHeaderFormat={{ weekday: "short" }}
-        slotLabelFormat={{ hour: "numeric", minute: "2-digit", hour12: false }}
-        // contentHeight="auto"
-      />
-      {/* {eventHint && (
-        <div
-          className="fixed z-10 bg-neutral-100 dark:bg-neutral-800 border-border border p-2 break-words rounded-md shadow-md"
-          style={{
-            top: eventHint.position.top,
-            left: eventHint.position.left,
-            width: eventHint.width,
-          }}
-        >
-          <div className="text-foreground text-sm">{eventHint.title}</div>
-        </div>
-      )} */}
-    </>
+                {event.entries.map((entry, i) => {
+                  return (
+                    <div className="text-sm truncate text-neutral-600">
+                      {entry.type} | {entry.venue} | {entry.weeks.join(", ")}
+                    </div>
+                  );
+                })}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 flex flex-col gap-2">
+              <div
+                className="w-8 h-2 rounded-sm"
+                style={{
+                  backgroundColor: arg.event.backgroundColor,
+                }}
+              />
+              <h3 className="text-sm font-bold break-words">
+                {event.code} {event.name}
+              </h3>
+              <div className="text-sm">
+                {event.entries.map((entry, i) => {
+                  return (
+                    <div className="text-sm text-foreground">
+                      {entry.type} @ {entry.venue}, Wk {entry.weeks.join(", ")}
+                    </div>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+        );
+      }}
+      allDaySlot={false}
+      nowIndicator={false}
+      now={undefined}
+      height="100%"
+      // contentHeight="auto"
+      // height="auto"
+      slotMinTime="08:00:00"
+      slotMaxTime="20:00:00"
+      dayHeaderFormat={{ weekday: "short" }}
+      slotLabelFormat={{ hour: "numeric", minute: "2-digit", hour12: false }}
+      // contentHeight="auto"
+    />
   );
 }
