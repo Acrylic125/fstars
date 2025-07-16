@@ -174,7 +174,7 @@ export function TimetableView({ id }: { id: string }) {
               <div className="text-sm">
                 {event.entries.map((entry, i) => {
                   return (
-                    <div className="text-sm text-foreground">
+                    <div className="text-sm text-foreground" key={i}>
                       {entry.type} @ {entry.venue}, Wk {entry.weeks.join(", ")}
                     </div>
                   );
