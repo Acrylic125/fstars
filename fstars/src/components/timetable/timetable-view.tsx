@@ -19,6 +19,8 @@ import {
   Time,
 } from "@/generator/utils";
 import { cn } from "@/lib/utils";
+import { Badge } from "../ui/badge";
+import { AlertTriangleIcon } from "lucide-react";
 
 type FCEvent = {
   title: string;
@@ -34,6 +36,7 @@ type ExtendedProps = {
   code: string;
   name: string;
   index: string;
+  timeStr: string;
   entries: {
     type: string;
     venue: string;
@@ -121,6 +124,7 @@ export function TimetableView({ id }: { id: string }) {
           title: c.course.code,
           start: getEventDate(c.day + 1, c.from.hour, c.from.minute),
           end: getEventDate(c.day + 1, c.to.hour, c.to.minute),
+          timeStr: `${c.from.hour}:${c.from.minute} - ${c.to.hour}:${c.to.minute}`,
           backgroundColor: color.backgroundColor,
           borderColor: color.backgroundColor,
           textColor: color.color,
@@ -214,6 +218,7 @@ export function TimetableView({ id }: { id: string }) {
       eventContent={(arg) => {
         // TODO: Annoying type casting.
         const event = arg.event.extendedProps as ExtendedProps;
+
         return (
           <Popover>
             <PopoverTrigger asChild>
@@ -246,7 +251,13 @@ export function TimetableView({ id }: { id: string }) {
                     );
                   })}
                 </div>
-                <div className="text-xs text-neutral-500">{arg.timeText}</div>
+                <div
+                  className={cn("text-xs text-neutral-500", {
+                    "text-neutral-300": event.isError,
+                  })}
+                >
+                  {event.timeStr}
+                </div>
               </div>
             </PopoverTrigger>
             <PopoverContent className="w-80 flex flex-col gap-2">
@@ -268,8 +279,22 @@ export function TimetableView({ id }: { id: string }) {
                   );
                 })}
               </div>
-              <div className="text-xs text-muted-foreground">
-                {arg.timeText}
+              <div className="flex flex-row justify-between items-center">
+                <div className="text-xs text-muted-foreground">
+                  {event.timeStr}
+                </div>
+                {event.isError ? (
+                  <div className="flex flex-row items-center gap-2">
+                    <AlertTriangleIcon className="text-destructive size-4" />
+                    <div className="text-xs text-destructive">
+                      {event.index}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground">
+                    {event.index}
+                  </div>
+                )}
               </div>
             </PopoverContent>
           </Popover>
