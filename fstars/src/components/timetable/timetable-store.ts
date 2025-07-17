@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, PersistStorage } from "zustand/middleware";
 import superjson from "superjson";
 import { AcadYear, Program } from "@/lib/types";
+import { nanoid } from "nanoid";
 
 export type TimetableId = string;
 export type PlanId = string;
@@ -48,7 +49,9 @@ export type TimetablePlanCourseRef = {
 type TimetableStore = {
   timetables: Map<TimetableId, Timetable>;
   createTimetable: (timetable: Timetable) => void;
+  // Plan selection.
   changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => void;
+  // Course CRUD.
   addCourseToPlan: (
     ref: TimetablePlanRef,
     course: {
@@ -58,12 +61,18 @@ type TimetableStore = {
     }
   ) => void;
   removeCourseFromPlan: (ref: TimetablePlanCourseRef) => void;
+  // Course index selection.
   toggleIgnoreIndexes: (
     ref: TimetablePlanCourseRef,
     indexes: string[],
     ignored: boolean
   ) => void;
   selectCourseIndex: (ref: TimetablePlanCourseRef, index: CourseIndex) => void;
+  // Plan CRUD.
+  deletePlan: (ref: TimetablePlanRef) => void;
+  changePlanName: (ref: TimetablePlanRef, name: string) => void;
+  createPlanCopy: (ref: TimetablePlanRef) => void;
+  createPlan: (ref: TimetablePlanRef) => void;
 };
 
 const storage: PersistStorage<TimetableStore> = {
@@ -234,6 +243,102 @@ export const useTimetableStore = create<TimetableStore>()(
             ...timetable,
             plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
           };
+          return {
+            timetables: new Map(state.timetables).set(
+              ref.timetableId,
+              updatedTimetable
+            ),
+          };
+        });
+      },
+      deletePlan: (ref: TimetablePlanRef) => {
+        set((state) => {
+          const timetable = state.timetables.get(ref.timetableId);
+          if (!timetable) return {};
+          const plan = timetable.plans.get(ref.planId);
+          if (!plan) return {};
+
+          const newPlans = new Map(timetable.plans);
+          newPlans.delete(ref.planId);
+          const updatedTimetable = {
+            ...timetable,
+            plans: newPlans,
+          };
+
+          return {
+            timetables: new Map(state.timetables).set(
+              ref.timetableId,
+              updatedTimetable
+            ),
+          };
+        });
+      },
+      changePlanName: (ref: TimetablePlanRef, name: string) => {
+        set((state) => {
+          const timetable = state.timetables.get(ref.timetableId);
+          if (!timetable) return {};
+          const plan = timetable.plans.get(ref.planId);
+          if (!plan) return {};
+
+          const updatedPlan = {
+            ...plan,
+            name,
+          };
+
+          const updatedTimetable = {
+            ...timetable,
+            plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
+          };
+
+          return {
+            timetables: new Map(state.timetables).set(
+              ref.timetableId,
+              updatedTimetable
+            ),
+          };
+        });
+      },
+      createPlanCopy: (ref: TimetablePlanRef) => {
+        set((state) => {
+          const timetable = state.timetables.get(ref.timetableId);
+          if (!timetable) return {};
+          const plan = timetable.plans.get(ref.planId);
+          if (!plan) return {};
+
+          // Deep copy plan.
+          const newPlan = superjson.parse(superjson.stringify(plan)) as Plan;
+          newPlan.id = nanoid(16);
+          newPlan.name = `${plan.name} Copy`;
+
+          const updatedTimetable = {
+            ...timetable,
+            plans: new Map(timetable.plans).set(newPlan.id, newPlan),
+          };
+
+          return {
+            timetables: new Map(state.timetables).set(
+              ref.timetableId,
+              updatedTimetable
+            ),
+          };
+        });
+      },
+      createPlan: (ref: TimetablePlanRef) => {
+        set((state) => {
+          const timetable = state.timetables.get(ref.timetableId);
+          if (!timetable) return {};
+
+          const updatedPlan = {
+            id: nanoid(16),
+            name: "New Plan",
+            courses: new Map(),
+          };
+
+          const updatedTimetable = {
+            ...timetable,
+            plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
+          };
+
           return {
             timetables: new Map(state.timetables).set(
               ref.timetableId,

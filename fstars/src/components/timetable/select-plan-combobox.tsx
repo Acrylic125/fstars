@@ -1,7 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown, PlusIcon } from "lucide-react";
+import {
+  ChevronsUpDown,
+  CopyIcon,
+  CopyPlusIcon,
+  EllipsisIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -9,6 +17,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandItemBase,
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
@@ -26,6 +35,14 @@ import {
 import { Button } from "../ui/button";
 import { useShallow } from "zustand/react/shallow";
 import { useMemo } from "react";
+import { stopPropagation } from "@/lib/events";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 export function SelectPlanCombobox({
   timetableId,
@@ -45,6 +62,10 @@ export function SelectPlanCombobox({
         plans: timetable.plans,
         selectedPlanId: timetable.selectedPlanId,
         changeTimetablePlan: state.changeTimetablePlan,
+        deletePlan: state.deletePlan,
+        changePlanName: state.changePlanName,
+        createPlanCopy: state.createPlanCopy,
+        createPlan: state.createPlan,
       };
     })
   );
@@ -75,7 +96,7 @@ export function SelectPlanCombobox({
       </PopoverTrigger>
       {/* https://github.com/shadcn-ui/ui/issues/1690 */}
       <PopoverContent className="p-0 min-w-[var(--radix-popover-trigger-width)] max-w-sm">
-        <Command>
+        <Command defaultValue="-">
           <CommandInput placeholder="Search plan..." className="h-10" />
           <CommandList>
             <CommandEmpty>
@@ -87,21 +108,53 @@ export function SelectPlanCombobox({
             </CommandEmpty>
             <CommandGroup>
               {plansArray.map((plan) => (
-                <CommandItem
+                <CommandItemBase
                   key={plan.id}
                   value={plan.name}
                   onSelect={() => {
                     timetableStore?.changeTimetablePlan(timetableId, plan.id);
-                    setOpen(false);
                   }}
-                  className={cn(
-                    selectedPlan?.plan.id === plan.id
-                      ? "bg-primary text-primary-foreground active:bg-primary/90 hover:bg-primary/90 focus:bg-primary/90 data-[selected=true]:bg-primary/90 data-[selected=true]:text-primary-foreground"
-                      : ""
-                  )}
+                  selected={selectedPlan?.plan.id === plan.id}
+                  className="group flex flex-row justify-between py-0"
                 >
                   {plan.name}
-                </CommandItem>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={stopPropagation}
+                        className="p-2.5 h-fit w-fit hover:group-data-[selected=true]:bg-transparent dark:hover:group-data-[selected=true]:bg-transparent hover:group-data-[selected=true]:text-neutral-400 dark:hover:group-data-[selected=true]:text-neutral-400"
+                      >
+                        <EllipsisIcon className="h-4 w-4 text-current" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          timetableStore?.createPlanCopy({
+                            timetableId,
+                            planId: plan.id,
+                          });
+                        }}
+                      >
+                        <CopyIcon className="h-4 w-4" /> Create Copy
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => {
+                          timetableStore?.deletePlan({
+                            timetableId,
+                            planId: plan.id,
+                          });
+                        }}
+                      >
+                        <TrashIcon className="h-4 w-4" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CommandItemBase>
               ))}
             </CommandGroup>
           </CommandList>
