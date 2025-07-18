@@ -3,7 +3,7 @@ import { TimetableView } from "@/components/timetable/timetable-view";
 import {
   TimetableCoursesPanel,
   TimetableHeader,
-} from "@/components/timetable/timetable";
+} from "@/components/timetable/timetable-course-panel";
 import { TimetableModal } from "@/components/timetable/timetable-modal";
 
 export default async function Home(props: { params: Promise<{ id: string }> }) {
