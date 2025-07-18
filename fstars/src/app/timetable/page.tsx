@@ -1,7 +1,6 @@
 import { MainNavbar } from "@/components/nav/main-navbar";
 import { TimetableList } from "@/components/timetable/timetable-list";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import React from "react";
 
 export default function Home() {
   return (

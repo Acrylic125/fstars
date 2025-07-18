@@ -3,13 +3,9 @@ import { useShallow } from "zustand/react/shallow";
 import { PlanId, useTimetableStore } from "./timetable-store";
 import { asProgramName } from "./select-program-combox";
 import { Skeleton } from "../ui/skeleton";
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { SelectPlanCombobox } from "./select-plan-combobox";
-import {
-  RequestAddCourse,
-  SelectCourseCombobox,
-} from "./select-course-combobox";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { SelectCourseCombobox } from "./select-course-combobox";
 import { trpc } from "@/server/client";
 import { Button } from "../ui/button";
 import {
@@ -17,12 +13,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  ChevronDownIcon,
-  ChevronsUpDown,
-  ChevronUpIcon,
-  TrashIcon,
-} from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, TrashIcon } from "lucide-react";
 import { colorByIndex } from "./utils";
 import { SelectIndexCombobox } from "./select-index-combobox";
 import { type AppRouter } from "@/server/router";

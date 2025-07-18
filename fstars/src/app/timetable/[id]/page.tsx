@@ -4,6 +4,7 @@ import {
   TimetableCoursesPanel,
   TimetableHeader,
 } from "@/components/timetable/timetable";
+import { TimetableModal } from "@/components/timetable/timetable-modal";
 
 export default async function Home(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
@@ -25,6 +26,7 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
           </div>
         </div>
       </div>
+      <TimetableModal />
     </main>
   );
 }

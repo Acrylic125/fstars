@@ -1,11 +1,8 @@
 "use client";
 
-import * as React from "react";
 import {
-  AlertCircleIcon,
   ChevronsUpDown,
   CopyIcon,
-  CopyPlusIcon,
   EllipsisIcon,
   PencilIcon,
   PlusIcon,
@@ -17,7 +14,6 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
   CommandItemBase,
   CommandList,
   CommandSeparator,
@@ -28,15 +24,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Plan,
-  PlanId,
   TimetableId,
   TimetablePlanRef,
   useTimetableStore,
 } from "./timetable-store";
 import { Button } from "../ui/button";
 import { useShallow } from "zustand/react/shallow";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { stopPropagation } from "@/lib/events";
 import {
   DropdownMenu,
@@ -45,116 +39,70 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { useMutation } from "@tanstack/react-query";
+import { timetableModalStore } from "./timetable-modal";
 
-const formSchema = z.object({
-  name: z.string().min(1, "Please enter a plan name"),
-});
-
-export function NewPlanDialogContent({
+export function NewPlanDialogButton({
   timetableId,
 }: {
   timetableId: TimetableId;
 }) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "New Plan",
-    },
-  });
-  const timetableStore = useTimetableStore(
+  const modalStore = timetableModalStore(
     useShallow((state) => {
-      const timetable = state.timetables.get(timetableId);
-      if (!timetable) {
-        return null;
-      }
-
       return {
-        createPlan: state.createPlan,
+        setAction: state.setAction,
       };
     })
   );
 
-  // We will use RQ to do state management despite the action being synchronous.
-  const createPlanMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof formSchema>) => {
-      console.log(data);
-      timetableStore?.createPlan(
-        {
-          timetableId,
-        },
-        data.name
-      );
-    },
-  });
-
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    createPlanMutation.mutate(data);
-  };
-
   return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>New Plan</DialogTitle>
-        <DialogDescription>
-          Create a new plan for this timetable.
-        </DialogDescription>
-      </DialogHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Plan Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter timetable name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <Button
+      variant="ghost"
+      className="w-full flex flex-row items-center justify-start"
+      onClick={(e) => {
+        e.stopPropagation();
+        modalStore.setAction({
+          type: "create-plan",
+          options: {
+            timetableId,
+          },
+        });
+      }}
+    >
+      <PlusIcon className="h-4 w-4" />
+      New Plan
+    </Button>
+  );
+}
 
-          {createPlanMutation.isError && (
-            <Alert variant="error">
-              <AlertCircleIcon />
-              <AlertTitle>Unable to create timetable.</AlertTitle>
-              <AlertDescription>
-                <p>{createPlanMutation.error.message}</p>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="flex flex-row gap-2">
-            <Button type="submit" disabled={createPlanMutation.isPending}>
-              {createPlanMutation.isPending ? "Creating..." : "Create"}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </DialogContent>
+export function RenamePlanDialogButton({
+  planRef,
+  defaultName,
+}: {
+  planRef: TimetablePlanRef;
+  defaultName: string;
+}) {
+  const modalStore = timetableModalStore(
+    useShallow((state) => {
+      return {
+        setAction: state.setAction,
+      };
+    })
+  );
+  return (
+    <DropdownMenuItem
+      onClick={(e) => {
+        e.stopPropagation();
+        modalStore.setAction({
+          type: "rename-plan",
+          options: {
+            planRef,
+            defaultName,
+          },
+        });
+      }}
+    >
+      <PencilIcon className="h-4 w-4" /> Rename
+    </DropdownMenuItem>
   );
 }
 
@@ -163,7 +111,7 @@ export function SelectPlanCombobox({
 }: {
   timetableId: TimetableId;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
   const timetableStore = useTimetableStore(
     useShallow((state) => {
@@ -171,9 +119,6 @@ export function SelectPlanCombobox({
       if (!timetable) {
         return null;
       }
-      console.log(
-        `${timetable.selectedPlanId} ${Array.from(timetable.plans.keys())}`
-      );
       return {
         plans: timetable.plans,
         selectedPlanId: timetable.selectedPlanId,
@@ -246,6 +191,13 @@ export function SelectPlanCombobox({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
+                      <RenamePlanDialogButton
+                        planRef={{
+                          timetableId,
+                          planId: plan.id,
+                        }}
+                        defaultName={plan.name}
+                      />
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
@@ -257,6 +209,7 @@ export function SelectPlanCombobox({
                       >
                         <CopyIcon className="h-4 w-4" /> Create Copy
                       </DropdownMenuItem>
+
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         variant="destructive"
@@ -278,18 +231,7 @@ export function SelectPlanCombobox({
           </CommandList>
           <CommandSeparator />
           <div className="flex flex-row items-center justify-between pb-1">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="w-full flex flex-row items-center justify-start"
-                >
-                  <PlusIcon className="h-4 w-4" />
-                  New Plan
-                </Button>
-              </DialogTrigger>
-              <NewPlanDialogContent timetableId={timetableId} />
-            </Dialog>
+            <NewPlanDialogButton timetableId={timetableId} />
           </div>
         </Command>
       </PopoverContent>

@@ -69,10 +69,10 @@ type TimetableStore = {
   ) => void;
   selectCourseIndex: (ref: TimetablePlanCourseRef, index: CourseIndex) => void;
   // Plan CRUD.
-  deletePlan: (ref: TimetablePlanRef) => void;
+  deletePlan: (ref: TimetablePlanRef, autoSelect?: boolean) => void;
   changePlanName: (ref: TimetablePlanRef, name: string) => void;
-  createPlanCopy: (ref: TimetablePlanRef) => void;
-  createPlan: (ref: TimetableRef, name: string) => void;
+  createPlanCopy: (ref: TimetablePlanRef, autoSelect?: boolean) => void;
+  createPlan: (ref: TimetableRef, name: string, autoSelect?: boolean) => void;
 };
 
 const storage: PersistStorage<TimetableStore> = {
@@ -239,7 +239,7 @@ export const useTimetableStore = create<TimetableStore>()(
           };
         });
       },
-      deletePlan: (ref: TimetablePlanRef) => {
+      deletePlan: (ref: TimetablePlanRef, autoSelect: boolean = true) => {
         set((state) => {
           const timetable = state.timetables.get(ref.timetableId);
           if (!timetable) return {};
@@ -252,6 +252,16 @@ export const useTimetableStore = create<TimetableStore>()(
             ...timetable,
             plans: newPlans,
           };
+
+          if (autoSelect) {
+            const newPlanIds = Array.from(newPlans.keys());
+            if (newPlanIds.length > 0) {
+              updatedTimetable.selectedPlanId =
+                newPlanIds[newPlanIds.length - 1];
+            } else {
+              updatedTimetable.selectedPlanId = "";
+            }
+          }
 
           return {
             timetables: state.timetables.set(ref.timetableId, updatedTimetable),
@@ -292,7 +302,7 @@ export const useTimetableStore = create<TimetableStore>()(
           // };
         });
       },
-      createPlanCopy: (ref: TimetablePlanRef) => {
+      createPlanCopy: (ref: TimetablePlanRef, autoSelect: boolean = true) => {
         set((state) => {
           const timetable = state.timetables.get(ref.timetableId);
           if (!timetable) return {};
@@ -307,6 +317,7 @@ export const useTimetableStore = create<TimetableStore>()(
           const updatedTimetable = {
             ...timetable,
             plans: new Map(timetable.plans).set(newPlan.id, newPlan),
+            selectedPlanId: autoSelect ? newPlan.id : timetable.selectedPlanId,
           };
 
           return {
@@ -314,7 +325,11 @@ export const useTimetableStore = create<TimetableStore>()(
           };
         });
       },
-      createPlan: (ref: TimetableRef, name: string) => {
+      createPlan: (
+        ref: TimetableRef,
+        name: string,
+        autoSelect: boolean = true
+      ) => {
         set((state) => {
           const timetableId = ref.timetableId;
           const timetable = state.timetables.get(timetableId);
@@ -329,6 +344,9 @@ export const useTimetableStore = create<TimetableStore>()(
           const updatedTimetable = {
             ...timetable,
             plans: new Map(timetable.plans).set(updatedPlan.id, updatedPlan),
+            selectedPlanId: autoSelect
+              ? updatedPlan.id
+              : timetable.selectedPlanId,
           };
 
           return {

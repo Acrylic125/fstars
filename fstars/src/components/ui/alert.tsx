@@ -11,6 +11,7 @@ const alertVariants = cva(
         default: "bg-card text-card-foreground",
         info: "bg-sky-300/20 text-sky-500 border border-sky-500",
         error: "bg-red-300/20 text-red-400 border border-red-400",
+        success: "bg-green-300/20 text-green-400 border border-green-400",
         destructive:
           "text-destructive bg-card [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90",
       },

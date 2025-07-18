@@ -1,0 +1,317 @@
+"use client";
+import { create } from "zustand";
+import {
+  TimetableId,
+  TimetablePlanRef,
+  useTimetableStore,
+} from "./timetable-store";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { useShallow } from "zustand/react/shallow";
+import { useCallback, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { Button } from "../ui/button";
+import { AlertCircleIcon, CheckCircleIcon, PlusIcon } from "lucide-react";
+import { nanoid } from "nanoid";
+
+export type TimetableModalAction =
+  | {
+      type: "create-plan";
+      options: {
+        timetableId: TimetableId;
+      };
+    }
+  | {
+      type: "rename-plan";
+      options: {
+        planRef: TimetablePlanRef;
+        defaultName: string;
+      };
+    };
+
+type ExtractOptions<T extends TimetableModalAction["type"]> = Extract<
+  TimetableModalAction,
+  { type: T }
+>["options"];
+
+type TimetableModalStore = {
+  action:
+    | ({
+        key: string;
+      } & TimetableModalAction)
+    | null;
+  setAction: (
+    action: TimetableModalAction | null,
+    refreshKey?: boolean
+  ) => void;
+};
+
+export const timetableModalStore = create<TimetableModalStore>((set, get) => ({
+  action: null,
+  setAction: (action, refreshKey = true) => {
+    if (action === null) {
+      return set({
+        action: null,
+      });
+    }
+    const curKey = get().action?.key;
+    if (refreshKey && curKey) {
+      return set({
+        action: {
+          ...action,
+          key: curKey,
+        },
+      });
+    }
+    return set({
+      action: {
+        ...action,
+        key: nanoid(16),
+      },
+    });
+  },
+}));
+
+const NewPlanFormSchema = z.object({
+  name: z.string().min(1, "Please enter a plan name"),
+});
+
+export function NewPlanDialog({
+  options: { timetableId },
+  isOpen,
+  setIsOpen,
+}: {
+  options: ExtractOptions<"create-plan">;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}) {
+  const form = useForm<z.infer<typeof NewPlanFormSchema>>({
+    resolver: zodResolver(NewPlanFormSchema),
+    defaultValues: {
+      name: "New Plan",
+    },
+  });
+  const timetableStore = useTimetableStore(
+    useShallow((state) => {
+      return {
+        createPlan: state.createPlan,
+      };
+    })
+  );
+
+  // We will use RQ to do state management despite the action being synchronous.
+  const createPlanMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof NewPlanFormSchema>) => {
+      timetableStore?.createPlan(
+        {
+          timetableId,
+        },
+        data.name
+      );
+      setIsOpen(false);
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof NewPlanFormSchema>) => {
+    createPlanMutation.mutate(data);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New Plan</DialogTitle>
+          <DialogDescription>
+            Create a new plan for this timetable.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Plan Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter timetable name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {createPlanMutation.isError && (
+              <Alert variant="error">
+                <AlertCircleIcon />
+                <AlertTitle>Unable to create timetable.</AlertTitle>
+                <AlertDescription>
+                  <p>{createPlanMutation.error.message}</p>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex flex-row gap-2">
+              <Button type="submit" disabled={createPlanMutation.isPending}>
+                {createPlanMutation.isPending ? "Creating..." : "Create"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const RenamePlanFormSchema = z.object({
+  name: z.string().min(1, "Please enter a plan name"),
+});
+
+export function RenamePlanDialog({
+  options: { planRef, defaultName },
+  isOpen,
+  setIsOpen,
+}: {
+  options: ExtractOptions<"rename-plan">;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}) {
+  const form = useForm<z.infer<typeof RenamePlanFormSchema>>({
+    resolver: zodResolver(RenamePlanFormSchema),
+    defaultValues: {
+      name: defaultName,
+    },
+  });
+  const timetableStore = useTimetableStore(
+    useShallow((state) => {
+      return {
+        changePlanName: state.changePlanName,
+      };
+    })
+  );
+
+  // We will use RQ to do state management despite the action being synchronous.
+  const createPlanMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof RenamePlanFormSchema>) => {
+      timetableStore?.changePlanName(planRef, data.name);
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof RenamePlanFormSchema>) => {
+    createPlanMutation.mutate(data);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New Plan</DialogTitle>
+          <DialogDescription>
+            Create a new plan for this timetable.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Plan Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter timetable name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {createPlanMutation.isError && (
+              <Alert variant="error">
+                <AlertCircleIcon />
+                <AlertTitle>Unable to rename plan.</AlertTitle>
+                <AlertDescription>
+                  <p>{createPlanMutation.error.message}</p>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {createPlanMutation.isSuccess && (
+              <Alert variant="success">
+                <CheckCircleIcon />
+                <AlertTitle>Plan renamed.</AlertTitle>
+              </Alert>
+            )}
+
+            <div className="flex flex-row gap-2">
+              <Button type="submit" disabled={createPlanMutation.isPending}>
+                {createPlanMutation.isPending ? "Renaming..." : "Rename"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function TimetableModal() {
+  const modalStore = timetableModalStore(
+    useShallow((state) => {
+      return {
+        action: state.action,
+        setAction: state.setAction,
+      };
+    })
+  );
+  const setOpen = useCallback(
+    (open: boolean) => {
+      modalStore.setAction(null);
+    },
+    [modalStore.setAction]
+  );
+
+  return (
+    <>
+      <NewPlanDialog
+        key={`create-plan-${modalStore.action?.key}`}
+        options={
+          modalStore.action?.type === "create-plan"
+            ? modalStore.action.options
+            : { timetableId: "" }
+        }
+        isOpen={modalStore.action?.type === "create-plan"}
+        setIsOpen={setOpen}
+      />
+      <RenamePlanDialog
+        key={`rename-plan-${modalStore.action?.key}`}
+        options={
+          modalStore.action?.type === "rename-plan"
+            ? modalStore.action.options
+            : { planRef: { timetableId: "", planId: "" }, defaultName: "" }
+        }
+        isOpen={modalStore.action?.type === "rename-plan"}
+        setIsOpen={setOpen}
+      />
+    </>
+  );
+}
