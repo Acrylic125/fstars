@@ -72,7 +72,7 @@ type TimetableStore = {
   deletePlan: (ref: TimetablePlanRef) => void;
   changePlanName: (ref: TimetablePlanRef, name: string) => void;
   createPlanCopy: (ref: TimetablePlanRef) => void;
-  createPlan: (ref: TimetablePlanRef) => void;
+  createPlan: (ref: TimetableRef, name: string) => void;
 };
 
 const storage: PersistStorage<TimetableStore> = {
@@ -138,10 +138,7 @@ export const useTimetableStore = create<TimetableStore>()(
           };
 
           return {
-            timetables: new Map(state.timetables).set(
-              ref.timetableId,
-              updatedTimetable
-            ),
+            timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
       },
@@ -167,10 +164,7 @@ export const useTimetableStore = create<TimetableStore>()(
           };
 
           return {
-            timetables: new Map(state.timetables).set(
-              ref.timetableId,
-              updatedTimetable
-            ),
+            timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
       },
@@ -214,10 +208,7 @@ export const useTimetableStore = create<TimetableStore>()(
           };
 
           return {
-            timetables: new Map(state.timetables).set(
-              ref.timetableId,
-              updatedTimetable
-            ),
+            timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
       },
@@ -244,10 +235,7 @@ export const useTimetableStore = create<TimetableStore>()(
             plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
           };
           return {
-            timetables: new Map(state.timetables).set(
-              ref.timetableId,
-              updatedTimetable
-            ),
+            timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
       },
@@ -266,11 +254,14 @@ export const useTimetableStore = create<TimetableStore>()(
           };
 
           return {
-            timetables: new Map(state.timetables).set(
-              ref.timetableId,
-              updatedTimetable
-            ),
+            timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
+          // return {
+          //   timetables: new Map(state.timetables).set(
+          //     ref.timetableId,
+          //     updatedTimetable
+          //   ),
+          // };
         });
       },
       changePlanName: (ref: TimetablePlanRef, name: string) => {
@@ -291,11 +282,14 @@ export const useTimetableStore = create<TimetableStore>()(
           };
 
           return {
-            timetables: new Map(state.timetables).set(
-              ref.timetableId,
-              updatedTimetable
-            ),
+            timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
+          // return {
+          //   timetables: new Map(state.timetables).set(
+          //     ref.timetableId,
+          //     updatedTimetable
+          //   ),
+          // };
         });
       },
       createPlanCopy: (ref: TimetablePlanRef) => {
@@ -316,34 +310,29 @@ export const useTimetableStore = create<TimetableStore>()(
           };
 
           return {
-            timetables: new Map(state.timetables).set(
-              ref.timetableId,
-              updatedTimetable
-            ),
+            timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
       },
-      createPlan: (ref: TimetablePlanRef) => {
+      createPlan: (ref: TimetableRef, name: string) => {
         set((state) => {
-          const timetable = state.timetables.get(ref.timetableId);
+          const timetableId = ref.timetableId;
+          const timetable = state.timetables.get(timetableId);
           if (!timetable) return {};
 
           const updatedPlan = {
             id: nanoid(16),
-            name: "New Plan",
+            name,
             courses: new Map(),
           };
 
           const updatedTimetable = {
             ...timetable,
-            plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
+            plans: new Map(timetable.plans).set(updatedPlan.id, updatedPlan),
           };
 
           return {
-            timetables: new Map(state.timetables).set(
-              ref.timetableId,
-              updatedTimetable
-            ),
+            timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
       },

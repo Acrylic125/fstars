@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {
+  AlertCircleIcon,
   ChevronsUpDown,
   CopyIcon,
   CopyPlusIcon,
@@ -30,6 +31,7 @@ import {
   Plan,
   PlanId,
   TimetableId,
+  TimetablePlanRef,
   useTimetableStore,
 } from "./timetable-store";
 import { Button } from "../ui/button";
@@ -43,6 +45,118 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { useMutation } from "@tanstack/react-query";
+
+const formSchema = z.object({
+  name: z.string().min(1, "Please enter a plan name"),
+});
+
+export function NewPlanDialogContent({
+  timetableId,
+}: {
+  timetableId: TimetableId;
+}) {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "New Plan",
+    },
+  });
+  const timetableStore = useTimetableStore(
+    useShallow((state) => {
+      const timetable = state.timetables.get(timetableId);
+      if (!timetable) {
+        return null;
+      }
+
+      return {
+        createPlan: state.createPlan,
+      };
+    })
+  );
+
+  // We will use RQ to do state management despite the action being synchronous.
+  const createPlanMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof formSchema>) => {
+      console.log(data);
+      timetableStore?.createPlan(
+        {
+          timetableId,
+        },
+        data.name
+      );
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof formSchema>) => {
+    createPlanMutation.mutate(data);
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>New Plan</DialogTitle>
+        <DialogDescription>
+          Create a new plan for this timetable.
+        </DialogDescription>
+      </DialogHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Plan Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter timetable name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {createPlanMutation.isError && (
+            <Alert variant="error">
+              <AlertCircleIcon />
+              <AlertTitle>Unable to create timetable.</AlertTitle>
+              <AlertDescription>
+                <p>{createPlanMutation.error.message}</p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex flex-row gap-2">
+            <Button type="submit" disabled={createPlanMutation.isPending}>
+              {createPlanMutation.isPending ? "Creating..." : "Create"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </DialogContent>
+  );
+}
 
 export function SelectPlanCombobox({
   timetableId,
@@ -57,7 +171,9 @@ export function SelectPlanCombobox({
       if (!timetable) {
         return null;
       }
-
+      console.log(
+        `${timetable.selectedPlanId} ${Array.from(timetable.plans.keys())}`
+      );
       return {
         plans: timetable.plans,
         selectedPlanId: timetable.selectedPlanId,
@@ -131,7 +247,8 @@ export function SelectPlanCombobox({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       <DropdownMenuItem
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           timetableStore?.createPlanCopy({
                             timetableId,
                             planId: plan.id,
@@ -143,7 +260,8 @@ export function SelectPlanCombobox({
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         variant="destructive"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           timetableStore?.deletePlan({
                             timetableId,
                             planId: plan.id,
@@ -160,13 +278,18 @@ export function SelectPlanCombobox({
           </CommandList>
           <CommandSeparator />
           <div className="flex flex-row items-center justify-between pb-1">
-            <Button
-              variant="ghost"
-              className="w-full flex flex-row items-center justify-start"
-            >
-              <PlusIcon className="h-4 w-4" />
-              New Plan
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full flex flex-row items-center justify-start"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  New Plan
+                </Button>
+              </DialogTrigger>
+              <NewPlanDialogContent timetableId={timetableId} />
+            </Dialog>
           </div>
         </Command>
       </PopoverContent>

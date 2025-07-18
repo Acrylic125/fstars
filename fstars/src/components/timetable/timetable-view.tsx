@@ -142,10 +142,6 @@ export function TimetableView({ id }: { id: string }) {
           day: c.day,
         };
         aggregatedEventMap.set(groupKey, event);
-        // Check if groupKey is already in eventRefsInDay[c.day]
-        // if (!eventRefsInDay[c.day].includes(groupKey)) {
-        //   eventRefsInDay[c.day].push(groupKey);
-        // }
         eventRefsInDay[c.day].push(groupKey);
         continue;
       }
@@ -156,8 +152,6 @@ export function TimetableView({ id }: { id: string }) {
         weeks: c.weeks,
       });
     }
-
-    // console.log(eventRefsInDay[0]);
 
     for (const events of eventRefsInDay) {
       if (events.length <= 0) {
