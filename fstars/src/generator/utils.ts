@@ -58,3 +58,13 @@ export function isWithinRange(
   }
   return val >= range[0]! && val <= range[1]!;
 }
+
+export function isBeforeOrEqual(before: Time, after: Time) {
+  if (before.hour < after.hour) {
+    return true;
+  }
+  if (before.hour === after.hour && before.minute <= after.minute) {
+    return true;
+  }
+  return false;
+}

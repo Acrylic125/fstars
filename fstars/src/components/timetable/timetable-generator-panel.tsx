@@ -30,6 +30,8 @@ import { CommandItemBase } from "../ui/command";
 import { cn } from "@/lib/utils";
 import EvenDistributionIcon from "../icons/even-distribution";
 import SkewedDistributionIcon from "../icons/skewed-distribution";
+import { Alert, AlertTitle } from "../ui/alert";
+import { isBeforeOrEqual } from "@/generator/utils";
 
 const priorityOptions: {
   value: Priority;
@@ -391,32 +393,23 @@ function HHMMTimePickerInput({
   hours,
   minutes,
   onChange,
+  isError,
 }: {
   hours: number;
   minutes: number;
   onChange: (value: { hours: number; minutes: number }) => void;
+  isError?: boolean;
 }) {
-  //   const hoursRef = useRef<HTMLButtonElement>(null);
-  //   const minutesRef = useRef<HTMLButtonElement>(null);
-
-  //   useEffect(() => {
-  //     if (hoursRef.current) {
-  //       hoursRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-  //     }
-  //   }, [hours]);
-  //   useEffect(() => {
-  //     if (minutesRef.current) {
-  //       minutesRef.current.scrollIntoView({
-  //         behavior: "smooth",
-  //         block: "center",
-  //       });
-  //     }
-  //   }, [minutes]);
-
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-16">
+        <Button
+          variant="outline"
+          className={cn("w-16", {
+            "border-destructive text-destructive dark:border-destructive dark:text-destructive":
+              isError,
+          })}
+        >
           {`${hours.toString().padStart(2, "0")} : ${minutes.toString().padStart(2, "0")}`}
         </Button>
       </PopoverTrigger>
@@ -502,6 +495,13 @@ export function StartAfterTimeView({
     [generatorStore, generatorId]
   );
 
+  const isStartAfterBeforeEnd =
+    generatorStore &&
+    isBeforeOrEqual(
+      generatorStore.startAfterAndEndBefore.startAfter,
+      generatorStore.startAfterAndEndBefore.endBefore
+    );
+
   return (
     <Collapsible className="group/collapsible w-full">
       <CollapsibleTrigger asChild>
@@ -539,6 +539,7 @@ export function StartAfterTimeView({
                       },
                     });
                   }}
+                  isError={!isStartAfterBeforeEnd}
                 />
                 <SelectPriority
                   selected={asPriority(
@@ -575,6 +576,7 @@ export function StartAfterTimeView({
                       },
                     });
                   }}
+                  isError={!isStartAfterBeforeEnd}
                 />
                 <SelectPriority
                   selected={asPriority(
@@ -593,6 +595,16 @@ export function StartAfterTimeView({
                 />
               </div>
             </div>
+            {!isStartAfterBeforeEnd && (
+              <Alert variant="error">
+                <AlertTitle>
+                  <p>
+                    <span className="font-bold">Error:</span> Start time is
+                    after end time.
+                  </p>
+                </AlertTitle>
+              </Alert>
+            )}
           </div>
         )}
       </CollapsibleContent>
