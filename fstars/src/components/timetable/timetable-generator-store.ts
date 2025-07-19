@@ -396,13 +396,10 @@ export const useTimetableGeneratorStore = create<TimetableGeneratorStore>()(
         value: TimetableGenerator["factors"][T]
       ) => {
         set((state) => {
-          const newGenerators = new Map(state.generators);
+          const newGenerators = state.generators;
           const generator = newGenerators.get(id);
           if (!generator) return state;
-          newGenerators.set(id, {
-            ...generator,
-            factors: { ...generator.factors, [field]: value },
-          });
+          generator.factors[field] = { ...value };
           return { generators: newGenerators };
         });
       },

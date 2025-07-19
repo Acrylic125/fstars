@@ -195,6 +195,13 @@ export function NewPlanDialog({
             )}
 
             <div className="flex flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                disabled={createPlanMutation.isPending}
+              >
+                Cancel
+              </Button>
               <Button type="submit" disabled={createPlanMutation.isPending}>
                 {createPlanMutation.isPending ? "Creating..." : "Create"}
               </Button>
@@ -287,6 +294,13 @@ export function RenamePlanDialog({
             )}
 
             <div className="flex flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                disabled={createPlanMutation.isPending}
+              >
+                Cancel
+              </Button>
               <Button type="submit" disabled={createPlanMutation.isPending}>
                 {createPlanMutation.isPending ? "Renaming..." : "Rename"}
               </Button>
@@ -426,6 +440,13 @@ export function CreateGeneratorDialog({
             )}
 
             <div className="flex flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                disabled={createPlanMutation.isPending}
+              >
+                Cancel
+              </Button>
               <Button type="submit" disabled={createPlanMutation.isPending}>
                 {createPlanMutation.isPending ? "Creating..." : "Create"}
               </Button>
@@ -517,6 +538,13 @@ export function RenameGeneratorDialog({
 
             <div className="flex flex-row gap-2">
               <Button
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                disabled={renameGeneratorMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
                 type="submit"
                 disabled={renameGeneratorMutation.isPending}
               >
@@ -578,6 +606,13 @@ export function DeleteGeneratorConfirmationDialog({
         )}
 
         <div className="flex flex-row gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setIsOpen(false)}
+            disabled={deleteGeneratorMutation.isPending}
+          >
+            Cancel
+          </Button>
           <Button
             variant="destructive"
             onClick={() => deleteGeneratorMutation.mutate()}
