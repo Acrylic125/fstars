@@ -145,43 +145,50 @@ export const TimetableGeneratorSchema = z.object({
         between3hAnd4h: { priority: asPriorityNumber("Not Preferred") },
         after4h: { priority: asPriorityNumber("Not Preferred") },
       }),
-    startAfterTime: z
+    startAfterAndEndBefore: z
       .object({
-        time: z.object({
-          hour: z.number().min(0).max(23).default(0),
-          minute: z.number().min(0).max(59).default(0),
-        }),
-        priority: z
-          .number()
-          .min(0)
-          .max(3)
-          .default(asPriorityNumber("Preferred")),
+        startAfter: z
+          .object({
+            hour: z.number().min(0).max(23).default(0),
+            minute: z.number().min(0).max(59).default(0),
+            priority: z
+              .number()
+              .min(0)
+              .max(3)
+              .default(asPriorityNumber("Preferred")),
+          })
+          .default({
+            hour: 8,
+            minute: 0,
+            priority: asPriorityNumber("Preferred"),
+          }),
+        endBefore: z
+          .object({
+            hour: z.number().min(0).max(23).default(0),
+            minute: z.number().min(0).max(59).default(0),
+            priority: z
+              .number()
+              .min(0)
+              .max(3)
+              .default(asPriorityNumber("Preferred")),
+          })
+          .default({
+            hour: 17,
+            minute: 0,
+            priority: asPriorityNumber("Preferred"),
+          }),
       })
       .default({
-        time: {
+        startAfter: {
           hour: 8,
           minute: 0,
+          priority: asPriorityNumber("Preferred"),
         },
-        priority: asPriorityNumber("Preferred"),
-      }),
-    endBeforeTime: z
-      .object({
-        time: z.object({
-          hour: z.number().min(0).max(23).default(0),
-          minute: z.number().min(0).max(59).default(0),
-        }),
-        priority: z
-          .number()
-          .min(0)
-          .max(3)
-          .default(asPriorityNumber("Preferred")),
-      })
-      .default({
-        time: {
+        endBefore: {
           hour: 17,
           minute: 0,
+          priority: asPriorityNumber("Preferred"),
         },
-        priority: asPriorityNumber("Preferred"),
       }),
     matchWithPlan: z
       .object({
@@ -306,13 +313,9 @@ function defaultGenerator(
         between3hAnd4h: { priority: nonePriority },
         after4h: { priority: nonePriority },
       },
-      startAfterTime: {
-        time: { hour: 8, minute: 0 },
-        priority: nonePriority,
-      },
-      endBeforeTime: {
-        time: { hour: 17, minute: 0 },
-        priority: nonePriority,
+      startAfterAndEndBefore: {
+        startAfter: { hour: 8, minute: 0, priority: nonePriority },
+        endBefore: { hour: 17, minute: 0, priority: nonePriority },
       },
       matchWithPlan: {
         matchWith: [],
