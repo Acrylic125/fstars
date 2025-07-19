@@ -276,7 +276,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
                 );
               })
             ) : (
-              <div className="w-full flex flex-col min-h-24 gap-2 items-center justify-center text-muted-foreground text-center max-w-48">
+              <div className="text-base w-full flex flex-col min-h-36 gap-2 items-center justify-center text-muted-foreground text-center max-w-48">
                 <p>
                   No courses added. Click{" "}
                   <span className="text-primary">+</span> to add one.
@@ -285,7 +285,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
             )}
           </>
         ) : (
-          <div className="w-full flex flex-col min-h-24 gap-2 items-center justify-center text-muted-foreground text-center max-w-48">
+          <div className="text-base w-full flex flex-col min-h-36 gap-2 items-center justify-center text-muted-foreground text-center max-w-48">
             <p>
               No plan selected. Click{" "}
               <span className="text-primary">Select Plan</span> to select one.

@@ -32,6 +32,13 @@ import { useMutation } from "@tanstack/react-query";
 import { Button } from "../ui/button";
 import { AlertCircleIcon, CheckCircleIcon, PlusIcon } from "lucide-react";
 import { nanoid } from "nanoid";
+import {
+  GeneratorTemplateTypeSchema,
+  TimetableGeneratorId,
+  useTimetableGeneratorStore,
+} from "./timetable-generator-store";
+import { Select, SelectTrigger, SelectValue } from "../ui/select";
+import { cn } from "@/lib/utils";
 
 export type TimetableModalAction =
   | {
@@ -45,6 +52,23 @@ export type TimetableModalAction =
       options: {
         planRef: TimetablePlanRef;
         defaultName: string;
+      };
+    }
+  | {
+      type: "create-generator";
+      options: {};
+    }
+  | {
+      type: "rename-generator";
+      options: {
+        generatorRef: TimetableGeneratorId;
+        defaultName: string;
+      };
+    }
+  | {
+      type: "delete-generator-confirmation";
+      options: {
+        generatorRef: TimetableGeneratorId;
       };
     };
 
@@ -274,6 +298,235 @@ export function RenamePlanDialog({
   );
 }
 
+const CreateGeneratorFormSchema = z.object({
+  name: z.string().min(1, "Please enter a generator name"),
+  templateType: GeneratorTemplateTypeSchema,
+});
+
+export function CreateGeneratorDialog({
+  isOpen,
+  setIsOpen,
+}: {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}) {
+  const form = useForm<z.infer<typeof CreateGeneratorFormSchema>>({
+    resolver: zodResolver(CreateGeneratorFormSchema),
+    defaultValues: {
+      name: "New Generator",
+      templateType: "default",
+    },
+  });
+  const timetableGeneratorStore = useTimetableGeneratorStore(
+    useShallow((state) => {
+      return {
+        createGenerator: state.createGenerator,
+      };
+    })
+  );
+
+  // We will use RQ to do state management despite the action being synchronous.
+  const createPlanMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof CreateGeneratorFormSchema>) => {
+      timetableGeneratorStore?.createGenerator(data.name, data.templateType);
+      setIsOpen(false);
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof CreateGeneratorFormSchema>) => {
+    createPlanMutation.mutate(data);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New Generator</DialogTitle>
+          <DialogDescription>
+            Create a new generator. This is available to all your timetables.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Generator Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter generator name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="templateType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Template</FormLabel>
+                  <FormControl>
+                    <div className="flex flex-row gap-2">
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full",
+                          {
+                            "border-primary dark:border-primary":
+                              field.value === "default",
+                          }
+                        )}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          field.onChange("default");
+                        }}
+                      >
+                        <h3 className="font-medium">Default</h3>
+                        <p className="text-left text-muted-foreground wrap-break-word whitespace-normal">
+                          A basic generator that will try to generate a
+                          timetable that is as balanced as possible.
+                        </p>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full",
+                          {
+                            "border-primary dark:border-primary":
+                              field.value === "empty",
+                          }
+                        )}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          field.onChange("empty");
+                        }}
+                      >
+                        <h3 className="font-medium">Empty</h3>
+                        <p className="text-left text-muted-foreground wrap-break-word whitespace-normal">
+                          An empty generator that will not have any constraints.
+                        </p>
+                      </Button>
+                    </div>
+
+                    {/* <SelectProgramCombobox
+                      value={
+                        field.value !== undefined
+                          ? asProgramName(field.value)
+                          : null
+                      }
+                      onChange={(value) => field.onChange(value || "")}
+                    /> */}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* <FormField
+              control={form.control}
+              name="templateType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Generator Template</FormLabel>
+                  <FormControl>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a template" />
+                      </SelectTrigger>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            /> */}
+
+            {createPlanMutation.isError && (
+              <Alert variant="error">
+                <AlertCircleIcon />
+                <AlertTitle>Unable to create generator.</AlertTitle>
+                <AlertDescription>
+                  <p>{createPlanMutation.error.message}</p>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex flex-row gap-2">
+              <Button type="submit" disabled={createPlanMutation.isPending}>
+                {createPlanMutation.isPending ? "Creating..." : "Create"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function DeleteGeneratorConfirmationDialog({
+  options: { generatorRef },
+  isOpen,
+  setIsOpen,
+}: {
+  options: ExtractOptions<"delete-generator-confirmation">;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}) {
+  const timetableStore = useTimetableGeneratorStore(
+    useShallow((state) => {
+      return {
+        deleteGenerator: state.deleteGenerator,
+      };
+    })
+  );
+
+  // We will use RQ to do state management despite the action being synchronous.
+  const deleteGeneratorMutation = useMutation({
+    mutationFn: async () => {
+      timetableStore?.deleteGenerator(generatorRef);
+      setIsOpen(false);
+    },
+  });
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Generator</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this generator? This generator is
+            used by all your timetables, so deleting it will remove it from all
+            of them.
+          </DialogDescription>
+        </DialogHeader>
+
+        {deleteGeneratorMutation.isError && (
+          <Alert variant="error">
+            <AlertCircleIcon />
+            <AlertTitle>Unable to delete generator.</AlertTitle>
+            <AlertDescription>
+              <p>{deleteGeneratorMutation.error.message}</p>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="flex flex-row gap-2">
+          <Button
+            variant="destructive"
+            onClick={() => deleteGeneratorMutation.mutate()}
+            disabled={
+              deleteGeneratorMutation.isPending ||
+              deleteGeneratorMutation.isSuccess
+            }
+          >
+            {deleteGeneratorMutation.isPending ? "Deleting..." : "Delete"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function TimetableModal() {
   const modalStore = timetableModalStore(
     useShallow((state) => {
@@ -310,6 +563,21 @@ export function TimetableModal() {
             : { planRef: { timetableId: "", planId: "" }, defaultName: "" }
         }
         isOpen={modalStore.action?.type === "rename-plan"}
+        setIsOpen={setOpen}
+      />
+      <CreateGeneratorDialog
+        key={`create-generator-${modalStore.action?.key}`}
+        isOpen={modalStore.action?.type === "create-generator"}
+        setIsOpen={setOpen}
+      />
+      <DeleteGeneratorConfirmationDialog
+        key={`delete-generator-confirmation-${modalStore.action?.key}`}
+        options={
+          modalStore.action?.type === "delete-generator-confirmation"
+            ? modalStore.action.options
+            : { generatorRef: "" }
+        }
+        isOpen={modalStore.action?.type === "delete-generator-confirmation"}
         setIsOpen={setOpen}
       />
     </>

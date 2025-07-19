@@ -40,12 +40,12 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { timetableModalStore } from "./timetable-modal";
+import {
+  TimetableGeneratorId,
+  useTimetableGeneratorStore,
+} from "./timetable-generator-store";
 
-export function NewPlanDialogButton({
-  timetableId,
-}: {
-  timetableId: TimetableId;
-}) {
+export function NewGeneratorDialogButton() {
   const modalStore = timetableModalStore(
     useShallow((state) => {
       return {
@@ -61,24 +61,22 @@ export function NewPlanDialogButton({
       onClick={(e) => {
         e.stopPropagation();
         modalStore.setAction({
-          type: "create-plan",
-          options: {
-            timetableId,
-          },
+          type: "create-generator",
+          options: {},
         });
       }}
     >
       <PlusIcon className="h-4 w-4" />
-      New Plan
+      New Generator
     </Button>
   );
 }
 
-export function RenamePlanDialogButton({
-  planRef,
+export function RenameGeneratorDialogButton({
+  generatorRef,
   defaultName,
 }: {
-  planRef: TimetablePlanRef;
+  generatorRef: TimetableGeneratorId;
   defaultName: string;
 }) {
   const modalStore = timetableModalStore(
@@ -93,9 +91,9 @@ export function RenamePlanDialogButton({
       onClick={(e) => {
         e.stopPropagation();
         modalStore.setAction({
-          type: "rename-plan",
+          type: "rename-generator",
           options: {
-            planRef,
+            generatorRef,
             defaultName,
           },
         });
@@ -106,40 +104,34 @@ export function RenamePlanDialogButton({
   );
 }
 
-export function SelectPlanCombobox({
-  timetableId,
-}: {
-  timetableId: TimetableId;
-}) {
+export function SelectGeneratorCombobox() {
   const [open, setOpen] = useState(false);
 
-  const timetableStore = useTimetableStore(
+  const modalStore = timetableModalStore(
     useShallow((state) => {
-      const timetable = state.timetables.get(timetableId);
-      if (!timetable) {
-        return null;
-      }
       return {
-        plans: timetable.plans,
-        selectedPlanId: timetable.selectedPlanId,
-        changeTimetablePlan: state.changeTimetablePlan,
-        deletePlan: state.deletePlan,
-        changePlanName: state.changePlanName,
-        createPlanCopy: state.createPlanCopy,
-        createPlan: state.createPlan,
+        setAction: state.setAction,
       };
     })
   );
-  const selectedPlan = useMemo(() => {
-    if (!timetableStore?.plans) return null;
-    const plan = timetableStore.plans.get(timetableStore.selectedPlanId);
-    if (!plan) return null;
-    return { plan, courses: Array.from(plan.courses.keys()) };
-  }, [timetableStore?.plans, timetableStore?.selectedPlanId]);
-  const plansArray = useMemo(() => {
-    if (!timetableStore?.plans) return [];
-    return Array.from(timetableStore.plans.values());
-  }, [timetableStore?.plans]);
+
+  const generatorStore = useTimetableGeneratorStore(
+    useShallow((state) => {
+      return {
+        selectedGeneratorId: state.selectedGeneratorId,
+        generators: state.generators,
+        selectedGenerator: state.generators.get(state.selectedGeneratorId),
+        // deleteGenerator: state.deleteGenerator,
+        createGeneratorCopy: state.createGeneratorCopy,
+        changeGeneratorField: state.changeGeneratorField,
+        changeSelectedGeneratorId: state.changeSelectedGeneratorId,
+      };
+    })
+  );
+  const generatorsArray = useMemo(() => {
+    if (!generatorStore?.generators) return [];
+    return Array.from(generatorStore.generators.values());
+  }, [generatorStore?.generators]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -148,37 +140,41 @@ export function SelectPlanCombobox({
           variant="outline"
           className={cn(
             "text-left flex flex-row items-center justify-between flex-1 px-2",
-            selectedPlan ? "" : "text-muted-foreground"
+            generatorStore.generators ? "" : "text-muted-foreground"
           )}
         >
-          {selectedPlan ? selectedPlan.plan.name : "Select Plan"}
+          {generatorStore.selectedGenerator
+            ? generatorStore.selectedGenerator.name
+            : "Select Generator"}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
       {/* https://github.com/shadcn-ui/ui/issues/1690 */}
       <PopoverContent className="p-0 min-w-[var(--radix-popover-trigger-width)] max-w-sm">
         <Command defaultValue="-">
-          <CommandInput placeholder="Search plan..." className="h-10" />
+          <CommandInput placeholder="Search generator..." className="h-10" />
           <CommandList>
             <CommandEmpty>
               <div className="px-4 text-base py-4 text-muted-foreground mx-auto max-w-64">
-                No plan found. Click{" "}
-                <span className="font-semibold text-primary">New Plan</span> to
-                create a new plan.
+                No generator found. Click{" "}
+                <span className="font-semibold text-primary">
+                  New Generator
+                </span>{" "}
+                to create a new generator.
               </div>
             </CommandEmpty>
             <CommandGroup>
-              {plansArray.map((plan) => (
+              {generatorsArray.map((generator) => (
                 <CommandItemBase
-                  key={plan.id}
-                  value={plan.name}
+                  key={generator.id}
+                  value={generator.name}
                   onSelect={() => {
-                    timetableStore?.changeTimetablePlan(timetableId, plan.id);
+                    generatorStore?.changeSelectedGeneratorId(generator.id);
                   }}
-                  selected={selectedPlan?.plan.id === plan.id}
+                  selected={generatorStore.selectedGeneratorId === generator.id}
                   className="group flex flex-row justify-between py-0"
                 >
-                  {plan.name}
+                  {generator.name}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -191,20 +187,14 @@ export function SelectPlanCombobox({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      <RenamePlanDialogButton
-                        planRef={{
-                          timetableId,
-                          planId: plan.id,
-                        }}
-                        defaultName={plan.name}
+                      <RenameGeneratorDialogButton
+                        generatorRef={generator.id}
+                        defaultName={generator.name}
                       />
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
-                          timetableStore?.createPlanCopy({
-                            timetableId,
-                            planId: plan.id,
-                          });
+                          generatorStore?.createGeneratorCopy(generator.id);
                         }}
                       >
                         <CopyIcon className="h-4 w-4" /> Create Copy
@@ -215,9 +205,11 @@ export function SelectPlanCombobox({
                         variant="destructive"
                         onClick={(e) => {
                           e.stopPropagation();
-                          timetableStore?.deletePlan({
-                            timetableId,
-                            planId: plan.id,
+                          modalStore.setAction({
+                            type: "delete-generator-confirmation",
+                            options: {
+                              generatorRef: generator.id,
+                            },
                           });
                         }}
                       >
@@ -231,7 +223,7 @@ export function SelectPlanCombobox({
           </CommandList>
           <CommandSeparator />
           <div className="flex flex-row items-center justify-between pb-1">
-            <NewPlanDialogButton timetableId={timetableId} />
+            <NewGeneratorDialogButton />
           </div>
         </Command>
       </PopoverContent>

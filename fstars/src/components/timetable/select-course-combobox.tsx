@@ -120,7 +120,10 @@ export function SelectCourseCombobox({
             <CommandEmpty>
               {findCoursesRes.isError ? (
                 <div className="px-4">
-                  <Alert variant="error" className="flex flex-col gap-1">
+                  <Alert
+                    variant="error"
+                    className="flex flex-col gap-1 text-base"
+                  >
                     <AlertTitle>Error</AlertTitle>
                     <AlertDescription>
                       {findCoursesRes.error.message}
@@ -128,7 +131,9 @@ export function SelectCourseCombobox({
                   </Alert>
                 </div>
               ) : (
-                "No course found"
+                <div className="px-4 text-base py-4 text-muted-foreground mx-auto max-w-64">
+                  No course found.
+                </div>
               )}
             </CommandEmpty>
             <CommandGroup className="max-h-72 overflow-y-auto">
