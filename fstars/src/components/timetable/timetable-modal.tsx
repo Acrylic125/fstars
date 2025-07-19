@@ -409,37 +409,11 @@ export function CreateGeneratorDialog({
                         </p>
                       </Button>
                     </div>
-
-                    {/* <SelectProgramCombobox
-                      value={
-                        field.value !== undefined
-                          ? asProgramName(field.value)
-                          : null
-                      }
-                      onChange={(value) => field.onChange(value || "")}
-                    /> */}
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {/* <FormField
-              control={form.control}
-              name="templateType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Generator Template</FormLabel>
-                  <FormControl>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a template" />
-                      </SelectTrigger>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
 
             {createPlanMutation.isError && (
               <Alert variant="error">
@@ -454,6 +428,99 @@ export function CreateGeneratorDialog({
             <div className="flex flex-row gap-2">
               <Button type="submit" disabled={createPlanMutation.isPending}>
                 {createPlanMutation.isPending ? "Creating..." : "Create"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const RenameGeneratorFormSchema = z.object({
+  name: z.string().min(1, "Please enter a generator name"),
+});
+
+export function RenameGeneratorDialog({
+  options: { generatorRef, defaultName },
+  isOpen,
+  setIsOpen,
+}: {
+  options: ExtractOptions<"rename-generator">;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}) {
+  const form = useForm<z.infer<typeof RenameGeneratorFormSchema>>({
+    resolver: zodResolver(RenameGeneratorFormSchema),
+    defaultValues: {
+      name: defaultName,
+    },
+  });
+  const timetableGeneratorStore = useTimetableGeneratorStore(
+    useShallow((state) => {
+      return {
+        changeGeneratorName: state.changeGeneratorName,
+      };
+    })
+  );
+
+  // We will use RQ to do state management despite the action being synchronous.
+  const renameGeneratorMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof RenameGeneratorFormSchema>) => {
+      timetableGeneratorStore?.changeGeneratorName(generatorRef, data.name);
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof RenameGeneratorFormSchema>) => {
+    renameGeneratorMutation.mutate(data);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Rename Generator</DialogTitle>
+          <DialogDescription>Rename this generator.</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Generator Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter generator name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {renameGeneratorMutation.isError && (
+              <Alert variant="error">
+                <AlertCircleIcon />
+                <AlertTitle>Unable to rename generator.</AlertTitle>
+                <AlertDescription>
+                  <p>{renameGeneratorMutation.error.message}</p>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {renameGeneratorMutation.isSuccess && (
+              <Alert variant="success">
+                <CheckCircleIcon />
+                <AlertTitle>Generator renamed.</AlertTitle>
+              </Alert>
+            )}
+
+            <div className="flex flex-row gap-2">
+              <Button
+                type="submit"
+                disabled={renameGeneratorMutation.isPending}
+              >
+                {renameGeneratorMutation.isPending ? "Renaming..." : "Rename"}
               </Button>
             </div>
           </form>
@@ -568,6 +635,16 @@ export function TimetableModal() {
       <CreateGeneratorDialog
         key={`create-generator-${modalStore.action?.key}`}
         isOpen={modalStore.action?.type === "create-generator"}
+        setIsOpen={setOpen}
+      />
+      <RenameGeneratorDialog
+        key={`rename-generator-${modalStore.action?.key}`}
+        options={
+          modalStore.action?.type === "rename-generator"
+            ? modalStore.action.options
+            : { generatorRef: "", defaultName: "" }
+        }
+        isOpen={modalStore.action?.type === "rename-generator"}
         setIsOpen={setOpen}
       />
       <DeleteGeneratorConfirmationDialog
