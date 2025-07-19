@@ -166,7 +166,13 @@ export function CreateTimetable() {
           )}
 
           <div className="flex flex-row gap-2">
-            <Button type="submit" disabled={createTimetableMutation.isPending}>
+            <Button
+              type="submit"
+              disabled={
+                createTimetableMutation.isPending ||
+                createTimetableMutation.isSuccess
+              }
+            >
               {createTimetableMutation.isPending ? "Creating..." : "Create"}
             </Button>
           </div>
