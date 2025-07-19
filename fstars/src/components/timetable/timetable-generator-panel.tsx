@@ -28,6 +28,8 @@ import {
 import { Button } from "../ui/button";
 import { CommandItemBase } from "../ui/command";
 import { cn } from "@/lib/utils";
+import EvenDistributionIcon from "../icons/even-distribution";
+import SkewedDistributionIcon from "../icons/skewed-distribution";
 
 const priorityOptions: {
   value: Priority;
@@ -538,7 +540,6 @@ export function StartAfterTimeView({
                     });
                   }}
                 />
-                {/* <Input type="time" className="w-28" /> */}
                 <SelectPriority
                   selected={asPriority(
                     generatorStore.startAfterAndEndBefore.startAfter.priority
@@ -575,7 +576,6 @@ export function StartAfterTimeView({
                     });
                   }}
                 />
-                {/* <Input type="time" className="w-28" value="18:0" /> */}
                 <SelectPriority
                   selected={asPriority(
                     generatorStore.startAfterAndEndBefore.endBefore.priority
@@ -587,6 +587,116 @@ export function StartAfterTimeView({
                         ...generatorStore.startAfterAndEndBefore.endBefore,
                         priority: asPriorityNumber(value),
                       },
+                    });
+                  }}
+                  disablePriorities={["Not Preferred"]}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+export function ClassDistributionView({
+  generatorId,
+}: {
+  generatorId: TimetableGeneratorId;
+}) {
+  const generatorStore = useTimetableGeneratorStore(
+    useShallow((state) => {
+      const generator = state.generators.get(generatorId);
+      if (!generator) return null;
+      return {
+        changeGeneratorField: state.changeGeneratorField,
+        classDistribution: generator.factors.classDistribution,
+      };
+    })
+  );
+  const changeSelection = useCallback(
+    (value: TimetableGenerator["factors"]["classDistribution"]) => {
+      generatorStore?.changeGeneratorField(
+        generatorId,
+        "classDistribution",
+        value
+      );
+    },
+    [generatorStore, generatorId]
+  );
+
+  return (
+    <Collapsible className="group/collapsible w-full">
+      <CollapsibleTrigger asChild>
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Start after and end before"
+          className="h-12 w-full flex flex-row justify-between items-center px-4 hover:bg-neutral-100 focus-visible:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:bg-neutral-800 outline-0 ring-0 cursor-pointer [&_svg]:pointer-events-none select-none"
+        >
+          <p className="text-sm">Class Distribution</p>
+          <div className="text-muted-foreground hidden lg:block">
+            <ChevronDownIcon className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
+            <ChevronUpIcon className="w-4 h-4 group-data-[state=closed]/collapsible:hidden" />
+          </div>
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        {generatorStore?.classDistribution && (
+          <div className="flex flex-col gap-2 px-4 py-2 w-full">
+            <div className="flex flex-row justify-between items-center gap-2 w-full">
+              <div className="flex flex-row gap-2 items-center w-full">
+                <Select
+                  value={generatorStore.classDistribution.distribution}
+                  onValueChange={(value) => {
+                    changeSelection({
+                      ...generatorStore.classDistribution,
+                      distribution: value as "Even" | "Skewed",
+                    });
+                  }}
+                >
+                  <SelectTrigger className="w-full gap-1 flex flex-row">
+                    <div className="w-full flex flex-row gap-2 items-center">
+                      {generatorStore.classDistribution.distribution ===
+                        "Even" && (
+                        <>
+                          <EvenDistributionIcon className="w-full h-full stroke-white" />
+                          <p className="w-24 text-left truncate">Even</p>
+                        </>
+                      )}
+                      {generatorStore.classDistribution.distribution ===
+                        "Skewed" && (
+                        <>
+                          <SkewedDistributionIcon className="w-full h-full stroke-white" />
+                          <p className="w-24 text-left truncate">Skewed</p>
+                        </>
+                      )}
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Even">
+                      <div className="flex flex-row gap-2 items-center">
+                        <EvenDistributionIcon className="w-full h-full stroke-white" />
+                        <p className="w-24 text-left truncate">Even</p>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="Skewed">
+                      <div className="flex flex-row gap-2 items-center">
+                        <SkewedDistributionIcon className="w-full h-full stroke-white" />
+                        <p className="w-24 text-left truncate">Skewed</p>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <SelectPriority
+                  selected={asPriority(
+                    generatorStore.classDistribution.priority
+                  )}
+                  onChange={(value) => {
+                    changeSelection({
+                      ...generatorStore.classDistribution,
+                      priority: asPriorityNumber(value),
                     });
                   }}
                   disablePriorities={["Not Preferred"]}
@@ -629,6 +739,9 @@ export function TimetableGeneratorPanel() {
               generatorId={generatorStore.selectedGeneratorId}
             />
             <StartAfterTimeView
+              generatorId={generatorStore.selectedGeneratorId}
+            />
+            <ClassDistributionView
               generatorId={generatorStore.selectedGeneratorId}
             />
           </>

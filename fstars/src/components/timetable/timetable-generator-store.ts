@@ -190,6 +190,15 @@ export const TimetableGeneratorSchema = z.object({
           priority: asPriorityNumber("Preferred"),
         },
       }),
+    classDistribution: z
+      .object({
+        distribution: z.enum(["Even", "Skewed"]).default("Even"),
+        priority: z.number().min(0).max(3).default(asPriorityNumber("None")),
+      })
+      .default({
+        distribution: "Even",
+        priority: asPriorityNumber("None"),
+      }),
     matchWithPlan: z
       .object({
         matchWith: z.array(
@@ -316,6 +325,10 @@ function defaultGenerator(
       startAfterAndEndBefore: {
         startAfter: { hour: 8, minute: 0, priority: nonePriority },
         endBefore: { hour: 17, minute: 0, priority: nonePriority },
+      },
+      classDistribution: {
+        distribution: "Even",
+        priority: asPriorityNumber("None"),
       },
       matchWithPlan: {
         matchWith: [],
