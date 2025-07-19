@@ -744,6 +744,11 @@ export function TimetableGeneratorPanel() {
             <ClassDistributionView
               generatorId={generatorStore.selectedGeneratorId}
             />
+            <div className="w-full flex flex-row px-4 py-4 border-t border-border">
+              <Button variant="secondary" className="w-full">
+                <p>Generate Timetable</p>
+              </Button>
+            </div>
           </>
         ) : (
           <div className="text-base w-full flex flex-col min-h-36 gap-2 items-center justify-center text-muted-foreground text-center max-w-48">
@@ -754,14 +759,6 @@ export function TimetableGeneratorPanel() {
             </p>
           </div>
         )}
-        {/* <NoClassDaysFactorView />
-        <NoClassDaysFactorView />
-        <NoClassDaysFactorView />
-        <NoClassDaysFactorView />
-        <NoClassDaysFactorView />
-        <NoClassDaysFactorView />
-        <NoClassDaysFactorView />
-        <NoClassDaysFactorView /> */}
       </div>
     </div>
   );
