@@ -1,35 +1,45 @@
 import { create } from "zustand";
 import { persist, PersistStorage } from "zustand/middleware";
 import superjson from "superjson";
-import { AcadYear, Program } from "@/lib/types";
+import { AcadYear, AcadYearSchema, Program, ProgramSchema } from "@/lib/types";
 import { nanoid } from "nanoid";
+import z from "zod";
 
-export type TimetableId = string;
-export type PlanId = string;
-export type CourseCode = string;
-export type CourseIndex = string;
+export const TimetableIdSchema = z.string();
+export const PlanIdSchema = z.string();
+export const CourseCodeSchema = z.string();
+export const CourseIndexSchema = z.string();
 
-export type Plan = {
-  id: PlanId;
-  name: string;
-  courses: Map<
-    CourseCode,
-    {
-      index: CourseIndex;
-      ignoreIndexes: Set<string>;
-    }
-  >;
-};
+export type TimetableId = z.infer<typeof TimetableIdSchema>;
+export type PlanId = z.infer<typeof PlanIdSchema>;
+export type CourseCode = z.infer<typeof CourseCodeSchema>;
+export type CourseIndex = z.infer<typeof CourseIndexSchema>;
 
-export type Timetable = {
-  id: TimetableId;
-  name: string;
-  program: Program;
-  acadYear: AcadYear;
-  plans: Map<PlanId, Plan>;
-  selectedGeneratorId: string;
-  selectedPlanId: PlanId;
-};
+export const PlanSchema = z.object({
+  id: PlanIdSchema,
+  name: z.string(),
+  courses: z.map(
+    CourseCodeSchema,
+    z.object({
+      index: CourseIndexSchema,
+      ignoreIndexes: z.set(CourseIndexSchema),
+    })
+  ),
+});
+
+export type Plan = z.infer<typeof PlanSchema>;
+
+export const TimetableSchema = z.object({
+  id: TimetableIdSchema,
+  name: z.string(),
+  program: ProgramSchema,
+  acadYear: AcadYearSchema,
+  plans: z.map(PlanIdSchema, PlanSchema).default(new Map()),
+  selectedGeneratorId: z.string().default(""),
+  selectedPlanId: PlanIdSchema.default(""),
+});
+
+export type Timetable = z.infer<typeof TimetableSchema>;
 
 export type TimetableRef = {
   timetableId: TimetableId;
@@ -46,8 +56,13 @@ export type TimetablePlanCourseRef = {
   courseCode: CourseCode;
 };
 
+const TimetableStoreStateSchema = z.object({
+  timetables: z.map(TimetableIdSchema, TimetableSchema),
+});
+
+type TimetableStoreState = z.infer<typeof TimetableStoreStateSchema>;
+
 type TimetableStore = {
-  timetables: Map<TimetableId, Timetable>;
   createTimetable: (timetable: Timetable) => void;
   // Plan selection.
   changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => void;
@@ -73,13 +88,24 @@ type TimetableStore = {
   changePlanName: (ref: TimetablePlanRef, name: string) => void;
   createPlanCopy: (ref: TimetablePlanRef, autoSelect?: boolean) => void;
   createPlan: (ref: TimetableRef, name: string, autoSelect?: boolean) => void;
-};
+} & TimetableStoreState;
+
+const RawSchema = z.object({
+  version: z.number(),
+  state: TimetableStoreStateSchema,
+});
 
 const storage: PersistStorage<TimetableStore> = {
   getItem: (name) => {
     const str = localStorage.getItem(name);
     if (!str) return null;
-    return superjson.parse(str) as { state: TimetableStore };
+    const raw = superjson.parse(str);
+    const res = RawSchema.safeParse(raw);
+    if (!res.success) {
+      console.error(res.error);
+      return null;
+    }
+    return { state: res.data.state } as { state: TimetableStore };
   },
   setItem: (name, value) => {
     localStorage.setItem(name, superjson.stringify(value));
