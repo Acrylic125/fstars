@@ -1,9 +1,6 @@
 "use client";
 import { useShallow } from "zustand/react/shallow";
 import {
-  asPriority,
-  asPriorityNumber,
-  Priority,
   TimetableGenerator,
   TimetableGeneratorId,
   useTimetableGeneratorStore,
@@ -19,14 +16,12 @@ import { useCallback, useEffect, useRef } from "react";
 import { Collapsible, CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { CollapsibleContent } from "../ui/collapsible";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import { Input } from "../ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "../ui/button";
-import { CommandItemBase } from "../ui/command";
 import { cn } from "@/lib/utils";
 import EvenDistributionIcon from "../icons/even-distribution";
 import SkewedDistributionIcon from "../icons/skewed-distribution";
@@ -37,8 +32,9 @@ import { useMutation } from "@tanstack/react-query";
 import { TimetableId, useTimetableStore } from "./timetable-store";
 import {
   GeneratedTimetable,
-  GeneticGenerator,
+  GeneratedTimetableWithScore,
 } from "@/generator/genetic-generator";
+import { asPriority, asPriorityNumber, Priority } from "./utils";
 
 const priorityOptions: {
   value: Priority;
@@ -743,21 +739,6 @@ function GenerateTimetableSection({
       };
     })
   );
-  const workerRef = useRef<Worker | null>(null);
-
-  useEffect(() => {
-    workerRef.current = new Worker(
-      new URL("./generate-timetable-worker.ts", import.meta.url)
-    );
-    workerRef.current.onmessage = (
-      event: MessageEvent<GeneratedTimetable[]>
-    ) => {
-      console.log(`WebWorker Response => ${event.data}`);
-    };
-    return () => {
-      workerRef.current?.terminate();
-    };
-  }, []);
 
   const timetableStore = useTimetableStore(
     useShallow((state) => {
@@ -774,111 +755,51 @@ function GenerateTimetableSection({
 
   const trpcUtils = trpc.useUtils();
 
-  const test = useCallback(async () => {
-    if (!timetableStore) return;
-    const plan = timetableStore.selectedPlan;
-    if (!plan) return;
-    if (!timetableGeneratorStore.factors) return;
-    if (!workerRef.current) return;
-
-    const courseCodes = Array.from(plan.courses.keys());
-    const response = await trpcUtils.client.getCourseClasses.query({
-      courseCodes,
-      acadYear: timetableStore.acadYear,
-    });
-    workerRef.current.postMessage({
-      factors: timetableGeneratorStore.factors,
-      courses: response,
-    });
-  }, []);
-
   const generateTimetableRes = useMutation({
     mutationFn: async () => {
       if (!timetableStore) return;
       const plan = timetableStore.selectedPlan;
       if (!plan) return;
       if (!timetableGeneratorStore.factors) return;
-      if (!workerRef.current) return;
 
       const courseCodes = Array.from(plan.courses.keys());
       const response = await trpcUtils.client.getCourseClasses.query({
         courseCodes,
         acadYear: timetableStore.acadYear,
       });
-      workerRef.current.postMessage({
-        factors: timetableGeneratorStore.factors,
-        courses: response,
+
+      const result = await new Promise((resolve, reject) => {
+        try {
+          const worker = new Worker(
+            new URL("./generate-timetable-worker.ts", import.meta.url)
+          );
+          worker.onmessage = (
+            event: MessageEvent<GeneratedTimetableWithScore[]>
+          ) => {
+            resolve(event.data);
+          };
+          worker.onerror = (event: ErrorEvent) => {
+            reject(event.error);
+          };
+          worker.postMessage({
+            factors: timetableGeneratorStore.factors,
+            courses: response,
+          });
+        } catch (error) {
+          reject(error);
+        }
       });
-
-      //   const result = await new Promise((resolve, reject) => {
-      //     try {
-      //       const worker = workerRef.current;
-      //       if (!worker) return;
-      //       //   const worker = new Worker(
-      //       //     new URL("./generate-timetable-worker.ts", import.meta.url)
-      //       //   );
-      //       worker.onmessage = (event: MessageEvent<GeneratedTimetable[]>) => {
-      //         console.log(`WebWorker Response => ${event.data}`);
-      //         resolve(event.data);
-      //       };
-      //       worker.onerror = (event: ErrorEvent) => {
-      //         reject(event.error);
-      //       };
-      //       console.log("Sending message to worker");
-      //       worker.postMessage({
-      //         factors: timetableGeneratorStore.factors,
-      //         courses: response,
-      //       });
-      //     } catch (error) {
-      //       reject(error);
-      //     }
-      //   });
-      //   return result;
-
-      //   const generator = new GeneticGenerator(
-      //     new Map(
-      //       Object.entries(response).map(([courseCode, course]) => [
-      //         courseCode,
-      //         course,
-      //       ])
-      //     ),
-      //     timetableGeneratorStore.factors,
-      //     {
-      //       minsConstituteAsConsecutive: 10,
-      //       isSkewedThresholdSD: 3,
-      //     }
-      //   );
-
-      //   const score = generator.evaluateTimetable({
-      //     courseIndexSelection: {
-      //       SC2001: "10144",
-      //       SC2005: "10176",
-      //       SC2006: "10196",
-      //       SC2008: "10219",
-      //       SC2203: "10260",
-      //       CC0007: "83013",
-      //     },
-      //   });
-      //   console.log(score);
-
-      //   workerRef.current.postMessage({
-      //     factors: timetableGeneratorStore.factors,
-      //     courses: response,
-      //   });
+      console.log(result);
+      return result;
     },
   });
 
-  //   const handleWork = useCallback(async () => {
-  //     console.log("Generating timetable...");
-  //     workerRef.current?.postMessage(10000000000);
-  //   }, []);
   return (
     <div className="w-full flex flex-col gap-4 px-4 pt-4 pb-2 border-t border-border">
       <Button
         variant="secondary"
         className="w-full"
-        // onClick={() => generateTimetableRes.mutate()}
-        onClick={test}
+        onClick={() => generateTimetableRes.mutate()}
         disabled={generateTimetableRes.isPending}
       >
         <p>Generate Timetable</p>

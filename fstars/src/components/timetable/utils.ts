@@ -68,3 +68,36 @@ export function colorByIndex(
       };
   }
 }
+
+export function asPriority(index: number | undefined) {
+  if (index === undefined) return "None" as const;
+  switch (index) {
+    case 0:
+      return "None" as const;
+    case 1:
+      return "Not Preferred" as const;
+    case 2:
+      return "Preferred" as const;
+    case 3:
+      return "Important" as const;
+    default:
+      return "None" as const;
+  }
+}
+
+export type Priority = ReturnType<typeof asPriority>;
+
+export function asPriorityNumber(priority: Priority) {
+  switch (priority) {
+    case "None":
+      return 0 as const;
+    case "Not Preferred":
+      return 1 as const;
+    case "Preferred":
+      return 2 as const;
+    case "Important":
+      return 3 as const;
+    default:
+      return 0 as const;
+  }
+}

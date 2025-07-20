@@ -5,25 +5,21 @@ import {
   toMinutes,
   toMinutesFromTimeAsArray,
 } from "./utils";
-import {
+import type {
   CourseCode,
   CourseIndex,
 } from "@/components/timetable/timetable-store";
-import {
-  asPriorityNumber,
-  TimetableGenerator,
-} from "@/components/timetable/timetable-generator-store";
 import { Config } from "@/lib/config";
-
-// export function generateTimetable(
-//   courses: Course[],
-//   options: {
-//     numberOfTimetables: number;
-//   }
-// ) {}
+import { type TimetableGenerator } from "@/components/timetable/timetable-generator-store";
+import { asPriorityNumber } from "@/components/timetable/utils";
 
 export type GeneratedTimetable = {
   courseIndexSelection: Record<CourseCode, CourseIndex>;
+};
+
+export type GeneratedTimetableWithScore = {
+  timetable: GeneratedTimetable;
+  score: number;
 };
 
 type IndexClassWithCourseAndIndex = IndexClass & {
@@ -416,7 +412,7 @@ export class GeneticGenerator {
 
     // Remove duplicates.
     const alreadyIncluded = new Set<string>();
-    const top: { timetable: GeneratedTimetable; score: number }[] = [];
+    const top: GeneratedTimetableWithScore[] = [];
     for (const timetable of timetablesWithScores) {
       const serialized = this.serializeTimetable(timetable.timetable);
       if (!alreadyIncluded.has(serialized)) {
