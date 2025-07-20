@@ -61,10 +61,10 @@ export const TimetableGeneratorSchema = z.object({
         }),
       })
       .default({
-        before1h: { priority: asPriorityNumber("Important") },
-        between1hAnd2h: { priority: asPriorityNumber("Preferred") },
-        between2hAnd3h: { priority: asPriorityNumber("Not Preferred") },
-        between3hAnd4h: { priority: asPriorityNumber("Not Preferred") },
+        before1h: { priority: asPriorityNumber("Not Preferred") },
+        between1hAnd2h: { priority: asPriorityNumber("Not Preferred") },
+        between2hAnd3h: { priority: asPriorityNumber("Preferred") },
+        between3hAnd4h: { priority: asPriorityNumber("Preferred") },
         after4h: { priority: asPriorityNumber("Not Preferred") },
       }),
     gapsBetweenClasses: z

@@ -789,7 +789,6 @@ function GenerateTimetableSection({
           reject(error);
         }
       });
-      console.log(result);
       return result;
     },
   });
