@@ -15,8 +15,6 @@ import {
 } from "@/components/timetable/timetable-generator-store";
 import { Config } from "@/lib/config";
 
-const rng = seedrandom("abcdefghijklmnopqrstuvwxyz");
-
 // export function generateTimetable(
 //   courses: Course[],
 //   options: {
@@ -55,21 +53,15 @@ export class GeneticGenerator {
     private readonly courses: Map<CourseCode, CourseClasses>,
     private readonly factors: TimetableGenerator["factors"],
     private readonly options: {
-      iterations: number;
-      generatePerIteration: number;
-      mutationProbability: number;
       minsConstituteAsConsecutive: number;
       isSkewedThresholdSD: number;
     } = {
-      iterations: 100,
-      generatePerIteration: 100,
-      mutationProbability: 0.2,
       minsConstituteAsConsecutive: 10,
       isSkewedThresholdSD: 3,
     }
   ) {}
 
-  private evaluateTimetable(timetable: GeneratedTimetable) {
+  public evaluateTimetable(timetable: GeneratedTimetable) {
     // Before we start, we will define some fallback scores
     // in the event that the factor is not appropriate for consideration.
     // i.e. Days without classes.
@@ -108,15 +100,23 @@ export class GeneticGenerator {
       // First, we need to map the timeslots to the day.
       const weekClasses = new Array<IndexClassWithCourseAndIndex[]>(
         daysInAWeek
-      ).fill([]);
+      );
+      for (let day = 0; day < daysInAWeek; day++) {
+        weekClasses[day] = [];
+      }
+
       for (const [courseCode, selectedIndex] of Object.entries(
         timetable.courseIndexSelection
       )) {
         const course = this.courses.get(courseCode);
         if (!course) {
+          console.log(`Course ${courseCode} not found`);
           continue;
         }
         for (const indexClass of course.indexes) {
+          if (indexClass.index !== selectedIndex) {
+            continue;
+          }
           for (const cls of indexClass.classes) {
             if (cls.weeks.includes(week)) {
               weekClasses[cls.day].push({
@@ -218,7 +218,8 @@ export class GeneticGenerator {
       }
 
       // Now, we will compute the score for each day of the week.
-      for (const dayClasses of weekClasses) {
+      for (let day = 0; day < daysInAWeek; day++) {
+        const dayClasses = weekClasses[day];
         let lastTimeSlot: IndexClassWithCourseAndIndex | null = null;
         let curConsecutiveTimeInMin = 0;
 
@@ -239,6 +240,9 @@ export class GeneticGenerator {
               // If not, the timetable has a collision.
               lastEndTimeInMin > startTimeInMin
             ) {
+              //   console.log(
+              //     `Collision detected between ${lastTimeSlot.courseCode} ${lastTimeSlot.index} and ${cls.courseCode} ${cls.index}, Week ${week}, Day ${day}, Time ${lastTimeSlot.startTime} - ${lastTimeSlot.endTime} and ${cls.startTime} - ${cls.endTime}`
+              //   );
               return -1;
             }
 
@@ -338,7 +342,148 @@ export class GeneticGenerator {
     return score;
   }
 
-  private nextIteration() {
-    return [];
+  // Lightweight serialization of the timetable.
+  // Only used for deduplication.
+  private serializeTimetable(timetable: GeneratedTimetable) {
+    return Object.entries(timetable.courseIndexSelection)
+      .map(([courseCode, index]) => {
+        return `${courseCode}:${index}`;
+      })
+      .join(",");
+  }
+
+  private createRandomTimetable(rng: seedrandom.PRNG) {
+    const timetable: GeneratedTimetable = {
+      courseIndexSelection: {},
+    };
+    this.courses.forEach((course, courseCode) => {
+      const selectedIndex =
+        course.indexes[
+          Math.min(
+            Math.floor(rng.quick() * course.indexes.length),
+            course.indexes.length - 1
+          )
+        ].index;
+      timetable.courseIndexSelection[courseCode] = selectedIndex;
+    });
+    return timetable;
+  }
+
+  private createChildTimetable(
+    rng: seedrandom.PRNG,
+    parents: GeneratedTimetable[],
+    mutationProbability: number
+  ) {
+    if (parents.length === 0) {
+      return this.createRandomTimetable(rng);
+    }
+    const timetable: GeneratedTimetable = {
+      courseIndexSelection: {},
+    };
+    this.courses.forEach((course, courseCode) => {
+      if (rng.quick() < mutationProbability) {
+        timetable.courseIndexSelection[courseCode] =
+          course.indexes[
+            Math.min(
+              Math.floor(rng.quick() * course.indexes.length),
+              course.indexes.length - 1
+            )
+          ].index;
+      } else {
+        const selectedIndex =
+          parents[
+            Math.min(
+              Math.floor(rng.quick() * parents.length),
+              parents.length - 1
+            )
+          ].courseIndexSelection[courseCode];
+        timetable.courseIndexSelection[courseCode] = selectedIndex;
+      }
+    });
+    return timetable;
+  }
+
+  private getTopTimetables(timetables: GeneratedTimetable[], N: number) {
+    // Evaluate the timetables.
+    const timetablesWithScores = timetables.map((timetable) => {
+      return {
+        timetable,
+        score: this.evaluateTimetable(timetable),
+      };
+    });
+    // Sort the iteration timetables by score from highest to lowest.
+    timetablesWithScores.sort((a, b) => b.score - a.score);
+
+    // Remove duplicates.
+    const alreadyIncluded = new Set<string>();
+    const top: { timetable: GeneratedTimetable; score: number }[] = [];
+    for (const timetable of timetablesWithScores) {
+      const serialized = this.serializeTimetable(timetable.timetable);
+      if (!alreadyIncluded.has(serialized)) {
+        alreadyIncluded.add(serialized);
+        top.push(timetable);
+      }
+    }
+
+    const results = top.slice(0, N);
+    return results;
+  }
+
+  public generate(
+    options: {
+      iterations: number;
+      generatePerIteration: number;
+      mutationProbability: number;
+      iterationSelectionAmount: number;
+      returnTopN: number;
+      seed: string;
+    } = {
+      iterations: 100,
+      generatePerIteration: 100,
+      mutationProbability: 0.2,
+      iterationSelectionAmount: 10,
+      returnTopN: 25,
+      seed: "abcdefghijklmnopqrstuvwxyz",
+    }
+  ) {
+    const rng = seedrandom(options.seed);
+
+    // Initialize the iteration timetables.
+    let iterationTimetables = new Array<GeneratedTimetable>(options.iterations);
+    for (let i = 0; i < options.generatePerIteration; i++) {
+      iterationTimetables[i] = this.createRandomTimetable(rng);
+    }
+
+    for (let i = 0; i < options.iterations; i++) {
+      const parents = this.getTopTimetables(
+        iterationTimetables,
+        options.iterationSelectionAmount
+      ).map((timetable) => timetable.timetable);
+
+      // Pad the newTimetables if necessary.
+      while (parents.length < options.iterationSelectionAmount) {
+        parents.push(this.createRandomTimetable(rng));
+      }
+
+      const nextGeneration: GeneratedTimetable[] = [];
+      // Minimally, we will move the parents into the next generation.
+      for (const parent of parents) {
+        nextGeneration.push(parent);
+      }
+
+      // Then using the parents, we will generate the next generation.
+      while (nextGeneration.length < options.generatePerIteration) {
+        const child = this.createChildTimetable(
+          rng,
+          parents,
+          options.mutationProbability
+        );
+        nextGeneration.push(child);
+      }
+
+      iterationTimetables = nextGeneration;
+    }
+
+    return this.getTopTimetables(iterationTimetables, options.returnTopN);
   }
 }

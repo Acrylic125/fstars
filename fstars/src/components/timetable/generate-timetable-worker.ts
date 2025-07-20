@@ -1,15 +1,39 @@
 import { CourseClasses } from "@/generator/utils";
 import { CourseCode } from "./timetable-store";
+import { GeneticGenerator } from "@/generator/genetic-generator";
+import { type TimetableGenerator } from "./timetable-generator-store";
 
 // Web Worker for generating timetables
-self.onmessage = function (e: MessageEvent<Record<CourseCode, CourseClasses>>) {
-  console.log("Worker received:", e.data);
-
-  // Simulate heavy computation
-  //   const result = pi(e.data);
-
-  //   // Send result back to main thread
-  //   self.postMessage(result);
+self.onmessage = function (
+  e: MessageEvent<{
+    factors: TimetableGenerator["factors"];
+    courses: Record<CourseCode, CourseClasses>;
+  }>
+) {
+  const generator = new GeneticGenerator(
+    new Map(
+      Object.entries(e.data.courses).map(([courseCode, course]) => [
+        courseCode,
+        course,
+      ])
+    ),
+    e.data.factors,
+    {
+      minsConstituteAsConsecutive: 10,
+      isSkewedThresholdSD: 3,
+    }
+  );
+  console.log("Generating timetables");
+  const timetables = generator.generate({
+    iterations: 100,
+    generatePerIteration: 100,
+    mutationProbability: 0.2,
+    iterationSelectionAmount: 10,
+    returnTopN: 25,
+    seed: "abcdefghijklmnopqrstuvwxyz",
+  });
+  self.postMessage(timetables);
+  console.log("Timetables generated");
 };
 
 // function pi(n: number) {
