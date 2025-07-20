@@ -30,8 +30,11 @@ import { CommandItemBase } from "../ui/command";
 import { cn } from "@/lib/utils";
 import EvenDistributionIcon from "../icons/even-distribution";
 import SkewedDistributionIcon from "../icons/skewed-distribution";
-import { Alert, AlertTitle } from "../ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { isBeforeOrEqual } from "@/generator/utils";
+import { trpc } from "@/server/client";
+import { useMutation } from "@tanstack/react-query";
+import { TimetableId, useTimetableStore } from "./timetable-store";
 
 const priorityOptions: {
   value: Priority;
@@ -724,7 +727,129 @@ export function ClassDistributionView({
   );
 }
 
-export function TimetableGeneratorPanel() {
+function GenerateTimetableSection({
+  timetableId,
+}: {
+  timetableId: TimetableId;
+}) {
+  const workerRef = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    workerRef.current = new Worker(
+      new URL("./generate-timetable-worker.ts", import.meta.url)
+    );
+    workerRef.current.onmessage = (event: MessageEvent<number>) =>
+      alert(`WebWorker Response => ${event.data}`);
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, []);
+  //   const blobUrlRef = useRef<string | null>(null);
+
+  //   useEffect(() => {
+  //     // Create worker using a blob URL to avoid Turbopack issues
+  //     const workerCode = `
+  //       self.onmessage = function(e) {
+  //         console.log("Worker received:", e.data);
+
+  //         // Simulate heavy computation
+  //         const result = pi(e.data);
+
+  //         // Send result back to main thread
+  //         self.postMessage(result);
+  //       };
+
+  //       function pi(n) {
+  //         console.log("Called");
+  //         let v = 0;
+  //         for (let i = 1; i <= n; i += 4) {
+  //           // increment by 4
+  //           v += 1 / i - 1 / (i + 2); // add the value of the series
+  //         }
+  //         return 4 * v; // apply the factor at last
+  //       }
+  //     `;
+
+  //     const blob = new Blob([workerCode], { type: "application/javascript" });
+  //     blobUrlRef.current = URL.createObjectURL(blob);
+  //     workerRef.current = new Worker(blobUrlRef.current);
+
+  //     workerRef.current.onmessage = (event: MessageEvent<number>) =>
+  //       console.log(`WebWorker Response => ${event.data}`);
+
+  //     return () => {
+  //       if (workerRef.current) {
+  //         workerRef.current.terminate();
+  //       }
+  //       if (blobUrlRef.current) {
+  //         URL.revokeObjectURL(blobUrlRef.current);
+  //       }
+  //     };
+  //   }, []);
+
+  const timetableStore = useTimetableStore(
+    useShallow((state) => {
+      const timetable = state.timetables.get(timetableId);
+      if (!timetable) return null;
+
+      return {
+        selectedPlanId: timetable.selectedPlanId,
+        selectedPlan: timetable.plans.get(timetable.selectedPlanId),
+        acadYear: timetable.acadYear,
+      };
+    })
+  );
+
+  const trpcUtils = trpc.useUtils();
+
+  const generateTimetableRes = useMutation({
+    mutationFn: async () => {
+      if (!timetableStore) return;
+      const plan = timetableStore.selectedPlan;
+      if (!plan) return;
+      const courseCodes = Array.from(plan.courses.keys());
+      const response = await trpcUtils.client.getCourseClasses.query({
+        courseCodes,
+        acadYear: timetableStore.acadYear,
+      });
+      console.log(response);
+      return response;
+    },
+  });
+
+  //   const handleWork = useCallback(async () => {
+  //     console.log("Generating timetable...");
+  //     workerRef.current?.postMessage(10000000000);
+  //   }, []);
+  return (
+    <div className="w-full flex flex-col gap-4 px-4 pt-4 pb-2 border-t border-border">
+      <Button
+        variant="secondary"
+        className="w-full"
+        onClick={() => generateTimetableRes.mutate()}
+        disabled={generateTimetableRes.isPending}
+      >
+        <p>Generate Timetable</p>
+      </Button>
+      {generateTimetableRes.isError && (
+        <Alert variant="error">
+          <AlertTitle>
+            <p>Error generating timetable</p>
+          </AlertTitle>
+          <AlertDescription>
+            <p>{generateTimetableRes.error.message}</p>
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+}
+
+export function TimetableGeneratorPanel({
+  timetableId,
+}: {
+  timetableId: TimetableId;
+}) {
   const generatorStore = useTimetableGeneratorStore(
     useShallow((state) => {
       return {
@@ -758,11 +883,7 @@ export function TimetableGeneratorPanel() {
             <ClassDistributionView
               generatorId={generatorStore.selectedGeneratorId}
             />
-            <div className="w-full flex flex-row px-4 py-4 border-t border-border">
-              <Button variant="secondary" className="w-full">
-                <p>Generate Timetable</p>
-              </Button>
-            </div>
+            <GenerateTimetableSection timetableId={timetableId} />
           </>
         ) : (
           <div className="text-base w-full flex flex-col min-h-36 gap-2 items-center justify-center text-muted-foreground text-center max-w-48">

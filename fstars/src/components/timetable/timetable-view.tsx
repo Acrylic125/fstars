@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import { useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import "./fullcalendar.css";
@@ -12,14 +12,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  isIntersecting,
-  isIntersectingDate,
-  isWithinRange,
-  Time,
-} from "@/generator/utils";
+import { isIntersectingDate } from "@/generator/utils";
 import { cn } from "@/lib/utils";
-import { Badge } from "../ui/badge";
 import { AlertTriangleIcon } from "lucide-react";
 
 type FCEvent = {

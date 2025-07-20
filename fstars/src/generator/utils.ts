@@ -1,7 +1,41 @@
+import { CourseCode } from "@/components/timetable/timetable-store";
+
 export type Time = {
   hour: number;
   minute: number;
 };
+
+export type Hour = number;
+export type Minute = number;
+export type TimeAsArray = [Hour, Minute];
+
+export type IndexClass = {
+  startTime: TimeAsArray;
+  endTime: TimeAsArray;
+  day: number;
+  weeks: number[];
+};
+
+export type CourseIndexClasses = {
+  index: string;
+  classes: IndexClass[];
+};
+
+export type CourseClasses = {
+  courseCode: CourseCode;
+  indexes: CourseIndexClasses[];
+};
+
+export function toTimeAsArray(time: Time): TimeAsArray {
+  return [time.hour, time.minute] as const;
+}
+
+export function toTime(time: TimeAsArray) {
+  return {
+    hour: time[0],
+    minute: time[1],
+  } as const;
+}
 
 export function toMinutes(time: Time) {
   return time.hour * 60 + time.minute;

@@ -10,6 +10,13 @@ import {
 } from "@/db/schema";
 import { and, eq, exists, inArray, like, not, or, sql } from "drizzle-orm";
 import { AcadYearSchema, ProgramSchema } from "@/lib/types";
+import { CourseCode } from "@/components/timetable/timetable-store";
+import {
+  CourseClasses,
+  IndexClass,
+  Time,
+  toTimeAsArray,
+} from "@/generator/utils";
 
 export const appRouter = createTRPCRouter({
   getCoursesByCodes: publicProcedure
@@ -69,12 +76,14 @@ export const appRouter = createTRPCRouter({
   getCourseIndexClasses: publicProcedure
     .input(
       z.object({
-        courses: z.array(
-          z.object({
-            courseCode: z.string(),
-            index: z.string(),
-          })
-        ),
+        courses: z
+          .array(
+            z.object({
+              courseCode: z.string(),
+              index: z.string(),
+            })
+          )
+          .max(10),
         acadYear: AcadYearSchema,
       })
     )
@@ -122,6 +131,121 @@ export const appRouter = createTRPCRouter({
           )
         );
       return courseClasses;
+    }),
+  getCourseClasses: publicProcedure
+    .input(
+      z.object({
+        courseCodes: z.array(z.string()).max(10),
+        acadYear: AcadYearSchema,
+      })
+    )
+    .query(async ({ input }) => {
+      if (input.courseCodes.length === 0) return [];
+      const courseClasses = await db
+        .select({
+          index: courseIndexTable.index,
+          course: {
+            code: coursesTable.code,
+            name: coursesTable.name,
+          },
+          weeks: courseIndexClassesTable.weeks,
+          day: courseIndexClassesTable.day,
+          from: {
+            hour: courseIndexClassesTable.timeFromHour,
+            minute: courseIndexClassesTable.timeFromMinute,
+          },
+          to: {
+            hour: courseIndexClassesTable.timeToHour,
+            minute: courseIndexClassesTable.timeToMinute,
+          },
+        })
+        .from(courseIndexClassesTable)
+        .innerJoin(
+          courseIndexTable,
+          eq(courseIndexTable.id, courseIndexClassesTable.indexId)
+        )
+        .innerJoin(coursesTable, eq(coursesTable.id, courseIndexTable.courseId))
+        .where(
+          and(
+            inArray(coursesTable.code, input.courseCodes),
+            eq(coursesTable.ay, input.acadYear.yearCode),
+            eq(coursesTable.semester, input.acadYear.semesterCode)
+          )
+        );
+
+      let courseIndexClassesMap: Record<CourseCode, CourseClasses> = {};
+
+      // First, group by course code.
+      const courseClassesGrouped = new Map<CourseCode, typeof courseClasses>();
+      for (const courseClass of courseClasses) {
+        const courseCode = courseClass.course.code;
+        const cur = courseClassesGrouped.get(courseCode);
+        if (!cur) {
+          courseClassesGrouped.set(courseCode, [courseClass]);
+        } else {
+          cur.push(courseClass);
+        }
+      }
+
+      // Then, within each course code, group by index.
+      for (const [courseCode, courseClasses] of courseClassesGrouped) {
+        let courseIndexClasses: CourseClasses = {
+          courseCode,
+          indexes: [],
+        };
+
+        // Each course class holds groups of index classes.
+        const indexClassesGrouped: Map<string, IndexClass[]> = new Map();
+        for (const courseClass of courseClasses) {
+          const index = courseClass.index;
+          const cur = indexClassesGrouped.get(index);
+          if (!cur) {
+            indexClassesGrouped.set(index, [
+              {
+                startTime: toTimeAsArray(courseClass.from),
+                endTime: toTimeAsArray(courseClass.to),
+                day: courseClass.day,
+                weeks: courseClass.weeks,
+              },
+            ]);
+          } else {
+            cur.push({
+              startTime: toTimeAsArray(courseClass.from),
+              endTime: toTimeAsArray(courseClass.to),
+              day: courseClass.day,
+              weeks: courseClass.weeks,
+            });
+          }
+        }
+
+        // Finally, for each index, we merge the index classes to reduce redundancy.
+        for (const [index, indexClasses] of indexClassesGrouped) {
+          // Day-start_hour:start_minute-end_hour:end_minute
+          const merged: Map<
+            `${number}-${number}:${number}-${number}:${number}`,
+            IndexClass
+          > = new Map();
+          for (const indexClass of indexClasses) {
+            const key =
+              `${indexClass.day}-${indexClass.startTime[0]}:${indexClass.startTime[1]}-${indexClass.endTime[0]}:${indexClass.endTime[1]}` as const;
+            const cur = merged.get(key);
+            if (!cur) {
+              merged.set(key, indexClass);
+            } else {
+              cur.weeks.push(...indexClass.weeks);
+            }
+          }
+
+          courseIndexClasses.indexes.push({
+            index,
+            classes: Array.from(merged.values()),
+          });
+        }
+
+        courseIndexClassesMap[courseCode] = courseIndexClasses;
+      }
+
+      return courseIndexClassesMap;
     }),
   findCourseIndexes: publicProcedure
     .input(

@@ -24,7 +24,7 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
           </div>
           <div className="w-md md:w-lg lg:w-xl flex flex-col gap-2 md:gap-4 items-center h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] overflow-auto py-8 pl-2 pr-4 md:pl-4 md:pr-8">
             <TimetableCoursesPanel id={id} />
-            <TimetableGeneratorPanel />
+            <TimetableGeneratorPanel timetableId={id} />
           </div>
         </div>
       </div>
