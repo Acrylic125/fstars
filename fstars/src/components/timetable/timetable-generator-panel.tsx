@@ -177,12 +177,12 @@ export function ConsecutiveClassesFactorView({
               <p className="text-muted-foreground text-sm">{"< 1h"}</p>
               <SelectPriority
                 selected={asPriority(
-                  generatorStore.consecutiveClasses.before1.priority
+                  generatorStore.consecutiveClasses.before1h.priority
                 )}
                 onChange={(value) => {
                   changeSelection({
                     ...generatorStore.consecutiveClasses,
-                    before1: {
+                    before1h: {
                       priority: asPriorityNumber(value),
                     },
                   });
@@ -309,12 +309,12 @@ export function GapsBetweenClassesFactorView({
               <p className="text-muted-foreground text-sm">{"< 1h"}</p>
               <SelectPriority
                 selected={asPriority(
-                  generatorStore.gapsBetweenClasses.before1.priority
+                  generatorStore.gapsBetweenClasses.before1h.priority
                 )}
                 onChange={(value) => {
                   changeSelection({
                     ...generatorStore.gapsBetweenClasses,
-                    before1: {
+                    before1h: {
                       priority: asPriorityNumber(value),
                     },
                   });

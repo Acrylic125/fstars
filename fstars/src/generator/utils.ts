@@ -41,6 +41,10 @@ export function toMinutes(time: Time) {
   return time.hour * 60 + time.minute;
 }
 
+export function toMinutesFromTimeAsArray(time: TimeAsArray) {
+  return time[0] * 60 + time[1];
+}
+
 export function isIntersectingDate(
   time1: {
     from: Date;

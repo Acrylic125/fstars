@@ -57,7 +57,7 @@ export const TimetableGeneratorSchema = z.object({
       .default({ priority: asPriorityNumber("Important") }),
     consecutiveClasses: z
       .object({
-        before1: z.object({
+        before1h: z.object({
           priority: z
             .number()
             .min(0)
@@ -94,7 +94,7 @@ export const TimetableGeneratorSchema = z.object({
         }),
       })
       .default({
-        before1: { priority: asPriorityNumber("Important") },
+        before1h: { priority: asPriorityNumber("Important") },
         between1hAnd2h: { priority: asPriorityNumber("Preferred") },
         between2hAnd3h: { priority: asPriorityNumber("Not Preferred") },
         between3hAnd4h: { priority: asPriorityNumber("Not Preferred") },
@@ -102,7 +102,7 @@ export const TimetableGeneratorSchema = z.object({
       }),
     gapsBetweenClasses: z
       .object({
-        before1: z.object({
+        before1h: z.object({
           priority: z
             .number()
             .min(0)
@@ -139,7 +139,7 @@ export const TimetableGeneratorSchema = z.object({
         }),
       })
       .default({
-        before1: { priority: asPriorityNumber("Important") },
+        before1h: { priority: asPriorityNumber("Important") },
         between1hAnd2h: { priority: asPriorityNumber("Preferred") },
         between2hAnd3h: { priority: asPriorityNumber("Not Preferred") },
         between3hAnd4h: { priority: asPriorityNumber("Not Preferred") },
@@ -309,14 +309,14 @@ function defaultGenerator(
     factors: {
       noClassDays: { priority: nonePriority },
       consecutiveClasses: {
-        before1: { priority: nonePriority },
+        before1h: { priority: nonePriority },
         between1hAnd2h: { priority: nonePriority },
         between2hAnd3h: { priority: nonePriority },
         between3hAnd4h: { priority: nonePriority },
         after4h: { priority: nonePriority },
       },
       gapsBetweenClasses: {
-        before1: { priority: nonePriority },
+        before1h: { priority: nonePriority },
         between1hAnd2h: { priority: nonePriority },
         between2hAnd3h: { priority: nonePriority },
         between3hAnd4h: { priority: nonePriority },
