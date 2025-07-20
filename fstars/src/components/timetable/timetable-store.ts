@@ -76,6 +76,13 @@ type TimetableStore = {
     }
   ) => void;
   removeCourseFromPlan: (ref: TimetablePlanCourseRef) => void;
+  selectCourseIndexes: (
+    ref: TimetablePlanRef,
+    courseIndexSelections: {
+      courseCode: CourseCode;
+      index: CourseIndex;
+    }[]
+  ) => void;
   // Course index selection.
   toggleIgnoreIndexes: (
     ref: TimetablePlanCourseRef,
@@ -191,6 +198,32 @@ export const useTimetableStore = create<TimetableStore>()(
 
           return {
             timetables: state.timetables.set(ref.timetableId, updatedTimetable),
+          };
+        });
+      },
+      selectCourseIndexes: (
+        ref: TimetablePlanRef,
+        courseIndexSelections: {
+          courseCode: CourseCode;
+          index: CourseIndex;
+        }[]
+      ) => {
+        set((state) => {
+          const timetable = state.timetables.get(ref.timetableId);
+          if (!timetable) return {};
+          const plan = timetable.plans.get(ref.planId);
+          if (!plan) return {};
+
+          const updatedCourses = new Map(plan.courses);
+          courseIndexSelections.forEach(({ courseCode, index }) => {
+            const course = updatedCourses.get(courseCode);
+            if (!course) return;
+            course.index = index;
+          });
+
+          plan.courses = updatedCourses;
+          return {
+            timetables: state.timetables,
           };
         });
       },

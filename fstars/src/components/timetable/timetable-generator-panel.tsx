@@ -12,17 +12,23 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { SelectGeneratorCombobox } from "./select-generator-combobox";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Collapsible, CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { CollapsibleContent } from "../ui/collapsible";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+  RotateCcwIcon,
+} from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "../ui/button";
-import { cn } from "@/lib/utils";
+import { cn, formatDuration } from "@/lib/utils";
 import EvenDistributionIcon from "../icons/even-distribution";
 import SkewedDistributionIcon from "../icons/skewed-distribution";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
@@ -35,6 +41,7 @@ import {
   GeneratedTimetableWithScore,
 } from "@/generator/genetic-generator";
 import { asPriority, asPriorityNumber, Priority } from "./utils";
+import { nanoid } from "nanoid";
 
 const priorityOptions: {
   value: Priority;
@@ -727,6 +734,175 @@ export function ClassDistributionView({
   );
 }
 
+function LastGeneratedView({ lastGenerated }: { lastGenerated: Date }) {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <p className="text-sm text-neutral-500">
+      Last Generated{" "}
+      {formatDuration(
+        Math.round((now.getTime() - lastGenerated.getTime()) / 1000)
+      )}{" "}
+      Ago
+    </p>
+  );
+}
+
+function GeneratorApplyToPlan({
+  generatedTimetables,
+  lastGenerated,
+  originalTimetable,
+  timetableId,
+}: {
+  generatedTimetables: GeneratedTimetableWithScore[];
+  lastGenerated?: Date;
+  originalTimetable?: GeneratedTimetable;
+  timetableId: TimetableId;
+}) {
+  const timetableStore = useTimetableStore(
+    useShallow((state) => {
+      const timetable = state.timetables.get(timetableId);
+      if (!timetable) return null;
+      return {
+        selectedPlanId: timetable.selectedPlanId,
+        selectedPlan: timetable.plans.get(timetable.selectedPlanId),
+        selectCourseIndexes: state.selectCourseIndexes,
+      };
+    })
+  );
+
+  const [page, setPage] = useState(0);
+  const numberOfPages = generatedTimetables.length;
+  const selectedPage = Math.min(page + 1, numberOfPages);
+
+  const nextPage = () => {
+    if (!timetableStore) return;
+    const plan = timetableStore.selectedPlan;
+    if (!plan) return;
+
+    const newPage = Math.min(page + 1, numberOfPages - 1);
+    timetableStore.selectCourseIndexes(
+      {
+        timetableId,
+        planId: plan.id,
+      },
+      Object.entries(
+        generatedTimetables[newPage].timetable.courseIndexSelection
+      ).map(([courseCode, index]) => ({
+        courseCode,
+        index,
+      }))
+    );
+    setPage(newPage);
+  };
+  const prevPage = () => {
+    if (!timetableStore) return;
+    const plan = timetableStore.selectedPlan;
+    if (!plan) return;
+
+    const newPage = Math.max(page - 1, 0);
+    timetableStore.selectCourseIndexes(
+      {
+        timetableId,
+        planId: plan.id,
+      },
+      Object.entries(
+        generatedTimetables[newPage].timetable.courseIndexSelection
+      ).map(([courseCode, index]) => ({
+        courseCode,
+        index,
+      }))
+    );
+    setPage(newPage);
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      {!timetableStore?.selectedPlan && (
+        <Alert variant="info">
+          <AlertTitle>No Plan Selected!</AlertTitle>
+          <AlertDescription>
+            Please select a plan to apply the generated timetable to.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="flex flex-row gap-2 w-full items-center">
+        <h3 className="text-sm w-full text-muted-foreground">Apply Plan</h3>
+        <Button
+          variant="outline"
+          className="w-fit"
+          disabled={page <= 0 || !timetableStore?.selectedPlan}
+          onClick={prevPage}
+        >
+          <ChevronLeftIcon className="w-4 h-4" />
+        </Button>
+        {generatedTimetables.length > 0 ? (
+          <Button
+            variant="outline"
+            className="w-28"
+            disabled={!timetableStore?.selectedPlan}
+            onClick={() => {
+              if (!timetableStore) return;
+              const plan = timetableStore.selectedPlan;
+              if (!plan) return;
+              timetableStore.selectCourseIndexes(
+                {
+                  timetableId,
+                  planId: plan.id,
+                },
+                Object.entries(
+                  generatedTimetables[page].timetable.courseIndexSelection
+                ).map(([courseCode, index]) => ({
+                  courseCode,
+                  index,
+                }))
+              );
+            }}
+          >
+            Generated {selectedPage}
+          </Button>
+        ) : (
+          <Button variant="outline" className="w-28" disabled>
+            -
+          </Button>
+        )}
+
+        <Button
+          variant="outline"
+          className="w-fit"
+          disabled={
+            page >= generatedTimetables.length - 1 ||
+            !timetableStore?.selectedPlan
+          }
+          onClick={nextPage}
+        >
+          <ChevronRightIcon className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="secondary"
+          className="w-fit"
+          disabled={!originalTimetable || !timetableStore?.selectedPlan}
+        >
+          <RotateCcwIcon className="w-4 h-4" />
+        </Button>
+      </div>
+      {lastGenerated && (
+        <div className="flex flex-row gap-2 w-full items-center justify-between">
+          <LastGeneratedView lastGenerated={lastGenerated} />
+          <p className="text-sm text-neutral-500">{numberOfPages} Plans</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function GenerateTimetableSection({
   timetableId,
 }: {
@@ -768,28 +944,35 @@ function GenerateTimetableSection({
         acadYear: timetableStore.acadYear,
       });
 
-      const result = await new Promise((resolve, reject) => {
-        try {
-          const worker = new Worker(
-            new URL("./generate-timetable-worker.ts", import.meta.url)
-          );
-          worker.onmessage = (
-            event: MessageEvent<GeneratedTimetableWithScore[]>
-          ) => {
-            resolve(event.data);
-          };
-          worker.onerror = (event: ErrorEvent) => {
-            reject(event.error);
-          };
-          worker.postMessage({
-            factors: timetableGeneratorStore.factors,
-            courses: response,
-          });
-        } catch (error) {
-          reject(error);
+      const now = new Date();
+      const result = await new Promise<GeneratedTimetableWithScore[]>(
+        (resolve, reject) => {
+          try {
+            const worker = new Worker(
+              new URL("./generate-timetable-worker.ts", import.meta.url)
+            );
+            worker.onmessage = (
+              event: MessageEvent<GeneratedTimetableWithScore[]>
+            ) => {
+              resolve(event.data);
+            };
+            worker.onerror = (event: ErrorEvent) => {
+              reject(event.error);
+            };
+            worker.postMessage({
+              factors: timetableGeneratorStore.factors,
+              courses: response,
+            });
+          } catch (error) {
+            reject(error);
+          }
         }
-      });
-      return result;
+      );
+      return {
+        key: nanoid(16),
+        result,
+        now,
+      };
     },
   });
 
@@ -813,6 +996,12 @@ function GenerateTimetableSection({
           </AlertDescription>
         </Alert>
       )}
+      <GeneratorApplyToPlan
+        key={generateTimetableRes.data?.key ?? ""}
+        generatedTimetables={generateTimetableRes.data?.result ?? []}
+        lastGenerated={generateTimetableRes.data?.now}
+        timetableId={timetableId}
+      />
     </div>
   );
 }
