@@ -53,7 +53,7 @@
 }
 
 .fc-event {
-  @apply border-[3px] overflow-hidden;
+  @apply border-none overflow-hidden p-0;
 }
 
 .fc-event-main {
@@ -64,6 +64,6 @@
   @apply shadow-none;
 }
 
-.fc-error {
-  @apply ring-3 ring-red-300 dark:ring-red-400;
+.fc-event:has(.fc-error) {
+  border: 4px solid;
 }

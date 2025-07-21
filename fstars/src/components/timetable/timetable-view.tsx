@@ -214,7 +214,8 @@ export function TimetableView({ id }: { id: string }) {
                 className={cn(
                   "flex flex-col justify-between w-full h-full px-1.5 py-0.5 rounded-xs",
                   {
-                    "bg-red-600 dark:bg-red-700 text-white": event.isError,
+                    "bg-red-600 dark:bg-red-700 text-white fc-error":
+                      event.isError,
                   }
                 )}
               >
