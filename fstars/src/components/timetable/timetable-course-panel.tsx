@@ -183,28 +183,36 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
         return null;
       }
 
+      const plan = timetable.plans.get(timetable.selectedPlanId);
+
       return {
         program: timetable.program,
         acadYear: timetable.acadYear,
         plans: timetable.plans,
         selectedPlanId: timetable.selectedPlanId,
-        selectedPlan: timetable.plans.get(timetable.selectedPlanId),
+        selectedPlanCourses: plan?.courses ?? null,
       };
     })
   );
-  const selectedPlan = useMemo(() => {
-    if (!timetableStore?.selectedPlan) return null;
-    return {
-      plan: timetableStore.selectedPlan,
-      courses: Array.from(timetableStore.selectedPlan.courses.keys()),
-    };
-  }, [timetableStore?.selectedPlan]);
+  // const selectedPlan = useMemo(() => {
+  //   if (!timetableStore?.selectedPlanCourses) return null;
+  //   return {
+  //     plan: timetableStore.selectedPlan,
+  //     courses: Array.from(timetableStore.selectedPlan.courses.keys()),
+  //   };
+  // }, [timetableStore?.selectedPlan]);
+  const selectedPlanCoursesArray = useMemo(() => {
+    if (!timetableStore?.selectedPlanCourses) return [];
+    return Array.from(timetableStore.selectedPlanCourses.keys());
+  }, [timetableStore?.selectedPlanCourses]);
+
   const selectedPlanCourses = trpc.getCoursesByCodes.useQuery(
     {
-      codes: selectedPlan?.courses ?? [],
+      codes: selectedPlanCoursesArray,
     },
     {
-      enabled: !!selectedPlan,
+      enabled:
+        !!selectedPlanCoursesArray && selectedPlanCoursesArray.length > 0,
       placeholderData: (prev) => prev,
     }
   );
@@ -222,12 +230,12 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
       <h2 className="text-base font-semibold px-4 pb-2">Courses</h2>
       <div className="flex flex-row gap-2 px-4">
         <SelectPlanCombobox timetableId={id} />
-        {timetableStore && selectedPlan ? (
+        {timetableStore && selectedPlanCoursesArray.length > 0 ? (
           <SelectCourseCombobox
             program={timetableStore.program}
             acadYear={timetableStore.acadYear}
             timetableId={id}
-            selectedPlanId={selectedPlan.plan.id}
+            selectedPlanId={timetableStore.selectedPlanId}
           />
         ) : (
           <SelectCourseCombobox
@@ -248,10 +256,10 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
         )}
       </div>
       <div className="flex flex-col w-full py-2 items-center">
-        {selectedPlan ? (
+        {timetableStore && selectedPlanCoursesArray.length > 0 ? (
           <>
-            {selectedPlan.courses.length > 0 ? (
-              selectedPlan.courses.map((courseCode, index) => {
+            {selectedPlanCoursesArray.length > 0 ? (
+              selectedPlanCoursesArray.map((courseCode, index) => {
                 const course = selectedPlanCoursesMap.get(courseCode);
                 return (
                   <TimetableCoursesRow
@@ -259,11 +267,11 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
                     id={id}
                     color={
                       colorByIndex(index, {
-                        max: selectedPlan.courses.length,
+                        max: selectedPlanCoursesArray.length,
                         scheme: "default",
                       }).backgroundColor
                     }
-                    planId={selectedPlan.plan.id}
+                    planId={timetableStore.selectedPlanId}
                     courseCode={courseCode}
                     course={course}
                     acadYear={

@@ -221,9 +221,17 @@ export const useTimetableStore = create<TimetableStore>()(
             course.index = index;
           });
 
-          plan.courses = updatedCourses;
+          // plan.courses = updatedCourses;
+          const updatedPlan = {
+            ...plan,
+            courses: updatedCourses,
+          };
+          const updatedTimetable = {
+            ...timetable,
+            plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
+          };
           return {
-            timetables: state.timetables,
+            timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
       },
