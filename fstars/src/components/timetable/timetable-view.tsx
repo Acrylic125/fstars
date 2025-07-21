@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/popover";
 import { isIntersectingDate } from "@/generator/utils";
 import { cn } from "@/lib/utils";
-import { AlertTriangleIcon } from "lucide-react";
+import { AlertTriangleIcon, ExpandIcon } from "lucide-react";
 
 type FCEvent = {
   title: string;
@@ -212,7 +212,7 @@ export function TimetableView({ id }: { id: string }) {
             <PopoverTrigger asChild>
               <div
                 className={cn(
-                  "flex flex-col justify-between w-full h-full px-1.5 py-0.5 rounded-xs",
+                  "relative flex flex-col justify-between w-full h-full px-1.5 py-0.5 rounded-xs",
                   {
                     "bg-red-600 dark:bg-red-700 text-white fc-error":
                       event.isError,
@@ -246,6 +246,9 @@ export function TimetableView({ id }: { id: string }) {
                   })}
                 >
                   {event.timeStr}
+                </div>
+                <div className="absolute bottom-0 right-0 pb-1 pr-1 text-neutral-900">
+                  <ExpandIcon className="size-4" />
                 </div>
               </div>
             </PopoverTrigger>
