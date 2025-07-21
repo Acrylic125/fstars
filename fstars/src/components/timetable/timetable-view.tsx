@@ -295,7 +295,7 @@ export function TimetableView({ id }: { id: string }) {
       // contentHeight="auto"
       // height="auto"
       slotMinTime="08:00:00"
-      slotMaxTime="20:00:00"
+      slotMaxTime="23:59:00"
       dayHeaderFormat={{ weekday: "short" }}
       slotLabelFormat={{ hour: "numeric", minute: "2-digit", hour12: false }}
       // contentHeight="auto"
