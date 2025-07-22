@@ -93,7 +93,18 @@ type TimetableStore = {
   // Plan CRUD.
   deletePlan: (ref: TimetablePlanRef, autoSelect?: boolean) => void;
   changePlanName: (ref: TimetablePlanRef, name: string) => void;
-  createPlanCopy: (ref: TimetablePlanRef, autoSelect?: boolean) => void;
+  createPlanCopy: (
+    ref: TimetablePlanRef,
+    autoSelect?: boolean
+  ) =>
+    | {
+        type: "success";
+        planId: PlanId;
+      }
+    | {
+        type: "error";
+        error: string;
+      };
   createPlan: (ref: TimetableRef, name: string, autoSelect?: boolean) => void;
 } & TimetableStoreState;
 
@@ -210,18 +221,28 @@ export const useTimetableStore = create<TimetableStore>()(
       ) => {
         set((state) => {
           const timetable = state.timetables.get(ref.timetableId);
-          if (!timetable) return {};
+          if (!timetable) {
+            return {};
+          }
           const plan = timetable.plans.get(ref.planId);
-          if (!plan) return {};
+          if (!plan) {
+            return {};
+          }
 
-          const updatedCourses = new Map(plan.courses);
+          const updatedCourses = new Map();
           courseIndexSelections.forEach(({ courseCode, index }) => {
-            const course = updatedCourses.get(courseCode);
-            if (!course) return;
+            const course = plan.courses.get(courseCode);
+            if (!course) {
+              updatedCourses.set(courseCode, {
+                index,
+                ignoreIndexes: new Set(),
+              });
+              return;
+            }
             course.index = index;
+            updatedCourses.set(courseCode, course);
           });
 
-          // plan.courses = updatedCourses;
           const updatedPlan = {
             ...plan,
             courses: updatedCourses,
@@ -370,16 +391,43 @@ export const useTimetableStore = create<TimetableStore>()(
         });
       },
       createPlanCopy: (ref: TimetablePlanRef, autoSelect: boolean = true) => {
+        let res:
+          | {
+              type: "success";
+              planId: PlanId;
+            }
+          | {
+              type: "error";
+              error: string;
+            }
+          | null = null;
         set((state) => {
           const timetable = state.timetables.get(ref.timetableId);
-          if (!timetable) return {};
+          if (!timetable) {
+            res = {
+              type: "error",
+              error: "Timetable not found",
+            };
+            return {};
+          }
           const plan = timetable.plans.get(ref.planId);
-          if (!plan) return {};
+          if (!plan) {
+            res = {
+              type: "error",
+              error: "Plan not found",
+            };
+            return {};
+          }
 
           // Deep copy plan.
           const newPlan = superjson.parse(superjson.stringify(plan)) as Plan;
           newPlan.id = nanoid(16);
           newPlan.name = `${plan.name} Copy`;
+
+          res = {
+            type: "success",
+            planId: newPlan.id,
+          };
 
           const updatedTimetable = {
             ...timetable,
@@ -391,6 +439,18 @@ export const useTimetableStore = create<TimetableStore>()(
             timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
+
+        if (res) {
+          return {
+            type: "success",
+            planId: res,
+          };
+        }
+
+        return {
+          type: "error",
+          error: "Failed to create plan copy",
+        };
       },
       createPlan: (
         ref: TimetableRef,

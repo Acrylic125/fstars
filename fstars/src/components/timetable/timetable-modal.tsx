@@ -11,7 +11,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "../ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,17 +26,16 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { useShallow } from "zustand/react/shallow";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "../ui/button";
-import { AlertCircleIcon, CheckCircleIcon, PlusIcon } from "lucide-react";
+import { AlertCircleIcon, CheckCircleIcon } from "lucide-react";
 import { nanoid } from "nanoid";
 import {
   GeneratorTemplateTypeSchema,
   TimetableGeneratorId,
   useTimetableGeneratorStore,
 } from "./timetable-generator-store";
-import { Select, SelectTrigger, SelectValue } from "../ui/select";
 import { cn } from "@/lib/utils";
 
 export type TimetableModalAction =

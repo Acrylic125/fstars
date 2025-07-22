@@ -17,10 +17,8 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
         <div className="w-full flex flex-row max-w-ui">
           <ScrollArea className="w-full flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] overflow-x-auto">
             <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
-              {/* min-h-[50rem] max-h-[80rem] */}
               <TimetableHeader id={id} />
               <TimetableView id={id} />
-              <div className=""></div>
             </div>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>

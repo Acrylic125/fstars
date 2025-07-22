@@ -35,13 +35,25 @@ import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { isBeforeOrEqual } from "@/generator/utils";
 import { trpc } from "@/server/client";
 import { useMutation } from "@tanstack/react-query";
-import { TimetableId, useTimetableStore } from "./timetable-store";
+import {
+  TimetableId,
+  TimetablePlanRef,
+  useTimetableStore,
+} from "./timetable-store";
 import {
   GeneratedTimetable,
   GeneratedTimetableWithScore,
 } from "@/generator/genetic-generator";
 import { asPriority, asPriorityNumber, Priority } from "./utils";
 import { nanoid } from "nanoid";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const priorityOptions: {
   value: Priority;
@@ -925,6 +937,8 @@ function GenerateTimetableSection({
         selectedPlanId: timetable.selectedPlanId,
         selectedPlan: timetable.plans.get(timetable.selectedPlanId),
         acadYear: timetable.acadYear,
+        createPlanCopy: state.createPlanCopy,
+        selectCourseIndexes: state.selectCourseIndexes,
       };
     })
   );
@@ -932,11 +946,31 @@ function GenerateTimetableSection({
   const trpcUtils = trpc.useUtils();
 
   const generateTimetableRes = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (options?: {
+      ref: TimetablePlanRef;
+      type: "copy" | "use";
+    }) => {
       if (!timetableStore) return;
       const plan = timetableStore.selectedPlan;
       if (!plan) return;
       if (!timetableGeneratorStore.factors) return;
+
+      let applyToPlanRef: TimetablePlanRef | null = null;
+      if (options) {
+        if (options.type === "copy") {
+          const copied = timetableStore.createPlanCopy(options.ref);
+          if (copied.type === "error") {
+            throw new Error(copied.error);
+          }
+
+          applyToPlanRef = {
+            timetableId: options.ref.timetableId,
+            planId: copied.planId,
+          };
+        } else {
+          applyToPlanRef = options.ref;
+        }
+      }
 
       const courseCodes = Array.from(plan.courses.keys());
       const response = await trpcUtils.client.getCourseClasses.query({
@@ -972,20 +1006,95 @@ function GenerateTimetableSection({
         key: nanoid(16),
         result,
         now,
+        applyToPlanRef,
       };
+    },
+    onSuccess(data, variables, context) {
+      if (data?.applyToPlanRef) {
+        const result = data.result;
+        if (result.length <= 0) return;
+        // console.log(data.applyToPlanRef);
+        timetableStore?.selectCourseIndexes(
+          data.applyToPlanRef,
+          Object.entries(result[0].timetable.courseIndexSelection).map(
+            ([courseCode, index]) => ({
+              courseCode,
+              index,
+            })
+          )
+        );
+      }
     },
   });
 
   return (
     <div className="w-full flex flex-col gap-4 px-4 pt-4 pb-2 border-t border-border">
-      <Button
-        variant="secondary"
-        className="w-full"
-        onClick={() => generateTimetableRes.mutate()}
-        disabled={generateTimetableRes.isPending}
-      >
-        <p>Generate Timetable</p>
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="secondary"
+            className="w-full"
+            disabled={generateTimetableRes.isPending}
+          >
+            <p>Generate Timetable</p>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            onClick={() => {
+              generateTimetableRes.mutate(undefined);
+            }}
+          >
+            <div className="flex flex-col justify-center pr-8">
+              <p>Generate</p>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Requires you to manually apply.
+              </p>
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={!timetableStore?.selectedPlan}
+            onClick={() => {
+              if (!timetableStore?.selectedPlan) return;
+              generateTimetableRes.mutate({
+                ref: {
+                  timetableId,
+                  planId: timetableStore.selectedPlanId,
+                },
+                type: "use",
+              });
+            }}
+          >
+            <div className="flex flex-col justify-center">
+              <p>Generate to Current Plan</p>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Applies top plan to the current plan.
+              </p>
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={!timetableStore?.selectedPlan}
+            onClick={() => {
+              if (!timetableStore?.selectedPlan) return;
+              generateTimetableRes.mutate({
+                ref: {
+                  timetableId,
+                  planId: timetableStore.selectedPlanId,
+                },
+                type: "copy",
+              });
+            }}
+          >
+            <div className="flex flex-col justify-center">
+              <p>Generate to Copy of Current Plan</p>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Applies top plan to a copy of the current plan.
+              </p>
+            </div>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       {generateTimetableRes.isError && (
         <Alert variant="error">
           <AlertTitle>
