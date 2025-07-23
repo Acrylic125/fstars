@@ -212,7 +212,7 @@ export function TimetableView({ id }: { id: string }) {
             <PopoverTrigger asChild>
               <div
                 className={cn(
-                  "relative flex flex-col justify-between w-full h-full px-1.5 py-0.5 rounded-xs",
+                  "relative flex flex-col justify-between w-full h-full px-1.5 py-0.5 rounded-xs cursor-pointer",
                   {
                     "bg-red-600 dark:bg-red-700 text-white fc-error":
                       event.isError,
