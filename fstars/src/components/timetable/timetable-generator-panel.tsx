@@ -54,6 +54,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { create } from "zustand";
 
 const priorityOptions: {
   value: Priority;
@@ -959,6 +960,9 @@ function GenerateTimetableSection({
       if (options) {
         if (options.type === "copy") {
           const copied = timetableStore.createPlanCopy(options.ref);
+          // const copied = useTimetableStore
+          //   .getState()
+          //   .createPlanCopy(options.ref);
           if (copied.type === "error") {
             throw new Error(copied.error);
           }
@@ -1013,7 +1017,6 @@ function GenerateTimetableSection({
       if (data?.applyToPlanRef) {
         const result = data.result;
         if (result.length <= 0) return;
-        // console.log(data.applyToPlanRef);
         timetableStore?.selectCourseIndexes(
           data.applyToPlanRef,
           Object.entries(result[0].timetable.courseIndexSelection).map(
@@ -1115,6 +1118,36 @@ function GenerateTimetableSection({
   );
 }
 
+export const useTestStore = create<{
+  s: number;
+  add: (state: number) => void;
+  printState: () => void;
+}>()((set) => ({
+  s: 0,
+  add: (s) => set((prev) => ({ s: prev.s + s })),
+  printState: () => {
+    set((prev) => {
+      console.log(prev.s);
+      return prev;
+    });
+  },
+}));
+
+function Test() {
+  const testStore = useTestStore();
+
+  const run = useCallback(() => {
+    testStore.add(1);
+    testStore.printState();
+  }, [testStore]);
+
+  return (
+    <div className="bg-primary text-foreground">
+      <button onClick={run}>Increment</button>
+    </div>
+  );
+}
+
 export function TimetableGeneratorPanel({
   timetableId,
 }: {
@@ -1136,6 +1169,7 @@ export function TimetableGeneratorPanel({
         <SelectGeneratorCombobox />
       </div>
       <div className="flex flex-col w-full py-2 items-center">
+        <Test />
         {generatorStore?.selectedGenerator ? (
           <>
             <NoClassDaysFactorView

@@ -76,13 +76,6 @@ type TimetableStore = {
     }
   ) => void;
   removeCourseFromPlan: (ref: TimetablePlanCourseRef) => void;
-  selectCourseIndexes: (
-    ref: TimetablePlanRef,
-    courseIndexSelections: {
-      courseCode: CourseCode;
-      index: CourseIndex;
-    }[]
-  ) => void;
   // Course index selection.
   toggleIgnoreIndexes: (
     ref: TimetablePlanCourseRef,
@@ -90,6 +83,13 @@ type TimetableStore = {
     ignored: boolean
   ) => void;
   selectCourseIndex: (ref: TimetablePlanCourseRef, index: CourseIndex) => void;
+  selectCourseIndexes: (
+    ref: TimetablePlanRef,
+    courseIndexSelections: {
+      courseCode: CourseCode;
+      index: CourseIndex;
+    }[]
+  ) => void;
   // Plan CRUD.
   deletePlan: (ref: TimetablePlanRef, autoSelect?: boolean) => void;
   changePlanName: (ref: TimetablePlanRef, name: string) => void;
@@ -148,7 +148,7 @@ export const useTimetableStore = create<TimetableStore>()(
           timetable.selectedPlanId = planId;
 
           return {
-            timetables: new Map(state.timetables).set(timetable.id, timetable),
+            timetables: state.timetables.set(timetable.id, timetable),
           };
         });
       },
@@ -226,6 +226,13 @@ export const useTimetableStore = create<TimetableStore>()(
           }
           const plan = timetable.plans.get(ref.planId);
           if (!plan) {
+            console.log(
+              "After plans: ",
+              timetable.plans,
+              timetable.plans.get(ref.planId),
+              ref.planId
+            );
+            console.error("Plan not found");
             return {};
           }
 
@@ -399,8 +406,11 @@ export const useTimetableStore = create<TimetableStore>()(
           | {
               type: "error";
               error: string;
-            }
-          | null = null;
+            } = {
+          type: "error",
+          error: "Failed to create plan copy",
+        };
+
         set((state) => {
           const timetable = state.timetables.get(ref.timetableId);
           if (!timetable) {
@@ -434,23 +444,14 @@ export const useTimetableStore = create<TimetableStore>()(
             plans: new Map(timetable.plans).set(newPlan.id, newPlan),
             selectedPlanId: autoSelect ? newPlan.id : timetable.selectedPlanId,
           };
+          console.log(`Before plans: `, updatedTimetable.plans, res);
 
           return {
             timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
 
-        if (res) {
-          return {
-            type: "success",
-            planId: res,
-          };
-        }
-
-        return {
-          type: "error",
-          error: "Failed to create plan copy",
-        };
+        return res;
       },
       createPlan: (
         ref: TimetableRef,
