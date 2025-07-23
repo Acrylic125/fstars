@@ -3,13 +3,20 @@ import { useShallow } from "zustand/react/shallow";
 import { useTimetableGeneratorStore } from "./timetable-generator-store";
 import { SelectGeneratorCombobox } from "./select-generator-combobox";
 import { useEffect, useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon, RotateCcwIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  RotateCcwIcon,
+  Undo2Icon,
+  UndoIcon,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { formatDuration } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { trpc } from "@/server/client";
 import { useMutation } from "@tanstack/react-query";
 import {
+  PlanId,
   TimetableId,
   TimetablePlanRef,
   useTimetableStore,
@@ -54,6 +61,62 @@ function LastGeneratedView({ lastGenerated }: { lastGenerated: Date }) {
   );
 }
 
+function GeneratorUndoButton({
+  timetableId,
+  selectedPlanId,
+}: {
+  timetableId: TimetableId;
+  selectedPlanId: PlanId;
+}) {
+  const timetableStore = useTimetableStore(
+    useShallow((state) => {
+      return {
+        selectCourseIndexes: state.selectCourseIndexes,
+      };
+    })
+  );
+  const timetableGeneratorUndoStore = useTimetableGeneratorUndoStore(
+    useShallow((state) => {
+      const timetableUndoStates = state.undoStates.get(timetableId);
+      if (!timetableUndoStates) return null;
+      const planUndoStates = timetableUndoStates.get(selectedPlanId);
+      if (!planUndoStates) return null;
+      return {
+        pop: state.pop,
+        hasUndoStates: planUndoStates.length > 0,
+      };
+    })
+  );
+  return (
+    <Button
+      variant="secondary"
+      size="icon"
+      disabled={!timetableGeneratorUndoStore?.hasUndoStates}
+      onClick={() => {
+        const planUndoStates = timetableGeneratorUndoStore?.pop({
+          timetableId,
+          planId: selectedPlanId,
+        });
+        if (!planUndoStates) return;
+        timetableStore?.selectCourseIndexes(
+          {
+            timetableId,
+            planId: selectedPlanId,
+          },
+          Object.entries(planUndoStates.courseIndexSelection).map(
+            ([courseCode, index]) => ({
+              courseCode,
+              index,
+            })
+          )
+        );
+      }}
+    >
+      <Undo2Icon className="w-4 h-4" />
+    </Button>
+  );
+}
+
 function GeneratorApplyToPlan({
   generatedTimetables,
   lastGenerated,
@@ -76,6 +139,13 @@ function GeneratorApplyToPlan({
       };
     })
   );
+  const timetableGeneratorUndoStore = useTimetableGeneratorUndoStore(
+    useShallow((state) => {
+      return {
+        pushByRef: state.pushByRef,
+      };
+    })
+  );
 
   const [page, setPage] = useState(0);
   const numberOfPages = generatedTimetables.length;
@@ -87,6 +157,10 @@ function GeneratorApplyToPlan({
     if (!plan) return;
 
     const newPage = Math.min(page + 1, numberOfPages - 1);
+    timetableGeneratorUndoStore.pushByRef({
+      timetableId,
+      planId: plan.id,
+    });
     timetableStore.selectCourseIndexes(
       {
         timetableId,
@@ -107,6 +181,10 @@ function GeneratorApplyToPlan({
     if (!plan) return;
 
     const newPage = Math.max(page - 1, 0);
+    timetableGeneratorUndoStore.pushByRef({
+      timetableId,
+      planId: plan.id,
+    });
     timetableStore.selectCourseIndexes(
       {
         timetableId,
@@ -153,6 +231,10 @@ function GeneratorApplyToPlan({
               if (!timetableStore) return;
               const plan = timetableStore.selectedPlan;
               if (!plan) return;
+              timetableGeneratorUndoStore.pushByRef({
+                timetableId,
+                planId: plan.id,
+              });
               timetableStore.selectCourseIndexes(
                 {
                   timetableId,
@@ -186,13 +268,10 @@ function GeneratorApplyToPlan({
         >
           <ChevronRightIcon className="w-4 h-4" />
         </Button>
-        <Button
-          variant="secondary"
-          size="icon"
-          disabled={!originalTimetable || !timetableStore?.selectedPlan}
-        >
-          <RotateCcwIcon className="w-4 h-4" />
-        </Button>
+        <GeneratorUndoButton
+          timetableId={timetableId}
+          selectedPlanId={timetableStore?.selectedPlanId ?? ""}
+        />
       </div>
       {lastGenerated && (
         <div className="flex flex-row gap-2 w-full items-center justify-between">
