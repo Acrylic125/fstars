@@ -225,12 +225,80 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
     );
   }, [selectedPlanCourses.data]);
 
+  let ele;
+  if (timetableStore) {
+    if (
+      timetableStore.plans.size <= 0 ||
+      !timetableStore.selectedPlanId ||
+      timetableStore.selectedPlanCourses === null
+    ) {
+      ele = (
+        <div className="text-base w-full flex flex-col min-h-36 gap-2 items-center justify-center text-muted-foreground text-center max-w-48">
+          <p>
+            No plan selected. Click{" "}
+            <span className="text-primary">Select Plan</span> to select one.
+            plan.
+          </p>
+        </div>
+      );
+    } else if (timetableStore.selectedPlanCourses.size <= 0) {
+      ele = (
+        <div className="text-base w-full flex flex-col min-h-36 gap-2 items-center justify-center text-muted-foreground text-center max-w-48">
+          <p>
+            No courses added. Click <span className="text-primary">+</span> to
+            add one.
+          </p>
+        </div>
+      );
+    } else {
+      ele = (
+        <div className="flex flex-col w-full py-2 items-center">
+          {selectedPlanCoursesArray.length > 0 ? (
+            selectedPlanCoursesArray.map((courseCode, index) => {
+              const course = selectedPlanCoursesMap.get(courseCode);
+              return (
+                <TimetableCoursesRow
+                  key={courseCode}
+                  id={id}
+                  color={
+                    colorByIndex(index, {
+                      max: selectedPlanCoursesArray.length,
+                      scheme: "default",
+                    }).backgroundColor
+                  }
+                  planId={timetableStore.selectedPlanId}
+                  courseCode={courseCode}
+                  course={course}
+                  acadYear={
+                    timetableStore?.acadYear ?? {
+                      yearCode: "",
+                      semesterCode: "",
+                    }
+                  }
+                />
+              );
+            })
+          ) : (
+            <div className="text-base w-full flex flex-col min-h-36 gap-2 items-center justify-center text-muted-foreground text-center max-w-48">
+              <p>
+                No courses added. Click <span className="text-primary">+</span>{" "}
+                to add one.
+              </p>
+            </div>
+          )}
+        </div>
+      );
+    }
+  } else {
+    ele = <></>;
+  }
+
   return (
     <div className="w-full border border-border bg-card rounded-lg pt-4 pb-0 flex flex-col">
       <h2 className="text-base font-semibold px-4 pb-2">Courses</h2>
       <div className="flex flex-row gap-2 px-4">
         <SelectPlanCombobox timetableId={id} />
-        {timetableStore ? (
+        {timetableStore && timetableStore.selectedPlanId ? (
           <SelectCourseCombobox
             program={timetableStore.program}
             acadYear={timetableStore.acadYear}
@@ -255,53 +323,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
           />
         )}
       </div>
-      <div className="flex flex-col w-full py-2 items-center">
-        {timetableStore && selectedPlanCoursesArray.length > 0 ? (
-          <>
-            {selectedPlanCoursesArray.length > 0 ? (
-              selectedPlanCoursesArray.map((courseCode, index) => {
-                const course = selectedPlanCoursesMap.get(courseCode);
-                return (
-                  <TimetableCoursesRow
-                    key={courseCode}
-                    id={id}
-                    color={
-                      colorByIndex(index, {
-                        max: selectedPlanCoursesArray.length,
-                        scheme: "default",
-                      }).backgroundColor
-                    }
-                    planId={timetableStore.selectedPlanId}
-                    courseCode={courseCode}
-                    course={course}
-                    acadYear={
-                      timetableStore?.acadYear ?? {
-                        yearCode: "",
-                        semesterCode: "",
-                      }
-                    }
-                  />
-                );
-              })
-            ) : (
-              <div className="text-base w-full flex flex-col min-h-36 gap-2 items-center justify-center text-muted-foreground text-center max-w-48">
-                <p>
-                  No courses added. Click{" "}
-                  <span className="text-primary">+</span> to add one.
-                </p>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-base w-full flex flex-col min-h-36 gap-2 items-center justify-center text-muted-foreground text-center max-w-48">
-            <p>
-              No plan selected. Click{" "}
-              <span className="text-primary">Select Plan</span> to select one.
-              plan.
-            </p>
-          </div>
-        )}
-      </div>
+      <div className="flex flex-col w-full py-2 items-center">{ele}</div>
     </div>
   );
 }
