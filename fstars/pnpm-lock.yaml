@@ -11,12 +11,6 @@ importers:
       '@fullcalendar/core':
         specifier: ^6.1.18
         version: 6.1.18
-      '@fullcalendar/daygrid':
-        specifier: ^6.1.18
-        version: 6.1.18(@fullcalendar/core@6.1.18)
-      '@fullcalendar/interaction':
-        specifier: ^6.1.18
-        version: 6.1.18(@fullcalendar/core@6.1.18)
       '@fullcalendar/react':
         specifier: ^6.1.18
         version: 6.1.18(@fullcalendar/core@6.1.18)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -26,9 +20,6 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.1.1
         version: 5.1.1(react-hook-form@7.60.0(react@19.1.0))
-      '@neondatabase/serverless':
-        specifier: ^1.0.1
-        version: 1.0.1
       '@radix-ui/react-accordion':
         specifier: ^1.2.11
         version: 1.2.11(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -539,11 +530,6 @@ packages:
 
   '@fullcalendar/daygrid@6.1.18':
     resolution: {integrity: sha512-s452Zle1SdMEzZDw+pDczm8m3JLIZzS9ANMThXTnqeqJewW1gqNFYas18aHypJSgF9Fh9rDJjTSUw04BpXB/Mg==}
-    peerDependencies:
-      '@fullcalendar/core': ~6.1.18
-
-  '@fullcalendar/interaction@6.1.18':
-    resolution: {integrity: sha512-f/mD5RTjzw+Q6MGTMZrLCgIrQLIUUO9NV/58aM2J6ZBQZeRlNizDqmqldqyG+j49zj2vFhUfZibPrVKWm5yA4Q==}
     peerDependencies:
       '@fullcalendar/core': ~6.1.18
 
@@ -2523,10 +2509,6 @@ snapshots:
     dependencies:
       '@fullcalendar/core': 6.1.18
 
-  '@fullcalendar/interaction@6.1.18(@fullcalendar/core@6.1.18)':
-    dependencies:
-      '@fullcalendar/core': 6.1.18
-
   '@fullcalendar/react@6.1.18(@fullcalendar/core@6.1.18)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
     dependencies:
       '@fullcalendar/core': 6.1.18
@@ -2659,6 +2641,7 @@ snapshots:
     dependencies:
       '@types/node': 22.16.3
       '@types/pg': 8.15.4
+    optional: true
 
   '@next/env@15.3.5': {}
 
@@ -3253,12 +3236,14 @@ snapshots:
   '@types/node@22.16.3':
     dependencies:
       undici-types: 6.21.0
+    optional: true
 
   '@types/pg@8.15.4':
     dependencies:
       '@types/node': 20.19.6
       pg-protocol: 1.10.3
       pg-types: 2.2.0
+    optional: true
 
   '@types/react-dom@19.1.6(@types/react@19.1.8)':
     dependencies:
@@ -3837,9 +3822,11 @@ snapshots:
 
   path-key@3.1.1: {}
 
-  pg-int8@1.0.1: {}
+  pg-int8@1.0.1:
+    optional: true
 
-  pg-protocol@1.10.3: {}
+  pg-protocol@1.10.3:
+    optional: true
 
   pg-types@2.2.0:
     dependencies:
@@ -3848,6 +3835,7 @@ snapshots:
       postgres-bytea: 1.0.0
       postgres-date: 1.0.7
       postgres-interval: 1.2.0
+    optional: true
 
   picocolors@1.1.1: {}
 
@@ -3865,15 +3853,19 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  postgres-array@2.0.0: {}
+  postgres-array@2.0.0:
+    optional: true
 
-  postgres-bytea@1.0.0: {}
+  postgres-bytea@1.0.0:
+    optional: true
 
-  postgres-date@1.0.7: {}
+  postgres-date@1.0.7:
+    optional: true
 
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
+    optional: true
 
   postgres@3.4.7: {}
 
@@ -4078,7 +4070,8 @@ snapshots:
 
   word-wrap@1.2.5: {}
 
-  xtend@4.0.2: {}
+  xtend@4.0.2:
+    optional: true
 
   yallist@5.0.0: {}
 
