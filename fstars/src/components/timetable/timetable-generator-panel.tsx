@@ -52,6 +52,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTimetableGeneratorUndoStore } from "./timetable-generator-undo-store";
 
 const priorityOptions: {
   value: Priority;
@@ -926,7 +927,6 @@ function GenerateTimetableSection({
       };
     })
   );
-
   const timetableStore = useTimetableStore(
     useShallow((state) => {
       const timetable = state.timetables.get(timetableId);
@@ -938,6 +938,14 @@ function GenerateTimetableSection({
         acadYear: timetable.acadYear,
         createPlanCopy: state.createPlanCopy,
         selectCourseIndexes: state.selectCourseIndexes,
+      };
+    })
+  );
+  const timetableGeneratorUndoStore = useTimetableGeneratorUndoStore(
+    useShallow((state) => {
+      return {
+        pushByRef: state.pushByRef,
+        push: state.push,
       };
     })
   );
@@ -1015,9 +1023,20 @@ function GenerateTimetableSection({
       if (data?.applyToPlanRef) {
         const result = data.result;
         if (result.length <= 0) return;
+        const topTimetable = result[0];
+        // Get currently selected plan as timetable.
+        if (variables?.type === "copy") {
+          // Empty
+          timetableGeneratorUndoStore.push(data.applyToPlanRef, {
+            courseIndexSelection: {},
+          });
+        }
+        if (variables?.type === "use") {
+          timetableGeneratorUndoStore.pushByRef(variables.ref);
+        }
         timetableStore?.selectCourseIndexes(
           data.applyToPlanRef,
-          Object.entries(result[0].timetable.courseIndexSelection).map(
+          Object.entries(topTimetable.timetable.courseIndexSelection).map(
             ([courseCode, index]) => ({
               courseCode,
               index,
