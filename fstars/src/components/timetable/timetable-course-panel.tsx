@@ -230,7 +230,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
       <h2 className="text-base font-semibold px-4 pb-2">Courses</h2>
       <div className="flex flex-row gap-2 px-4">
         <SelectPlanCombobox timetableId={id} />
-        {timetableStore && selectedPlanCoursesArray.length > 0 ? (
+        {timetableStore ? (
           <SelectCourseCombobox
             program={timetableStore.program}
             acadYear={timetableStore.acadYear}
