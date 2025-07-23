@@ -847,12 +847,13 @@ function GeneratorApplyToPlan({
         <h3 className="text-sm w-full text-muted-foreground">Apply Plan</h3>
         <Button
           variant="outline"
-          className="w-fit"
+          size="icon"
           disabled={page <= 0 || !timetableStore?.selectedPlan}
           onClick={prevPage}
         >
           <ChevronLeftIcon className="w-4 h-4" />
         </Button>
+
         {generatedTimetables.length > 0 ? (
           <Button
             variant="outline"
@@ -886,7 +887,7 @@ function GeneratorApplyToPlan({
 
         <Button
           variant="outline"
-          className="w-fit"
+          size="icon"
           disabled={
             page >= generatedTimetables.length - 1 ||
             !timetableStore?.selectedPlan
@@ -897,7 +898,7 @@ function GeneratorApplyToPlan({
         </Button>
         <Button
           variant="secondary"
-          className="w-fit"
+          size="icon"
           disabled={!originalTimetable || !timetableStore?.selectedPlan}
         >
           <RotateCcwIcon className="w-4 h-4" />
@@ -1105,6 +1106,20 @@ function GenerateTimetableSection({
           </AlertDescription>
         </Alert>
       )}
+      {generateTimetableRes.data &&
+        generateTimetableRes.data.result.length <= 0 && (
+          <Alert variant="info">
+            <AlertTitle>No Timetables Generated!</AlertTitle>
+            <AlertDescription>
+              It is unlikely the current selected courses can create a valid
+              timetable. Please try:
+              <ul className="list-disc list-inside">
+                <li>Selecting more indexes for your courses.</li>
+                <li>Removing some courses.</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
       <GeneratorApplyToPlan
         key={generateTimetableRes.data?.key ?? ""}
         generatedTimetables={generateTimetableRes.data?.result ?? []}

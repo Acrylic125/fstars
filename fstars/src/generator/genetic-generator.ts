@@ -399,14 +399,23 @@ export class GeneticGenerator {
     return timetable;
   }
 
-  private getTopTimetables(timetables: GeneratedTimetable[], N: number) {
+  private getTopTimetables(
+    timetables: GeneratedTimetable[],
+    N: number,
+    ignoreCollisions: boolean = false
+  ) {
     // Evaluate the timetables.
-    const timetablesWithScores = timetables.map((timetable) => {
+    let timetablesWithScores = timetables.map((timetable) => {
       return {
         timetable,
         score: this.evaluateTimetable(timetable),
       };
     });
+    if (ignoreCollisions) {
+      timetablesWithScores = timetablesWithScores.filter((timetable) => {
+        return timetable.score !== -1;
+      });
+    }
     // Sort the iteration timetables by score from highest to lowest.
     timetablesWithScores.sort((a, b) => b.score - a.score);
 
@@ -453,7 +462,8 @@ export class GeneticGenerator {
     for (let i = 0; i < options.iterations; i++) {
       const parents = this.getTopTimetables(
         iterationTimetables,
-        options.iterationSelectionAmount
+        options.iterationSelectionAmount,
+        true
       ).map((timetable) => timetable.timetable);
 
       // Pad the newTimetables if necessary.
@@ -480,6 +490,6 @@ export class GeneticGenerator {
       iterationTimetables = nextGeneration;
     }
 
-    return this.getTopTimetables(iterationTimetables, options.returnTopN);
+    return this.getTopTimetables(iterationTimetables, options.returnTopN, true);
   }
 }
