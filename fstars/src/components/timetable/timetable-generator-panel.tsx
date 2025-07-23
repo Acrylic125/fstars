@@ -12,7 +12,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { SelectGeneratorCombobox } from "./select-generator-combobox";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Collapsible, CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { CollapsibleContent } from "../ui/collapsible";
 import {
@@ -50,11 +50,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { create } from "zustand";
 
 const priorityOptions: {
   value: Priority;
@@ -1118,36 +1115,6 @@ function GenerateTimetableSection({
   );
 }
 
-export const useTestStore = create<{
-  s: number;
-  add: (state: number) => void;
-  printState: () => void;
-}>()((set) => ({
-  s: 0,
-  add: (s) => set((prev) => ({ s: prev.s + s })),
-  printState: () => {
-    set((prev) => {
-      console.log(prev.s);
-      return prev;
-    });
-  },
-}));
-
-function Test() {
-  const testStore = useTestStore();
-
-  const run = useCallback(() => {
-    testStore.add(1);
-    testStore.printState();
-  }, [testStore]);
-
-  return (
-    <div className="bg-primary text-foreground">
-      <button onClick={run}>Increment</button>
-    </div>
-  );
-}
-
 export function TimetableGeneratorPanel({
   timetableId,
 }: {
@@ -1169,7 +1136,6 @@ export function TimetableGeneratorPanel({
         <SelectGeneratorCombobox />
       </div>
       <div className="flex flex-col w-full py-2 items-center">
-        <Test />
         {generatorStore?.selectedGenerator ? (
           <>
             <NoClassDaysFactorView
