@@ -140,7 +140,8 @@ export const appRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      if (input.courseCodes.length === 0) return [];
+      let courseIndexClassesMap: Record<CourseCode, CourseClasses> = {};
+      if (input.courseCodes.length === 0) return courseIndexClassesMap;
       const courseClasses = await db
         .select({
           index: courseIndexTable.index,
@@ -172,8 +173,6 @@ export const appRouter = createTRPCRouter({
             eq(coursesTable.semester, input.acadYear.semesterCode)
           )
         );
-
-      let courseIndexClassesMap: Record<CourseCode, CourseClasses> = {};
 
       // First, group by course code.
       const courseClassesGrouped = new Map<CourseCode, typeof courseClasses>();

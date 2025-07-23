@@ -326,7 +326,10 @@ function GenerateTimetableSection({
       type: "copy" | "use";
     }) => {
       if (!timetableStore) return;
-      const plan = timetableStore.selectedPlan;
+      const plan = useTimetableStore
+        .getState()
+        .timetables.get(timetableId)
+        ?.plans.get(timetableStore.selectedPlanId); // timetableStore.selectedPlan;
       if (!plan) return;
       if (!timetableGeneratorStore.factors) return;
 
@@ -334,9 +337,6 @@ function GenerateTimetableSection({
       if (options) {
         if (options.type === "copy") {
           const copied = timetableStore.createPlanCopy(options.ref);
-          // const copied = useTimetableStore
-          //   .getState()
-          //   .createPlanCopy(options.ref);
           if (copied.type === "error") {
             throw new Error(copied.error);
           }
@@ -356,6 +356,22 @@ function GenerateTimetableSection({
         acadYear: timetableStore.acadYear,
       });
 
+      // Filter down ignore indexes.
+      for (const courseClasses of Object.values(response)) {
+        const ignoreIndexes = plan.courses.get(
+          courseClasses.courseCode
+        )?.ignoreIndexes;
+        if (!ignoreIndexes)
+          throw new Error(
+            `Course ${courseClasses.courseCode} does not exist in the plan! Please report this!`
+          );
+        if (courseClasses.indexes.length > 0) {
+          courseClasses.indexes = courseClasses.indexes.filter(
+            (index) => !ignoreIndexes.has(index.index)
+          );
+        }
+      }
+
       const now = new Date();
       const result = await new Promise<GeneratedTimetableWithScore[]>(
         (resolve, reject) => {
@@ -369,7 +385,15 @@ function GenerateTimetableSection({
               resolve(event.data);
             };
             worker.onerror = (event: ErrorEvent) => {
-              reject(event.error);
+              if (event.error instanceof Error) {
+                reject(event.error);
+              } else {
+                reject(
+                  new Error(
+                    "An unknown error occurred when generating the timetable."
+                  )
+                );
+              }
             };
             worker.postMessage({
               factors: timetableGeneratorStore.factors,

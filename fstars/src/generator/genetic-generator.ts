@@ -353,6 +353,10 @@ export class GeneticGenerator {
       courseIndexSelection: {},
     };
     this.courses.forEach((course, courseCode) => {
+      if (course.indexes.length <= 0) {
+        console.log(`Course ${courseCode} has no indexes!`);
+        return;
+      }
       const selectedIndex =
         course.indexes[
           Math.min(
@@ -377,6 +381,10 @@ export class GeneticGenerator {
       courseIndexSelection: {},
     };
     this.courses.forEach((course, courseCode) => {
+      if (course.indexes.length <= 0) {
+        console.log(`Course ${courseCode} has no indexes!`);
+        return;
+      }
       if (rng.quick() < mutationProbability) {
         timetable.courseIndexSelection[courseCode] =
           course.indexes[
@@ -432,6 +440,15 @@ export class GeneticGenerator {
 
     const results = top.slice(0, N);
     return results;
+  }
+
+  private reconcileMissingIndexes(timetable: GeneratedTimetable) {
+    // Default to "" if the index is not found.
+    for (const courseCode of this.courses.keys()) {
+      if (!timetable.courseIndexSelection[courseCode]) {
+        timetable.courseIndexSelection[courseCode] = "";
+      }
+    }
   }
 
   public generate(
@@ -490,6 +507,14 @@ export class GeneticGenerator {
       iterationTimetables = nextGeneration;
     }
 
-    return this.getTopTimetables(iterationTimetables, options.returnTopN, true);
+    const topN = this.getTopTimetables(
+      iterationTimetables,
+      options.returnTopN,
+      true
+    );
+    topN.forEach((timetable) => {
+      this.reconcileMissingIndexes(timetable.timetable);
+    });
+    return topN;
   }
 }
