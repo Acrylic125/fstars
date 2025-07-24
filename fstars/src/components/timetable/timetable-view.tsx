@@ -127,7 +127,12 @@ export function TimetableView({ id }: { id: string }) {
           weeks: c.weeks,
         };
         if (
-          !entry.weeks.some((week) => (selectedWeeksBitMask & (1 << week)) > 0)
+          !entry.weeks.some((week) => {
+            const weekIndex = week - 1;
+            return (
+              weekIndex < 0 || (selectedWeeksBitMask & (1 << weekIndex)) > 0
+            );
+          })
         ) {
           continue;
         }
@@ -158,7 +163,10 @@ export function TimetableView({ id }: { id: string }) {
         weeks: c.weeks,
       };
       if (
-        !entry.weeks.some((week) => (selectedWeeksBitMask & (1 << week)) > 0)
+        !entry.weeks.some((week) => {
+          const weekIndex = week - 1;
+          return weekIndex < 0 || (selectedWeeksBitMask & (1 << weekIndex)) > 0;
+        })
       ) {
         continue;
       }

@@ -43,8 +43,8 @@ export const TimetableSchema = z.object({
   acadYear: AcadYearSchema,
   plans: z
     .map(PlanIdSchema, PlanSchema)
-    .default(new Map())
-    .or(fallback(new Map())),
+    .default(new Map<PlanId, Plan>())
+    .or(fallback(new Map<PlanId, Plan>())),
   selectedGeneratorId: z.string().default("").or(fallback("")),
   selectedPlanId: PlanIdSchema.default("").or(fallback("")),
 });
