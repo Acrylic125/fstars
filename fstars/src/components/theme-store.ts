@@ -1,11 +1,16 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { z } from "zod";
-import { fallback } from "@/lib/zod";
+import { fallback, injectDefaults } from "@/lib/zod";
 
-const ThemeStoreStateSchema = z.object({
-  theme: z.enum(["light", "dark"]).default("dark").or(fallback("dark")),
-});
+const ThemeStoreStateSchema = injectDefaults(
+  z.object({
+    theme: z.enum(["light", "dark"]),
+  }),
+  {
+    theme: "dark",
+  }
+);
 
 type ThemeStoreState = z.infer<typeof ThemeStoreStateSchema>;
 
