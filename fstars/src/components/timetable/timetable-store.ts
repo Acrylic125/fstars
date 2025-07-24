@@ -4,6 +4,7 @@ import superjson from "superjson";
 import { AcadYear, AcadYearSchema, Program, ProgramSchema } from "@/lib/types";
 import { nanoid } from "nanoid";
 import z from "zod";
+import { fallback, injectDefaults } from "@/lib/zod";
 
 export const TimetableIdSchema = z.string();
 export const PlanIdSchema = z.string();
@@ -17,13 +18,19 @@ export type CourseIndex = z.infer<typeof CourseIndexSchema>;
 
 export const PlanSchema = z.object({
   id: PlanIdSchema,
-  name: z.string(),
+  name: z.string().default("New Plan").or(fallback("New Plan")),
   courses: z.map(
     CourseCodeSchema,
-    z.object({
-      index: CourseIndexSchema,
-      ignoreIndexes: z.set(CourseIndexSchema),
-    })
+    injectDefaults(
+      z.object({
+        index: CourseIndexSchema,
+        ignoreIndexes: z.set(CourseIndexSchema),
+      }),
+      {
+        index: "",
+        ignoreIndexes: new Set<string>(),
+      }
+    )
   ),
 });
 
@@ -31,12 +38,15 @@ export type Plan = z.infer<typeof PlanSchema>;
 
 export const TimetableSchema = z.object({
   id: TimetableIdSchema,
-  name: z.string(),
+  name: z.string().default("New Timetable").or(fallback("New Timetable")),
   program: ProgramSchema,
   acadYear: AcadYearSchema,
-  plans: z.map(PlanIdSchema, PlanSchema).default(new Map()),
-  selectedGeneratorId: z.string().default(""),
-  selectedPlanId: PlanIdSchema.default(""),
+  plans: z
+    .map(PlanIdSchema, PlanSchema)
+    .default(new Map())
+    .or(fallback(new Map())),
+  selectedGeneratorId: z.string().default("").or(fallback("")),
+  selectedPlanId: PlanIdSchema.default("").or(fallback("")),
 });
 
 export type Timetable = z.infer<typeof TimetableSchema>;
