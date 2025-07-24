@@ -175,6 +175,15 @@ export function TimetableCoursesRow({
   );
 }
 
+export function TimetableCoursePlansHeader({ id }: { id: string }) {
+  return (
+    <div className="w-full h-fit flex flex-row items-center justify-between gap-2 px-4 pb-4">
+      <h2 className="text-base font-semibold">Course Plans</h2>
+      <Button size="sm">Export</Button>
+    </div>
+  );
+}
+
 export function TimetableCoursesPanel({ id }: { id: string }) {
   const timetableStore = useTimetableStore(
     useShallow((state) => {
@@ -295,7 +304,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
 
   return (
     <div className="w-full border border-border bg-card rounded-lg pt-4 pb-0 flex flex-col">
-      <h2 className="text-base font-semibold px-4 pb-2">Courses</h2>
+      <TimetableCoursePlansHeader id={id} />
       <div className="flex flex-row gap-2 px-4">
         <SelectPlanCombobox timetableId={id} />
         {timetableStore && timetableStore.selectedPlanId ? (
