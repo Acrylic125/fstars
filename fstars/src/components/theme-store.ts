@@ -9,7 +9,7 @@ type ThemeStore = {
 export const useThemeStore = create<ThemeStore>()(
   persist(
     (set) => ({
-      theme: "light",
+      theme: "dark",
       setTheme: (theme: "light" | "dark") => set({ theme }),
     }),
     { name: "theme", storage: createJSONStorage(() => localStorage) }
