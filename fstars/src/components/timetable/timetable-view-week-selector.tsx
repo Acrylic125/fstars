@@ -57,6 +57,13 @@ export function TimetableViewWeekSelector() {
                   "rounded-l-none": isPreviousSelected && isSelected,
                 }
               )}
+              onDoubleClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const newSelectedBitMask = 1 << i;
+                setSelectedBitMask(newSelectedBitMask);
+                lastSelectedWeek.current = i;
+              }}
               onClick={(e) => {
                 let newSelectedBitMask = selectedWeeksBitMask ^ (1 << i);
                 if (e.altKey) {
