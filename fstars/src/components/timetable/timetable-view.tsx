@@ -15,6 +15,7 @@ import {
 import { isIntersectingDate } from "@/generator/utils";
 import { cn } from "@/lib/utils";
 import { AlertTriangleIcon, ExpandIcon } from "lucide-react";
+import { useTimetableViewWeekSelector } from "./timetable-view-week-selector";
 
 type FCEvent = {
   title: string;
@@ -88,6 +89,11 @@ export function TimetableView({ id }: { id: string }) {
       enabled: !!courseCodes && !!timetableStore?.acadYear,
     }
   );
+  const { selectedWeeksBitMask } = useTimetableViewWeekSelector(
+    useShallow((state) => ({
+      selectedWeeksBitMask: state.selectedWeeksBitMask,
+    }))
+  );
 
   const events = useMemo(() => {
     if (!timetableStore?.courses) {
@@ -114,6 +120,18 @@ export function TimetableView({ id }: { id: string }) {
           max: courseCodes.length,
           scheme: colorScheme,
         });
+
+        const entry = {
+          type: c.type,
+          venue: c.venue,
+          weeks: c.weeks,
+        };
+        if (
+          !entry.weeks.some((week) => (selectedWeeksBitMask & (1 << week)) > 0)
+        ) {
+          continue;
+        }
+
         const event: FCEvent & ExtendedProps = {
           title: c.course.code,
           start: getEventDate(c.day + 1, c.from.hour, c.from.minute),
@@ -125,13 +143,7 @@ export function TimetableView({ id }: { id: string }) {
           code: c.course.code,
           name: c.course.name,
           index: c.index,
-          entries: [
-            {
-              type: c.type,
-              venue: c.venue,
-              weeks: c.weeks,
-            },
-          ],
+          entries: [entry],
           isError: false,
           day: c.day,
         };
@@ -140,11 +152,17 @@ export function TimetableView({ id }: { id: string }) {
         continue;
       }
 
-      group.entries.push({
+      const entry = {
         type: c.type,
         venue: c.venue,
         weeks: c.weeks,
-      });
+      };
+      if (
+        !entry.weeks.some((week) => (selectedWeeksBitMask & (1 << week)) > 0)
+      ) {
+        continue;
+      }
+      group.entries.push(entry);
     }
 
     for (const events of eventRefsInDay) {
@@ -194,7 +212,12 @@ export function TimetableView({ id }: { id: string }) {
       }
     }
     return Array.from(aggregatedEventMap.values());
-  }, [timetableStore?.courses, selectedCourseClasses.data, courseCodes]);
+  }, [
+    timetableStore?.courses,
+    selectedCourseClasses.data,
+    courseCodes,
+    selectedWeeksBitMask,
+  ]);
 
   return (
     <FullCalendar
