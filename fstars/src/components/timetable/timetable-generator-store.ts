@@ -4,148 +4,292 @@ import superjson from "superjson";
 import { nanoid } from "nanoid";
 import z from "zod";
 import { asPriorityNumber } from "./utils";
+import "@/lib/zod";
+import { injectDefaults } from "@/lib/zod";
 
 export const TimetableGeneratorIdSchema = z.string();
 
 export type TimetableGeneratorId = z.infer<typeof TimetableGeneratorIdSchema>;
 
+// export const TimetableGeneratorSchema = z.object({
+//   id: TimetableGeneratorIdSchema,
+//   name: z.string(),
+//   factors: z.object({
+//     noClassDays: z
+//       .object({
+//         priority: z
+//           .number()
+//           .min(0)
+//           .max(3)
+//           .default(asPriorityNumber("Important")),
+//       })
+//       .default({ priority: asPriorityNumber("Important") }),
+//     consecutiveClasses: z
+//       .object({
+//         before1h: z.object({
+//           priority: z
+//             .number()
+//             .min(0)
+//             .max(3)
+//             .default(asPriorityNumber("Not Preferred")),
+//         }),
+//         between1hAnd2h: z.object({
+//           priority: z
+//             .number()
+//             .min(0)
+//             .max(3)
+//             .default(asPriorityNumber("Not Preferred")),
+//         }),
+//         between2hAnd3h: z.object({
+//           priority: z
+//             .number()
+//             .min(0)
+//             .max(3)
+//             .default(asPriorityNumber("Preferred")),
+//         }),
+//         between3hAnd4h: z.object({
+//           priority: z
+//             .number()
+//             .min(0)
+//             .max(3)
+//             .default(asPriorityNumber("Preferred")),
+//         }),
+//         after4h: z.object({
+//           priority: z
+//             .number()
+//             .min(0)
+//             .max(3)
+//             .default(asPriorityNumber("Not Preferred")),
+//         }),
+//       })
+//       .default({
+//         before1h: { priority: asPriorityNumber("Not Preferred") },
+//         between1hAnd2h: { priority: asPriorityNumber("Not Preferred") },
+//         between2hAnd3h: { priority: asPriorityNumber("Preferred") },
+//         between3hAnd4h: { priority: asPriorityNumber("Preferred") },
+//         after4h: { priority: asPriorityNumber("Not Preferred") },
+//       }),
+//     gapsBetweenClasses: z
+//       .object({
+//         before1h: z.object({
+//           priority: z
+//             .number()
+//             .min(0)
+//             .max(3)
+//             .default(asPriorityNumber("Important")),
+//         }),
+//         between1hAnd2h: z.object({
+//           priority: z
+//             .number()
+//             .min(0)
+//             .max(3)
+//             .default(asPriorityNumber("Preferred")),
+//         }),
+//         between2hAnd3h: z.object({
+//           priority: z
+//             .number()
+//             .min(0)
+//             .max(3)
+//             .default(asPriorityNumber("Not Preferred")),
+//         }),
+//         between3hAnd4h: z.object({
+//           priority: z
+//             .number()
+//             .min(0)
+//             .max(3)
+//             .default(asPriorityNumber("Not Preferred")),
+//         }),
+//         after4h: z.object({
+//           priority: z
+//             .number()
+//             .min(0)
+//             .max(3)
+//             .default(asPriorityNumber("Not Preferred")),
+//         }),
+//       })
+//       .default({
+//         before1h: { priority: asPriorityNumber("Important") },
+//         between1hAnd2h: { priority: asPriorityNumber("Preferred") },
+//         between2hAnd3h: { priority: asPriorityNumber("Not Preferred") },
+//         between3hAnd4h: { priority: asPriorityNumber("Not Preferred") },
+//         after4h: { priority: asPriorityNumber("Not Preferred") },
+//       }),
+//     startAfterAndEndBefore: z
+//       .object({
+//         startAfter: z
+//           .object({
+//             hour: z.number().min(0).max(23).default(0),
+//             minute: z.number().min(0).max(59).default(0),
+//             priority: z
+//               .number()
+//               .min(0)
+//               .max(3)
+//               .default(asPriorityNumber("Preferred")),
+//           })
+//           .default({
+//             hour: 8,
+//             minute: 0,
+//             priority: asPriorityNumber("Preferred"),
+//           }),
+//         endBefore: z
+//           .object({
+//             hour: z.number().min(0).max(23).default(0),
+//             minute: z.number().min(0).max(59).default(0),
+//             priority: z
+//               .number()
+//               .min(0)
+//               .max(3)
+//               .default(asPriorityNumber("Preferred")),
+//           })
+//           .default({
+//             hour: 17,
+//             minute: 0,
+//             priority: asPriorityNumber("Preferred"),
+//           }),
+//       })
+//       .default({
+//         startAfter: {
+//           hour: 8,
+//           minute: 0,
+//           priority: asPriorityNumber("Preferred"),
+//         },
+//         endBefore: {
+//           hour: 17,
+//           minute: 0,
+//           priority: asPriorityNumber("Preferred"),
+//         },
+//       }),
+//     classDistribution: z
+//       .object({
+//         distribution: z.enum(["Even", "Skewed"]).default("Even"),
+//         priority: z.number().min(0).max(3).default(asPriorityNumber("None")),
+//       })
+//       .default({
+//         distribution: "Even",
+//         priority: asPriorityNumber("None"),
+//       }),
+//     matchWithPlan: z
+//       .object({
+//         matchWith: z.array(
+//           z.object({
+//             name: z.string().default("Imported Plan"),
+//             selections: z
+//               .array(
+//                 z
+//                   .object({
+//                     courseCode: z.string().default(""),
+//                     index: z.string().default(""),
+//                   })
+//                   .default({
+//                     courseCode: "",
+//                     index: "",
+//                   })
+//               )
+//               .default([]),
+//             priority: z
+//               .number()
+//               .min(0)
+//               .max(3)
+//               .default(asPriorityNumber("Preferred")),
+//           })
+//         ),
+//       })
+//       .default({
+//         matchWith: [],
+//       }),
+//   }),
+// });
+
 export const TimetableGeneratorSchema = z.object({
   id: TimetableGeneratorIdSchema,
   name: z.string(),
-  factors: z.object({
-    noClassDays: z
-      .object({
-        priority: z
-          .number()
-          .min(0)
-          .max(3)
-          .default(asPriorityNumber("Important")),
-      })
-      .default({ priority: asPriorityNumber("Important") }),
-    consecutiveClasses: z
-      .object({
+  factors: injectDefaults(
+    z.object({
+      noClassDays: z.object({
+        priority: z.number().min(0).max(3),
+      }),
+      consecutiveClasses: z.object({
         before1h: z.object({
-          priority: z
-            .number()
-            .min(0)
-            .max(3)
-            .default(asPriorityNumber("Not Preferred")),
+          priority: z.number().min(0).max(3),
         }),
         between1hAnd2h: z.object({
-          priority: z
-            .number()
-            .min(0)
-            .max(3)
-            .default(asPriorityNumber("Not Preferred")),
+          priority: z.number().min(0).max(3),
         }),
         between2hAnd3h: z.object({
-          priority: z
-            .number()
-            .min(0)
-            .max(3)
-            .default(asPriorityNumber("Preferred")),
+          priority: z.number().min(0).max(3),
         }),
         between3hAnd4h: z.object({
-          priority: z
-            .number()
-            .min(0)
-            .max(3)
-            .default(asPriorityNumber("Preferred")),
+          priority: z.number().min(0).max(3),
         }),
         after4h: z.object({
-          priority: z
-            .number()
-            .min(0)
-            .max(3)
-            .default(asPriorityNumber("Not Preferred")),
+          priority: z.number().min(0).max(3),
         }),
-      })
-      .default({
+      }),
+      gapsBetweenClasses: z.object({
+        before1h: z.object({
+          priority: z.number().min(0).max(3),
+        }),
+        between1hAnd2h: z.object({
+          priority: z.number().min(0).max(3),
+        }),
+        between2hAnd3h: z.object({
+          priority: z.number().min(0).max(3),
+        }),
+        between3hAnd4h: z.object({
+          priority: z.number().min(0).max(3),
+        }),
+        after4h: z.object({
+          priority: z.number().min(0).max(3),
+        }),
+      }),
+      startAfterAndEndBefore: z.object({
+        startAfter: z.object({
+          hour: z.number().min(0).max(23),
+          minute: z.number().min(0).max(59),
+          priority: z.number().min(0).max(3),
+        }),
+        endBefore: z.object({
+          hour: z.number().min(0).max(23),
+          minute: z.number().min(0).max(59),
+          priority: z.number().min(0).max(3),
+        }),
+      }),
+      classDistribution: z.object({
+        distribution: z.enum(["Even", "Skewed"]),
+        priority: z.number().min(0).max(3),
+      }),
+      matchWithPlan: z.object({
+        matchWith: z.array(
+          z.object({
+            name: z.string().default("Imported Plan"),
+            selections: z.array(
+              z.object({
+                courseCode: z.string().default(""),
+                index: z.string().default(""),
+              })
+            ),
+            priority: z.number().min(0).max(3),
+          })
+        ),
+      }),
+    }),
+    {
+      noClassDays: { priority: asPriorityNumber("Important") },
+      consecutiveClasses: {
         before1h: { priority: asPriorityNumber("Not Preferred") },
         between1hAnd2h: { priority: asPriorityNumber("Not Preferred") },
         between2hAnd3h: { priority: asPriorityNumber("Preferred") },
         between3hAnd4h: { priority: asPriorityNumber("Preferred") },
         after4h: { priority: asPriorityNumber("Not Preferred") },
-      }),
-    gapsBetweenClasses: z
-      .object({
-        before1h: z.object({
-          priority: z
-            .number()
-            .min(0)
-            .max(3)
-            .default(asPriorityNumber("Important")),
-        }),
-        between1hAnd2h: z.object({
-          priority: z
-            .number()
-            .min(0)
-            .max(3)
-            .default(asPriorityNumber("Preferred")),
-        }),
-        between2hAnd3h: z.object({
-          priority: z
-            .number()
-            .min(0)
-            .max(3)
-            .default(asPriorityNumber("Not Preferred")),
-        }),
-        between3hAnd4h: z.object({
-          priority: z
-            .number()
-            .min(0)
-            .max(3)
-            .default(asPriorityNumber("Not Preferred")),
-        }),
-        after4h: z.object({
-          priority: z
-            .number()
-            .min(0)
-            .max(3)
-            .default(asPriorityNumber("Not Preferred")),
-        }),
-      })
-      .default({
+      },
+      gapsBetweenClasses: {
         before1h: { priority: asPriorityNumber("Important") },
         between1hAnd2h: { priority: asPriorityNumber("Preferred") },
         between2hAnd3h: { priority: asPriorityNumber("Not Preferred") },
         between3hAnd4h: { priority: asPriorityNumber("Not Preferred") },
         after4h: { priority: asPriorityNumber("Not Preferred") },
-      }),
-    startAfterAndEndBefore: z
-      .object({
-        startAfter: z
-          .object({
-            hour: z.number().min(0).max(23).default(0),
-            minute: z.number().min(0).max(59).default(0),
-            priority: z
-              .number()
-              .min(0)
-              .max(3)
-              .default(asPriorityNumber("Preferred")),
-          })
-          .default({
-            hour: 8,
-            minute: 0,
-            priority: asPriorityNumber("Preferred"),
-          }),
-        endBefore: z
-          .object({
-            hour: z.number().min(0).max(23).default(0),
-            minute: z.number().min(0).max(59).default(0),
-            priority: z
-              .number()
-              .min(0)
-              .max(3)
-              .default(asPriorityNumber("Preferred")),
-          })
-          .default({
-            hour: 17,
-            minute: 0,
-            priority: asPriorityNumber("Preferred"),
-          }),
-      })
-      .default({
+      },
+      startAfterAndEndBefore: {
         startAfter: {
           hour: 8,
           minute: 0,
@@ -156,46 +300,16 @@ export const TimetableGeneratorSchema = z.object({
           minute: 0,
           priority: asPriorityNumber("Preferred"),
         },
-      }),
-    classDistribution: z
-      .object({
-        distribution: z.enum(["Even", "Skewed"]).default("Even"),
-        priority: z.number().min(0).max(3).default(asPriorityNumber("None")),
-      })
-      .default({
+      },
+      classDistribution: {
         distribution: "Even",
         priority: asPriorityNumber("None"),
-      }),
-    matchWithPlan: z
-      .object({
-        matchWith: z.array(
-          z.object({
-            name: z.string().default("Imported Plan"),
-            selections: z
-              .array(
-                z
-                  .object({
-                    courseCode: z.string().default(""),
-                    index: z.string().default(""),
-                  })
-                  .default({
-                    courseCode: "",
-                    index: "",
-                  })
-              )
-              .default([]),
-            priority: z
-              .number()
-              .min(0)
-              .max(3)
-              .default(asPriorityNumber("Preferred")),
-          })
-        ),
-      })
-      .default({
+      },
+      matchWithPlan: {
         matchWith: [],
-      }),
-  }),
+      },
+    }
+  ),
 });
 
 export type TimetableGenerator = z.infer<typeof TimetableGeneratorSchema>;
