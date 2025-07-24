@@ -32,6 +32,13 @@ export default function RootLayout({
           src="//unpkg.com/react-scan/dist/auto.global.js"
         />
       </head> */}
+      <head>
+        <script
+          defer
+          src="https://cloud.umami.is/script.js"
+          data-website-id="960f5a89-4c32-4ca4-92eb-0d821d2e9677"
+        ></script>
+      </head>
       <Providers className={cn(geistSans.variable, geistMono.variable)}>
         {children}
       </Providers>
