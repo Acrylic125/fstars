@@ -20,9 +20,10 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
             <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
               <TimetableHeader id={id} />
               <TimetableView id={id} />
+              <div className="w-full h-20 md:h-24 lg:h-28" />
             </div>
             <ScrollBar orientation="horizontal" />
-            <TimetableViewWeekSelector />
+            <TimetableViewWeekSelector className="absolute bottom-4 md:bottom-8 lg:bottom-12 left-1/2 -translate-x-1/2" />
           </ScrollArea>
           <ScrollArea className="w-md md:w-lg lg:w-xl flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)]">
             <div className="flex flex-col gap-2 md:gap-4 items-center py-8 pl-2 pr-4 md:pl-4 md:pr-8">

@@ -23,7 +23,11 @@ export const useTimetableViewWeekSelector = create<TimetableViewWeekSelector>(
   })
 );
 
-export function TimetableViewWeekSelector() {
+export function TimetableViewWeekSelector({
+  className,
+}: {
+  className?: string;
+}) {
   const lastSelectedWeek = useRef(0);
   const { selectedWeeksBitMask, setSelectedBitMask } =
     useTimetableViewWeekSelector(
@@ -34,7 +38,12 @@ export function TimetableViewWeekSelector() {
     );
 
   return (
-    <div className="absolute bottom-8 md:bottom-12 lg:bottom-16 left-1/2 -translate-x-1/2 dark:bg-neutral-800/30 backdrop-blur-md border border-border rounded-2xl w-fit h-14 z-10 flex flex-row items-center px-4 pointer-events-none">
+    <div
+      className={cn(
+        "dark:bg-neutral-800/30 backdrop-blur-md border border-border rounded-2xl w-fit h-14 z-10 flex flex-row items-center px-4 pointer-events-none",
+        className
+      )}
+    >
       <p className="text-sm text-muted-foreground pointer-events-none">Week</p>
       <div className="ml-4 w-[1px] h-full bg-border" />
       <div className="flex flex-row items-center pointer-events-auto">
