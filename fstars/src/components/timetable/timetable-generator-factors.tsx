@@ -120,6 +120,17 @@ export function NoClassDaysFactorView({
   );
 }
 
+const consecutiveClassesOptions: {
+  value: keyof TimetableGenerator["factors"]["consecutiveClasses"];
+  label: string;
+}[] = [
+  { value: "before1h", label: "< 1h" },
+  { value: "between1hAnd2h", label: "1h - 2h" },
+  { value: "between2hAnd3h", label: "2h - 3h" },
+  { value: "between3hAnd4h", label: "3h - 4h" },
+  { value: "after4h", label: "After 4h" },
+];
+
 export function ConsecutiveClassesFactorView({
   generatorId,
 }: {
@@ -165,92 +176,44 @@ export function ConsecutiveClassesFactorView({
       <CollapsibleContent>
         {generatorStore?.consecutiveClasses && (
           <div className="flex flex-col gap-2 px-4 py-2">
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-muted-foreground text-sm">{"< 1h"}</p>
-              <SelectPriority
-                selected={asPriority(
-                  generatorStore.consecutiveClasses.before1h.priority
-                )}
-                onChange={(value) => {
-                  changeSelection({
-                    ...generatorStore.consecutiveClasses,
-                    before1h: {
-                      priority: asPriorityNumber(value),
-                    },
-                  });
-                }}
-              />
-            </div>
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-muted-foreground text-sm">1h - 2h</p>
-              <SelectPriority
-                selected={asPriority(
-                  generatorStore.consecutiveClasses.between1hAnd2h.priority
-                )}
-                onChange={(value) => {
-                  changeSelection({
-                    ...generatorStore.consecutiveClasses,
-                    between1hAnd2h: {
-                      priority: asPriorityNumber(value),
-                    },
-                  });
-                }}
-              />
-            </div>
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-muted-foreground text-sm">2h - 3h</p>
-              <SelectPriority
-                selected={asPriority(
-                  generatorStore.consecutiveClasses.between2hAnd3h.priority
-                )}
-                onChange={(value) => {
-                  changeSelection({
-                    ...generatorStore.consecutiveClasses,
-                    between2hAnd3h: {
-                      priority: asPriorityNumber(value),
-                    },
-                  });
-                }}
-              />
-            </div>
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-muted-foreground text-sm">3h - 4h</p>
-              <SelectPriority
-                selected={asPriority(
-                  generatorStore.consecutiveClasses.between3hAnd4h.priority
-                )}
-                onChange={(value) => {
-                  changeSelection({
-                    ...generatorStore.consecutiveClasses,
-                    between3hAnd4h: {
-                      priority: asPriorityNumber(value),
-                    },
-                  });
-                }}
-              />
-            </div>
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-muted-foreground text-sm">{"> 4h"}</p>
-              <SelectPriority
-                selected={asPriority(
-                  generatorStore.consecutiveClasses.after4h.priority
-                )}
-                onChange={(value) => {
-                  changeSelection({
-                    ...generatorStore.consecutiveClasses,
-                    after4h: {
-                      priority: asPriorityNumber(value),
-                    },
-                  });
-                }}
-              />
-            </div>
+            {consecutiveClassesOptions.map((option) => (
+              <div
+                className="flex flex-row justify-between items-center"
+                key={option.value}
+              >
+                <p className="text-muted-foreground text-sm">{option.label}</p>
+                <SelectPriority
+                  selected={asPriority(
+                    generatorStore.consecutiveClasses[option.value].priority
+                  )}
+                  onChange={(value) => {
+                    changeSelection({
+                      ...generatorStore.consecutiveClasses,
+                      [option.value]: {
+                        priority: asPriorityNumber(value),
+                      },
+                    });
+                  }}
+                />
+              </div>
+            ))}
           </div>
         )}
       </CollapsibleContent>
     </Collapsible>
   );
 }
+
+const gapsBetweenClassesOptions: {
+  value: keyof TimetableGenerator["factors"]["gapsBetweenClasses"];
+  label: string;
+}[] = [
+  { value: "before1h", label: "< 1h" },
+  { value: "between1hAnd2h", label: "1h - 2h" },
+  { value: "between2hAnd3h", label: "2h - 3h" },
+  { value: "between3hAnd4h", label: "3h - 4h" },
+  { value: "after4h", label: "After 4h" },
+];
 
 export function GapsBetweenClassesFactorView({
   generatorId,
@@ -297,86 +260,27 @@ export function GapsBetweenClassesFactorView({
       <CollapsibleContent>
         {generatorStore?.gapsBetweenClasses && (
           <div className="flex flex-col gap-2 px-4 py-2">
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-muted-foreground text-sm">{"< 1h"}</p>
-              <SelectPriority
-                selected={asPriority(
-                  generatorStore.gapsBetweenClasses.before1h.priority
-                )}
-                onChange={(value) => {
-                  changeSelection({
-                    ...generatorStore.gapsBetweenClasses,
-                    before1h: {
-                      priority: asPriorityNumber(value),
-                    },
-                  });
-                }}
-              />
-            </div>
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-muted-foreground text-sm">1h - 2h</p>
-              <SelectPriority
-                selected={asPriority(
-                  generatorStore.gapsBetweenClasses.between1hAnd2h.priority
-                )}
-                onChange={(value) => {
-                  changeSelection({
-                    ...generatorStore.gapsBetweenClasses,
-                    between1hAnd2h: {
-                      priority: asPriorityNumber(value),
-                    },
-                  });
-                }}
-              />
-            </div>
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-muted-foreground text-sm">2h - 3h</p>
-              <SelectPriority
-                selected={asPriority(
-                  generatorStore.gapsBetweenClasses.between2hAnd3h.priority
-                )}
-                onChange={(value) => {
-                  changeSelection({
-                    ...generatorStore.gapsBetweenClasses,
-                    between2hAnd3h: {
-                      priority: asPriorityNumber(value),
-                    },
-                  });
-                }}
-              />
-            </div>
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-muted-foreground text-sm">3h - 4h</p>
-              <SelectPriority
-                selected={asPriority(
-                  generatorStore.gapsBetweenClasses.between3hAnd4h.priority
-                )}
-                onChange={(value) => {
-                  changeSelection({
-                    ...generatorStore.gapsBetweenClasses,
-                    between3hAnd4h: {
-                      priority: asPriorityNumber(value),
-                    },
-                  });
-                }}
-              />
-            </div>
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-muted-foreground text-sm">{"> 4h"}</p>
-              <SelectPriority
-                selected={asPriority(
-                  generatorStore.gapsBetweenClasses.after4h.priority
-                )}
-                onChange={(value) => {
-                  changeSelection({
-                    ...generatorStore.gapsBetweenClasses,
-                    after4h: {
-                      priority: asPriorityNumber(value),
-                    },
-                  });
-                }}
-              />
-            </div>
+            {gapsBetweenClassesOptions.map((option) => (
+              <div
+                className="flex flex-row justify-between items-center"
+                key={option.value}
+              >
+                <p className="text-muted-foreground text-sm">{option.label}</p>
+                <SelectPriority
+                  selected={asPriority(
+                    generatorStore.gapsBetweenClasses[option.value].priority
+                  )}
+                  onChange={(value) => {
+                    changeSelection({
+                      ...generatorStore.gapsBetweenClasses,
+                      [option.value]: {
+                        priority: asPriorityNumber(value),
+                      },
+                    });
+                  }}
+                />
+              </div>
+            ))}
           </div>
         )}
       </CollapsibleContent>
