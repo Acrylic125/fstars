@@ -45,7 +45,7 @@ export function TimetableViewWeekSelector({
       )}
     >
       <p className="text-sm text-muted-foreground pointer-events-none">Week</p>
-      <div className="ml-4 w-[1px] h-full bg-border" />
+      <div className="ml-4 mr-4 w-[1px] h-full bg-border" />
       <div className="flex flex-row items-center pointer-events-auto">
         {new Array(Config.lastWeek).fill(0).map((_, i) => {
           const isSelected = (selectedWeeksBitMask & (1 << i)) > 0;
