@@ -19,9 +19,13 @@ import { SelectIndexCombobox } from "./select-index-combobox";
 import { type AppRouter } from "@/server/router";
 import { inferRouterOutputs } from "@trpc/server";
 import { AcadYear } from "@/lib/types";
-import { cn } from "@/lib/utils";
-import { nanoid } from "nanoid";
 import { Indicator, useIndicator } from "../ui/indicator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 export function TimetableHeader({ id }: { id: string }) {
   const timetable = useTimetableStore(
@@ -209,23 +213,50 @@ export function TimetableCoursePlansHeader({ id }: { id: string }) {
   return (
     <div className="w-full h-fit flex flex-row items-center justify-between gap-2 px-4 pb-4">
       <h2 className="text-base font-semibold">Course Plans</h2>
-      <div className="relative">
-        <Indicator controls={controls} />
-        <Button
-          size="sm"
-          disabled={!selectedPlan}
-          onClick={() => {
-            if (!selectedPlan) {
-              return;
-            }
-            controls.showIndicator("Copied to clipboard!", "success");
-            navigator.clipboard.writeText(
-              serializePlanCourses(selectedPlan.courses)
-            );
-          }}
-        >
-          Share
-        </Button>
+      <div className="flex flex-row gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" disabled={!selectedPlan} variant="outline">
+              Import
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem>
+              <div className="flex flex-col justify-center pr-8">
+                <p>Import to Current Plan</p>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <div className="flex flex-col justify-center pr-8">
+                <p>Import to New Plan</p>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <div className="flex flex-col justify-center pr-8">
+                <p>Import to Copy of Current Plan</p>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="relative">
+          <Indicator controls={controls} />
+          <Button
+            size="sm"
+            disabled={!selectedPlan}
+            onClick={() => {
+              if (!selectedPlan) {
+                return;
+              }
+              controls.showIndicator("Copied to clipboard!", "success");
+              navigator.clipboard.writeText(
+                serializePlanCourses(selectedPlan.courses)
+              );
+            }}
+          >
+            Share
+          </Button>
+        </div>
       </div>
     </div>
   );

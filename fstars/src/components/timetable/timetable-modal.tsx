@@ -120,11 +120,11 @@ const NewPlanFormSchema = z.object({
 });
 
 export function NewPlanDialog({
-  options: { timetableId },
+  options,
   isOpen,
   setIsOpen,
 }: {
-  options: ExtractOptions<"create-plan">;
+  options?: ExtractOptions<"create-plan">;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }) {
@@ -145,9 +145,12 @@ export function NewPlanDialog({
   // We will use RQ to do state management despite the action being synchronous.
   const createPlanMutation = useMutation({
     mutationFn: async (data: z.infer<typeof NewPlanFormSchema>) => {
+      if (!options) {
+        return;
+      }
       timetableStore?.createPlan(
         {
-          timetableId,
+          timetableId: options.timetableId,
         },
         data.name
       );
@@ -218,18 +221,18 @@ const RenamePlanFormSchema = z.object({
 });
 
 export function RenamePlanDialog({
-  options: { planRef, defaultName },
+  options,
   isOpen,
   setIsOpen,
 }: {
-  options: ExtractOptions<"rename-plan">;
+  options?: ExtractOptions<"rename-plan">;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }) {
   const form = useForm<z.infer<typeof RenamePlanFormSchema>>({
     resolver: zodResolver(RenamePlanFormSchema),
     defaultValues: {
-      name: defaultName,
+      name: options?.defaultName ?? "",
     },
   });
   const timetableStore = useTimetableStore(
@@ -243,6 +246,10 @@ export function RenamePlanDialog({
   // We will use RQ to do state management despite the action being synchronous.
   const createPlanMutation = useMutation({
     mutationFn: async (data: z.infer<typeof RenamePlanFormSchema>) => {
+      if (!options) {
+        return;
+      }
+      const { planRef } = options;
       timetableStore?.changePlanName(planRef, data.name);
     },
   });
@@ -463,18 +470,18 @@ const RenameGeneratorFormSchema = z.object({
 });
 
 export function RenameGeneratorDialog({
-  options: { generatorRef, defaultName },
+  options,
   isOpen,
   setIsOpen,
 }: {
-  options: ExtractOptions<"rename-generator">;
+  options?: ExtractOptions<"rename-generator">;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }) {
   const form = useForm<z.infer<typeof RenameGeneratorFormSchema>>({
     resolver: zodResolver(RenameGeneratorFormSchema),
     defaultValues: {
-      name: defaultName,
+      name: options?.defaultName ?? "",
     },
   });
   const timetableGeneratorStore = useTimetableGeneratorStore(
@@ -488,6 +495,10 @@ export function RenameGeneratorDialog({
   // We will use RQ to do state management despite the action being synchronous.
   const renameGeneratorMutation = useMutation({
     mutationFn: async (data: z.infer<typeof RenameGeneratorFormSchema>) => {
+      if (!options) {
+        return;
+      }
+      const { generatorRef } = options;
       timetableGeneratorStore?.changeGeneratorName(generatorRef, data.name);
     },
   });
@@ -559,11 +570,11 @@ export function RenameGeneratorDialog({
 }
 
 export function DeleteGeneratorConfirmationDialog({
-  options: { generatorRef },
+  options,
   isOpen,
   setIsOpen,
 }: {
-  options: ExtractOptions<"delete-generator-confirmation">;
+  options?: ExtractOptions<"delete-generator-confirmation">;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }) {
@@ -578,6 +589,10 @@ export function DeleteGeneratorConfirmationDialog({
   // We will use RQ to do state management despite the action being synchronous.
   const deleteGeneratorMutation = useMutation({
     mutationFn: async () => {
+      if (!options) {
+        return;
+      }
+      const { generatorRef } = options;
       timetableStore?.deleteGenerator(generatorRef);
       setIsOpen(false);
     },
@@ -652,7 +667,7 @@ export function TimetableModal() {
         options={
           modalStore.action?.type === "create-plan"
             ? modalStore.action.options
-            : { timetableId: "" }
+            : undefined
         }
         isOpen={modalStore.action?.type === "create-plan"}
         setIsOpen={setOpen}
@@ -662,7 +677,7 @@ export function TimetableModal() {
         options={
           modalStore.action?.type === "rename-plan"
             ? modalStore.action.options
-            : { planRef: { timetableId: "", planId: "" }, defaultName: "" }
+            : undefined
         }
         isOpen={modalStore.action?.type === "rename-plan"}
         setIsOpen={setOpen}
@@ -677,7 +692,7 @@ export function TimetableModal() {
         options={
           modalStore.action?.type === "rename-generator"
             ? modalStore.action.options
-            : { generatorRef: "", defaultName: "" }
+            : undefined
         }
         isOpen={modalStore.action?.type === "rename-generator"}
         setIsOpen={setOpen}
@@ -687,7 +702,7 @@ export function TimetableModal() {
         options={
           modalStore.action?.type === "delete-generator-confirmation"
             ? modalStore.action.options
-            : { generatorRef: "" }
+            : undefined
         }
         isOpen={modalStore.action?.type === "delete-generator-confirmation"}
         setIsOpen={setOpen}
