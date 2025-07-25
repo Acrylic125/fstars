@@ -3,7 +3,7 @@ import * as React from "react";
 const SkewedDistributionIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 64 64"
+    viewBox="0 0 64 48"
     fill="none"
     {...props}
   >
