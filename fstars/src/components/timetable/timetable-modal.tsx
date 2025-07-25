@@ -87,31 +87,33 @@ type TimetableModalStore = {
   ) => void;
 };
 
-export const timetableModalStore = create<TimetableModalStore>((set, get) => ({
-  action: null,
-  setAction: (action, refreshKey = true) => {
-    if (action === null) {
-      return set({
-        action: null,
-      });
-    }
-    const curKey = get().action?.key;
-    if (refreshKey && curKey) {
+export const useTimetableModalStore = create<TimetableModalStore>(
+  (set, get) => ({
+    action: null,
+    setAction: (action, refreshKey = true) => {
+      if (action === null) {
+        return set({
+          action: null,
+        });
+      }
+      const curKey = get().action?.key;
+      if (refreshKey && curKey) {
+        return set({
+          action: {
+            ...action,
+            key: curKey,
+          },
+        });
+      }
       return set({
         action: {
           ...action,
-          key: curKey,
+          key: nanoid(16),
         },
       });
-    }
-    return set({
-      action: {
-        ...action,
-        key: nanoid(16),
-      },
-    });
-  },
-}));
+    },
+  })
+);
 
 const NewPlanFormSchema = z.object({
   name: z.string().min(1, "Please enter a plan name"),
@@ -628,7 +630,7 @@ export function DeleteGeneratorConfirmationDialog({
 }
 
 export function TimetableModal() {
-  const modalStore = timetableModalStore(
+  const modalStore = useTimetableModalStore(
     useShallow((state) => {
       return {
         action: state.action,

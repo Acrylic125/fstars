@@ -39,14 +39,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { timetableModalStore } from "./timetable-modal";
+import { useTimetableModalStore } from "./timetable-modal";
 import {
   TimetableGeneratorId,
   useTimetableGeneratorStore,
 } from "./timetable-generator-store";
 
 export function NewGeneratorDialogButton() {
-  const modalStore = timetableModalStore(
+  const modalStore = useTimetableModalStore(
     useShallow((state) => {
       return {
         setAction: state.setAction,
@@ -79,7 +79,7 @@ export function RenameGeneratorDialogButton({
   generatorRef: TimetableGeneratorId;
   defaultName: string;
 }) {
-  const modalStore = timetableModalStore(
+  const modalStore = useTimetableModalStore(
     useShallow((state) => {
       return {
         setAction: state.setAction,
@@ -107,7 +107,7 @@ export function RenameGeneratorDialogButton({
 export function SelectGeneratorCombobox() {
   const [open, setOpen] = useState(false);
 
-  const modalStore = timetableModalStore(
+  const modalStore = useTimetableModalStore(
     useShallow((state) => {
       return {
         setAction: state.setAction,

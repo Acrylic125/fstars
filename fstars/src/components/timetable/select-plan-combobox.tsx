@@ -39,14 +39,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { timetableModalStore } from "./timetable-modal";
+import { useTimetableModalStore } from "./timetable-modal";
 
 export function NewPlanDialogButton({
   timetableId,
 }: {
   timetableId: TimetableId;
 }) {
-  const modalStore = timetableModalStore(
+  const modalStore = useTimetableModalStore(
     useShallow((state) => {
       return {
         setAction: state.setAction,
@@ -81,7 +81,7 @@ export function RenamePlanDialogButton({
   planRef: TimetablePlanRef;
   defaultName: string;
 }) {
-  const modalStore = timetableModalStore(
+  const modalStore = useTimetableModalStore(
     useShallow((state) => {
       return {
         setAction: state.setAction,
