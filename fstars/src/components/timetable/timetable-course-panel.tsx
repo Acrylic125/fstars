@@ -1,9 +1,9 @@
 "use client";
 import { useShallow } from "zustand/react/shallow";
-import { PlanId, useTimetableStore } from "./timetable-store";
+import { Plan, PlanId, useTimetableStore } from "./timetable-store";
 import { asProgramName } from "./select-program-combox";
 import { Skeleton } from "../ui/skeleton";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SelectPlanCombobox } from "./select-plan-combobox";
 import { SelectCourseCombobox } from "./select-course-combobox";
 import { trpc } from "@/server/client";
@@ -19,6 +19,9 @@ import { SelectIndexCombobox } from "./select-index-combobox";
 import { type AppRouter } from "@/server/router";
 import { inferRouterOutputs } from "@trpc/server";
 import { AcadYear } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { nanoid } from "nanoid";
+import { Indicator, useIndicator } from "../ui/indicator";
 
 export function TimetableHeader({ id }: { id: string }) {
   const timetable = useTimetableStore(
@@ -175,11 +178,55 @@ export function TimetableCoursesRow({
   );
 }
 
+const PlanCoursesSerializer = {
+  noIndexSelection: "?",
+  entryDelimiter: ", \n",
+  stripChars: ["\n", "\r", "\t", " "],
+  deserializeEntryDelimiter: ",",
+  deserializeCourseIndexSplitDelimiter: ":",
+};
+
+function serializePlanCourses(plan: Plan["courses"]) {
+  return Array.from(plan.entries())
+    .map(([courseCode, index]) => {
+      return `${courseCode}: ${index.index ? index.index : PlanCoursesSerializer.noIndexSelection}`;
+    })
+    .join(PlanCoursesSerializer.entryDelimiter);
+}
+
 export function TimetableCoursePlansHeader({ id }: { id: string }) {
+  const controls = useIndicator();
+  const selectedPlan = useTimetableStore(
+    useShallow((state) => {
+      const timetable = state.timetables.get(id);
+      if (!timetable) {
+        return null;
+      }
+      return timetable.plans.get(timetable.selectedPlanId);
+    })
+  );
+
   return (
     <div className="w-full h-fit flex flex-row items-center justify-between gap-2 px-4 pb-4">
       <h2 className="text-base font-semibold">Course Plans</h2>
-      <Button size="sm">Export</Button>
+      <div className="relative">
+        <Indicator controls={controls} />
+        <Button
+          size="sm"
+          disabled={!selectedPlan}
+          onClick={() => {
+            if (!selectedPlan) {
+              return;
+            }
+            controls.showIndicator("Copied to clipboard!", "success");
+            navigator.clipboard.writeText(
+              serializePlanCourses(selectedPlan.courses)
+            );
+          }}
+        >
+          Share
+        </Button>
+      </div>
     </div>
   );
 }
@@ -203,13 +250,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
       };
     })
   );
-  // const selectedPlan = useMemo(() => {
-  //   if (!timetableStore?.selectedPlanCourses) return null;
-  //   return {
-  //     plan: timetableStore.selectedPlan,
-  //     courses: Array.from(timetableStore.selectedPlan.courses.keys()),
-  //   };
-  // }, [timetableStore?.selectedPlan]);
+
   const selectedPlanCoursesArray = useMemo(() => {
     if (!timetableStore?.selectedPlanCourses) return [];
     return Array.from(timetableStore.selectedPlanCourses.keys());
