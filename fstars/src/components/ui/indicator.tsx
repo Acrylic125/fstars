@@ -9,7 +9,7 @@ type IndicatorControls = {
   isVisible: boolean;
 };
 
-export function useIndicator() {
+export function useIndicator(viewDuration: number = 1800) {
   const [indicator, setIndicator] =
     useState<IndicatorControls["indicator"]>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -20,10 +20,10 @@ export function useIndicator() {
 
       const hideTimeout = setTimeout(() => {
         setIsVisible(false);
-      }, 1800);
+      }, viewDuration - 200);
       const clearIndicatorTimeout = setTimeout(() => {
         setIndicator(null);
-      }, 2000);
+      }, viewDuration);
 
       return () => {
         clearTimeout(hideTimeout);
@@ -45,7 +45,7 @@ export function useIndicator() {
             message,
             status,
           });
-        }, 100);
+        }, 200);
       } else {
         setIndicator({
           message,
@@ -67,7 +67,13 @@ export function useIndicator() {
   return controls;
 }
 
-export function Indicator({ controls }: { controls: IndicatorControls }) {
+export function Indicator({
+  controls,
+  className,
+}: {
+  controls: IndicatorControls;
+  className?: string;
+}) {
   const { indicator, isVisible } = controls;
 
   return (
@@ -79,7 +85,8 @@ export function Indicator({ controls }: { controls: IndicatorControls }) {
           "opacity-100 translate-y-0 scale-100": indicator && isVisible,
           "text-green-600 dark:text-green-400": indicator?.status === "success",
           "text-red-600 dark:text-red-400": indicator?.status === "error",
-        }
+        },
+        className
       )}
     >
       {indicator && indicator.message}

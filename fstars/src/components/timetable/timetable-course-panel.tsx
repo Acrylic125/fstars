@@ -28,6 +28,13 @@ import {
 } from "../ui/dropdown-menu";
 import { useTimetableModalStore } from "./timetable-modal";
 import { serializePlanCourses } from "./timetable-importer-utils";
+import {
+  downloadObjectAsJSONFile,
+  exportTimetable,
+} from "./timetable-export-utils";
+import { formatDateTimeISO } from "@/lib/utils";
+import { nanoid } from "nanoid";
+import { useTimetableGeneratorStore } from "./timetable-generator-store";
 
 export function TimetableHeader({ id }: { id: string }) {
   const timetable = useTimetableStore(
@@ -43,27 +50,62 @@ export function TimetableHeader({ id }: { id: string }) {
       };
     })
   );
+  const controls = useIndicator();
 
   return (
-    <div className="w-full flex flex-col">
-      {timetable !== null ? (
-        <>
-          <p className="text-sm text-muted-foreground h-6">
-            {asProgramName(timetable.program)} - AY{timetable.acadYear.yearCode}{" "}
-            Semester {timetable.acadYear.semesterCode}
-          </p>
-          <h1 className="text-2xl font-semibold h-12">{timetable.name}</h1>
-        </>
-      ) : (
-        <>
-          <div className="h-6 py-1 w-1/4">
-            <Skeleton className="h-full w-full rounded-md" />
-          </div>
-          <div className="h-12 py-2 w-1/2">
-            <Skeleton className="h-full w-full rounded-md" />
-          </div>
-        </>
-      )}
+    <div className="w-full flex flex-row gap-2 justify-between items-center">
+      <div className="w-full flex flex-col">
+        {timetable !== null ? (
+          <>
+            <p className="text-sm text-muted-foreground h-6">
+              {asProgramName(timetable.program)} - AY
+              {timetable.acadYear.yearCode} Semester{" "}
+              {timetable.acadYear.semesterCode}
+            </p>
+            <h1 className="text-2xl font-semibold h-12">{timetable.name}</h1>
+          </>
+        ) : (
+          <>
+            <div className="h-6 py-1 w-1/4">
+              <Skeleton className="h-full w-full rounded-md" />
+            </div>
+            <div className="h-12 py-2 w-1/2">
+              <Skeleton className="h-full w-full rounded-md" />
+            </div>
+          </>
+        )}
+      </div>
+      <div className="relative flex flex-row gap-2">
+        <Indicator controls={controls} className="w-48 z-10" />
+        <Button
+          variant="default"
+          onClick={() => {
+            if (!timetable) {
+              return;
+            }
+            const timetableState = useTimetableStore
+              .getState()
+              .timetables.get(id);
+            if (!timetableState) {
+              return;
+            }
+            const generators = useTimetableGeneratorStore.getState().generators;
+            const json = exportTimetable({
+              version: 1,
+              timetables: new Map([[id, timetableState]]),
+              generators,
+            });
+            const filename = `${timetable.name} ${nanoid(8)}.json`;
+            downloadObjectAsJSONFile(json, filename);
+            controls.showIndicator(
+              `Exported ${filename} to downloads!`,
+              "success"
+            );
+          }}
+        >
+          Export
+        </Button>
+      </div>
     </div>
   );
 }

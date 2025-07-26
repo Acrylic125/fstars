@@ -24,3 +24,15 @@ export function formatDuration(seconds: number): string {
 
   return parts.length > 0 ? parts.join(" ") : "0s";
 }
+
+export function formatDateTimeISO(date: Date): string {
+  const isoString = date.toISOString();
+
+  // Extract date part (yyyy-mm-dd)
+  const datePart = isoString.substring(0, 10);
+
+  // Extract time part and replace colons with underscores
+  const timePart = isoString.substring(11, 19).replace(/:/g, "_");
+
+  return `${datePart} ${timePart}`;
+}

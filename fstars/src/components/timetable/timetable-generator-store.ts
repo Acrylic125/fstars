@@ -125,7 +125,7 @@ export const TimetableGeneratorSchema = z.object({
 
 export type TimetableGenerator = z.infer<typeof TimetableGeneratorSchema>;
 
-const TimetableGeneratorStateSchema = z.object({
+export const TimetableGeneratorStateSchema = z.object({
   generators: z.map(TimetableGeneratorIdSchema, TimetableGeneratorSchema),
   selectedGeneratorId: TimetableGeneratorIdSchema.default(""),
 });

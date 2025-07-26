@@ -1,5 +1,8 @@
 import { MainNavbar } from "@/components/nav/main-navbar";
-import { TimetableList } from "@/components/timetable/timetable-list";
+import {
+  TimetableList,
+  TimetableListHeader,
+} from "@/components/timetable/timetable-list";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Home() {
@@ -7,9 +10,8 @@ export default function Home() {
     <main>
       <MainNavbar />
       <div className="flex flex-col h-screen max-w-ui mx-auto px-4 py-8 md:px-8 gap-4">
-        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
-          Timetable
-        </h1>
+        <TimetableListHeader />
+
         <Alert variant="info">
           <AlertTitle>
             <h2 className="text-lg font-bold">Export to backup!</h2>

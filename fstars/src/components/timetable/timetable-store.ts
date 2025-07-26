@@ -66,7 +66,7 @@ export type TimetablePlanCourseRef = {
   courseCode: CourseCode;
 };
 
-const TimetableStoreStateSchema = z.object({
+export const TimetableStoreStateSchema = z.object({
   timetables: z.map(TimetableIdSchema, TimetableSchema),
 });
 
@@ -462,7 +462,6 @@ export const useTimetableStore = create<TimetableStore>()(
             plans: new Map(timetable.plans).set(newPlan.id, newPlan),
             selectedPlanId: autoSelect ? newPlan.id : timetable.selectedPlanId,
           };
-          console.log(`Before plans: `, updatedTimetable.plans, res);
 
           return {
             timetables: state.timetables.set(ref.timetableId, updatedTimetable),
