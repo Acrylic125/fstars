@@ -29,6 +29,42 @@ export const appRouter = createTRPCRouter({
         .where(inArray(coursesTable.code, input.codes));
       return courses;
     }),
+  getCourseIndexPairs: publicProcedure
+    .input(
+      z.object({
+        courses: z
+          .array(
+            z.object({
+              courseCode: z.string(),
+              index: z.string(),
+            })
+          )
+          .max(10),
+        acadYear: AcadYearSchema,
+      })
+    )
+    .query(async ({ input }) => {
+      const courseIndexes = await db
+        .select({
+          course: {
+            code: coursesTable.code,
+          },
+          index: courseIndexTable.index,
+        })
+        .from(courseIndexTable)
+        .innerJoin(coursesTable, eq(coursesTable.id, courseIndexTable.courseId))
+        .where(
+          or(
+            ...input.courses.map((c) =>
+              and(
+                eq(coursesTable.code, c.courseCode),
+                eq(courseIndexTable.index, c.index)
+              )
+            )
+          )
+        );
+      return courseIndexes;
+    }),
   getProgramExcludedCourseIndexes: publicProcedure
     .input(
       z.object({

@@ -26,6 +26,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { useTimetableModalStore } from "./timetable-modal";
+import { serializePlanCourses } from "./timetable-importer-utils";
 
 export function TimetableHeader({ id }: { id: string }) {
   const timetable = useTimetableStore(
@@ -182,22 +184,6 @@ export function TimetableCoursesRow({
   );
 }
 
-const PlanCoursesSerializer = {
-  noIndexSelection: "?",
-  entryDelimiter: ", \n",
-  stripChars: ["\n", "\r", "\t", " "],
-  deserializeEntryDelimiter: ",",
-  deserializeCourseIndexSplitDelimiter: ":",
-};
-
-function serializePlanCourses(plan: Plan["courses"]) {
-  return Array.from(plan.entries())
-    .map(([courseCode, index]) => {
-      return `${courseCode}: ${index.index ? index.index : PlanCoursesSerializer.noIndexSelection}`;
-    })
-    .join(PlanCoursesSerializer.entryDelimiter);
-}
-
 export function TimetableCoursePlansHeader({ id }: { id: string }) {
   const controls = useIndicator();
   const selectedPlan = useTimetableStore(
@@ -207,6 +193,13 @@ export function TimetableCoursePlansHeader({ id }: { id: string }) {
         return null;
       }
       return timetable.plans.get(timetable.selectedPlanId);
+    })
+  );
+  const modalStore = useTimetableModalStore(
+    useShallow((state) => {
+      return {
+        setAction: state.setAction,
+      };
     })
   );
 
@@ -221,17 +214,59 @@ export function TimetableCoursePlansHeader({ id }: { id: string }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                if (!selectedPlan) {
+                  return;
+                }
+                modalStore.setAction({
+                  type: "import-plan",
+                  options: {
+                    type: "current",
+                    planRef: {
+                      timetableId: id,
+                      planId: selectedPlan.id,
+                    },
+                  },
+                });
+              }}
+            >
               <div className="flex flex-col justify-center pr-8">
                 <p>Import to Current Plan</p>
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                modalStore.setAction({
+                  type: "import-plan",
+                  options: {
+                    type: "new",
+                    timetableId: id,
+                  },
+                });
+              }}
+            >
               <div className="flex flex-col justify-center pr-8">
                 <p>Import to New Plan</p>
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                if (!selectedPlan) {
+                  return;
+                }
+                modalStore.setAction({
+                  type: "import-plan",
+                  options: {
+                    type: "copy",
+                    planRef: {
+                      timetableId: id,
+                      planId: selectedPlan.id,
+                    },
+                  },
+                });
+              }}
+            >
               <div className="flex flex-col justify-center pr-8">
                 <p>Import to Copy of Current Plan</p>
               </div>

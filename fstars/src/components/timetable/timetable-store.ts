@@ -98,7 +98,8 @@ type TimetableStore = {
     courseIndexSelections: {
       courseCode: CourseCode;
       index: CourseIndex;
-    }[]
+    }[],
+    override?: boolean
   ) => void;
   // Plan CRUD.
   deletePlan: (ref: TimetablePlanRef, autoSelect?: boolean) => void;
@@ -115,7 +116,19 @@ type TimetableStore = {
         type: "error";
         error: string;
       };
-  createPlan: (ref: TimetableRef, name: string, autoSelect?: boolean) => void;
+  createPlan: (
+    ref: TimetableRef,
+    name: string,
+    autoSelect?: boolean
+  ) =>
+    | {
+        type: "success";
+        planId: PlanId;
+      }
+    | {
+        type: "error";
+        error: string;
+      };
 } & TimetableStoreState;
 
 const RawSchema = z.object({
@@ -145,12 +158,13 @@ export const useTimetableStore = create<TimetableStore>()(
   persist(
     (set) => ({
       timetables: new Map(),
-      createTimetable: (timetable: Timetable) =>
+      createTimetable: (timetable: Timetable) => {
         set((state) => {
           return {
             timetables: new Map(state.timetables).set(timetable.id, timetable),
           };
-        }),
+        });
+      },
       changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => {
         set((state) => {
           const timetable = state.timetables.get(timetableId);
@@ -227,7 +241,8 @@ export const useTimetableStore = create<TimetableStore>()(
         courseIndexSelections: {
           courseCode: CourseCode;
           index: CourseIndex;
-        }[]
+        }[],
+        override: boolean = true
       ) => {
         set((state) => {
           const timetable = state.timetables.get(ref.timetableId);
@@ -236,17 +251,10 @@ export const useTimetableStore = create<TimetableStore>()(
           }
           const plan = timetable.plans.get(ref.planId);
           if (!plan) {
-            console.log(
-              "After plans: ",
-              timetable.plans,
-              timetable.plans.get(ref.planId),
-              ref.planId
-            );
-            console.error("Plan not found");
             return {};
           }
 
-          const updatedCourses = new Map();
+          const updatedCourses = override ? new Map() : new Map(plan.courses);
           courseIndexSelections.forEach(({ courseCode, index }) => {
             const course = plan.courses.get(courseCode);
             if (!course) {
@@ -468,10 +476,28 @@ export const useTimetableStore = create<TimetableStore>()(
         name: string,
         autoSelect: boolean = true
       ) => {
+        let res:
+          | {
+              type: "success";
+              planId: PlanId;
+            }
+          | {
+              type: "error";
+              error: string;
+            } = {
+          type: "error",
+          error: "Failed to create plan",
+        };
         set((state) => {
           const timetableId = ref.timetableId;
           const timetable = state.timetables.get(timetableId);
-          if (!timetable) return {};
+          if (!timetable) {
+            res = {
+              type: "error",
+              error: "Timetable not found",
+            };
+            return {};
+          }
 
           const updatedPlan = {
             id: nanoid(16),
@@ -487,10 +513,17 @@ export const useTimetableStore = create<TimetableStore>()(
               : timetable.selectedPlanId,
           };
 
+          res = {
+            type: "success",
+            planId: updatedPlan.id,
+          };
+
           return {
             timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
+
+        return res;
       },
     }),
     { name: "timetables", storage }
