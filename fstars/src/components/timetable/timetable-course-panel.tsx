@@ -32,7 +32,6 @@ import {
   downloadObjectAsJSONFile,
   exportTimetable,
 } from "./timetable-export-utils";
-import { formatDateTimeISO } from "@/lib/utils";
 import { nanoid } from "nanoid";
 import { useTimetableGeneratorStore } from "./timetable-generator-store";
 
@@ -51,6 +50,25 @@ export function TimetableHeader({ id }: { id: string }) {
     })
   );
   const controls = useIndicator();
+
+  const exportTimetableFile = useCallback(() => {
+    if (!timetable) {
+      return;
+    }
+    const timetableState = useTimetableStore.getState().timetables.get(id);
+    if (!timetableState) {
+      return;
+    }
+    const generators = useTimetableGeneratorStore.getState().generators;
+    const json = exportTimetable({
+      version: 1,
+      timetables: new Map([[id, timetableState]]),
+      generators,
+    });
+    const filename = `${timetable.name} ${nanoid(8)}.json`;
+    downloadObjectAsJSONFile(json, filename);
+    controls.showIndicator(`Exported ${filename} to downloads!`, "success");
+  }, [timetable, id]);
 
   return (
     <div className="w-full flex flex-row gap-2 justify-between items-center">
@@ -75,36 +93,18 @@ export function TimetableHeader({ id }: { id: string }) {
           </>
         )}
       </div>
-      <div className="relative flex flex-row gap-2">
-        <Indicator controls={controls} className="w-48 z-10" />
-        <Button
-          variant="default"
-          onClick={() => {
-            if (!timetable) {
-              return;
-            }
-            const timetableState = useTimetableStore
-              .getState()
-              .timetables.get(id);
-            if (!timetableState) {
-              return;
-            }
-            const generators = useTimetableGeneratorStore.getState().generators;
-            const json = exportTimetable({
-              version: 1,
-              timetables: new Map([[id, timetableState]]),
-              generators,
-            });
-            const filename = `${timetable.name} ${nanoid(8)}.json`;
-            downloadObjectAsJSONFile(json, filename);
-            controls.showIndicator(
-              `Exported ${filename} to downloads!`,
-              "success"
-            );
-          }}
-        >
-          Export
-        </Button>
+      <div className="flex flex-row gap-2">
+        <div className="relative flex flex-row gap-2">
+          <Button variant="outline" onClick={exportTimetableFile}>
+            Import
+          </Button>
+        </div>
+        <div className="relative flex flex-row gap-2">
+          <Indicator controls={controls} className="w-48 z-10" />
+          <Button variant="default" onClick={exportTimetableFile}>
+            Export
+          </Button>
+        </div>
       </div>
     </div>
   );

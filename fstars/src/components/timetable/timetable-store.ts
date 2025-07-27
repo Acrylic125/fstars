@@ -5,6 +5,7 @@ import { AcadYear, AcadYearSchema, Program, ProgramSchema } from "@/lib/types";
 import { nanoid } from "nanoid";
 import z from "zod";
 import { fallback, injectDefaults } from "@/lib/zod";
+import { Config } from "@/lib/config";
 
 export const TimetableIdSchema = z.string();
 export const PlanIdSchema = z.string();
@@ -73,7 +74,15 @@ export const TimetableStoreStateSchema = z.object({
 type TimetableStoreState = z.infer<typeof TimetableStoreStateSchema>;
 
 type TimetableStore = {
-  createTimetable: (timetable: Timetable) => void;
+  createTimetable: (timetable: Timetable) =>
+    | {
+        type: "success";
+        timetableId: TimetableId;
+      }
+    | {
+        type: "error";
+        error: string;
+      };
   // Plan selection.
   changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => void;
   // Course CRUD.
@@ -159,11 +168,27 @@ export const useTimetableStore = create<TimetableStore>()(
     (set) => ({
       timetables: new Map(),
       createTimetable: (timetable: Timetable) => {
+        let res: ReturnType<TimetableStore["createTimetable"]> = {
+          type: "error",
+          error: "Failed to create timetable",
+        };
         set((state) => {
+          if (state.timetables.size >= Config.limits.timetables) {
+            res = {
+              type: "error",
+              error: `Timetable limit (${state.timetables.size} / ${Config.limits.timetables}) reached`,
+            };
+            return {};
+          }
+          res = {
+            type: "success",
+            timetableId: timetable.id,
+          };
           return {
             timetables: new Map(state.timetables).set(timetable.id, timetable),
           };
         });
+        return res;
       },
       changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => {
         set((state) => {
@@ -416,15 +441,7 @@ export const useTimetableStore = create<TimetableStore>()(
         });
       },
       createPlanCopy: (ref: TimetablePlanRef, autoSelect: boolean = true) => {
-        let res:
-          | {
-              type: "success";
-              planId: PlanId;
-            }
-          | {
-              type: "error";
-              error: string;
-            } = {
+        let res: ReturnType<TimetableStore["createPlanCopy"]> = {
           type: "error",
           error: "Failed to create plan copy",
         };
@@ -443,6 +460,14 @@ export const useTimetableStore = create<TimetableStore>()(
             res = {
               type: "error",
               error: "Plan not found",
+            };
+            return {};
+          }
+
+          if (timetable.plans.size >= Config.limits.plans) {
+            res = {
+              type: "error",
+              error: `Plan limit (${timetable.plans.size} / ${Config.limits.plans}) reached`,
             };
             return {};
           }
@@ -475,15 +500,7 @@ export const useTimetableStore = create<TimetableStore>()(
         name: string,
         autoSelect: boolean = true
       ) => {
-        let res:
-          | {
-              type: "success";
-              planId: PlanId;
-            }
-          | {
-              type: "error";
-              error: string;
-            } = {
+        let res: ReturnType<TimetableStore["createPlan"]> = {
           type: "error",
           error: "Failed to create plan",
         };
@@ -494,6 +511,14 @@ export const useTimetableStore = create<TimetableStore>()(
             res = {
               type: "error",
               error: "Timetable not found",
+            };
+            return {};
+          }
+
+          if (timetable.plans.size >= Config.limits.plans) {
+            res = {
+              type: "error",
+              error: `Plan limit (${timetable.plans.size} / ${Config.limits.plans}) reached`,
             };
             return {};
           }

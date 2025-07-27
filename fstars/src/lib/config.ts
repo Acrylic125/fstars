@@ -4,4 +4,10 @@ export const Config = {
     year: 2025,
     semester: 1,
   },
+  limits: {
+    timetables: 10,
+    coursesInPlan: 10,
+    plans: 3,
+    generators: 10,
+  },
 };

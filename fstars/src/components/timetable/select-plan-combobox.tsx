@@ -40,11 +40,14 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { useTimetableModalStore } from "./timetable-modal";
+import { Config } from "@/lib/config";
 
 export function NewPlanDialogButton({
   timetableId,
+  errorMessage,
 }: {
   timetableId: TimetableId;
+  errorMessage?: string;
 }) {
   const modalStore = useTimetableModalStore(
     useShallow((state) => {
@@ -57,7 +60,7 @@ export function NewPlanDialogButton({
   return (
     <Button
       variant="ghost"
-      className="w-full flex flex-row items-center justify-start"
+      className="w-full flex flex-row items-center justify-between group disabled:opacity-100 opacity-100 px-2"
       onClick={(e) => {
         e.stopPropagation();
         modalStore.setAction({
@@ -67,9 +70,13 @@ export function NewPlanDialogButton({
           },
         });
       }}
+      disabled={!!errorMessage}
     >
-      <PlusIcon className="h-4 w-4" />
-      New Plan
+      <span className="group-disabled:opacity-50 flex flex-row items-center gap-2">
+        <PlusIcon className="h-4 w-4" />
+        New Plan
+      </span>
+      {errorMessage && <span className="text-destructive">{errorMessage}</span>}
     </Button>
   );
 }
@@ -141,6 +148,81 @@ export function SelectPlanCombobox({
     return Array.from(timetableStore.plans.values());
   }, [timetableStore?.plans]);
 
+  let ele = null;
+  let hasReachedLimit = false;
+  if (timetableStore) {
+    hasReachedLimit = timetableStore.plans.size >= Config.limits.plans;
+    ele = plansArray.map((plan) => (
+      <CommandItemBase
+        key={plan.id}
+        value={plan.name}
+        onSelect={() => {
+          timetableStore.changeTimetablePlan(timetableId, plan.id);
+        }}
+        selected={selectedPlan?.plan.id === plan.id}
+        className="group flex flex-row justify-between py-0"
+      >
+        {plan.name}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={stopPropagation}
+              className="p-2.5 h-fit w-fit hover:group-data-[selected=true]:bg-transparent dark:hover:group-data-[selected=true]:bg-transparent hover:group-data-[selected=true]:text-neutral-400 dark:hover:group-data-[selected=true]:text-neutral-400"
+            >
+              <EllipsisIcon className="h-4 w-4 text-current" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <RenamePlanDialogButton
+              planRef={{
+                timetableId,
+                planId: plan.id,
+              }}
+              defaultName={plan.name}
+            />
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                timetableStore.createPlanCopy({
+                  timetableId,
+                  planId: plan.id,
+                });
+              }}
+              disabled={hasReachedLimit}
+              className="data-[disabled]:opacity-100 opacity-100 group flex flex-row"
+            >
+              <span className="group-data-[disabled]:opacity-50 flex flex-row items-center gap-2">
+                <CopyIcon className="h-4 w-4" /> Create Copy
+              </span>
+              {hasReachedLimit && (
+                <span className="text-destructive">
+                  Plan limit reached{" "}
+                  {`(${timetableStore.plans.size} / ${Config.limits.plans})`}
+                </span>
+              )}
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                timetableStore.deletePlan({
+                  timetableId,
+                  planId: plan.id,
+                });
+              }}
+            >
+              <TrashIcon className="h-4 w-4" /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CommandItemBase>
+    ));
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -167,71 +249,18 @@ export function SelectPlanCombobox({
                 create a new plan.
               </div>
             </CommandEmpty>
-            <CommandGroup>
-              {plansArray.map((plan) => (
-                <CommandItemBase
-                  key={plan.id}
-                  value={plan.name}
-                  onSelect={() => {
-                    timetableStore?.changeTimetablePlan(timetableId, plan.id);
-                  }}
-                  selected={selectedPlan?.plan.id === plan.id}
-                  className="group flex flex-row justify-between py-0"
-                >
-                  {plan.name}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={stopPropagation}
-                        className="p-2.5 h-fit w-fit hover:group-data-[selected=true]:bg-transparent dark:hover:group-data-[selected=true]:bg-transparent hover:group-data-[selected=true]:text-neutral-400 dark:hover:group-data-[selected=true]:text-neutral-400"
-                      >
-                        <EllipsisIcon className="h-4 w-4 text-current" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <RenamePlanDialogButton
-                        planRef={{
-                          timetableId,
-                          planId: plan.id,
-                        }}
-                        defaultName={plan.name}
-                      />
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          timetableStore?.createPlanCopy({
-                            timetableId,
-                            planId: plan.id,
-                          });
-                        }}
-                      >
-                        <CopyIcon className="h-4 w-4" /> Create Copy
-                      </DropdownMenuItem>
-
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          timetableStore?.deletePlan({
-                            timetableId,
-                            planId: plan.id,
-                          });
-                        }}
-                      >
-                        <TrashIcon className="h-4 w-4" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CommandItemBase>
-              ))}
-            </CommandGroup>
+            <CommandGroup>{ele}</CommandGroup>
           </CommandList>
           <CommandSeparator />
           <div className="flex flex-row items-center justify-between pb-1">
-            <NewPlanDialogButton timetableId={timetableId} />
+            <NewPlanDialogButton
+              timetableId={timetableId}
+              errorMessage={
+                hasReachedLimit && timetableStore
+                  ? `Plan limit reached (${timetableStore.plans.size} / ${Config.limits.plans})`
+                  : undefined
+              }
+            />
           </div>
         </Command>
       </PopoverContent>

@@ -174,13 +174,17 @@ export function NewPlanDialog({
       if (!options) {
         return;
       }
-      timetableStore?.createPlan(
+      const res = timetableStore?.createPlan(
         {
           timetableId: options.timetableId,
         },
         data.name
       );
-      setIsOpen(false);
+      if (res.type === "success") {
+        setIsOpen(false);
+      } else {
+        throw new Error(res.error);
+      }
     },
   });
 

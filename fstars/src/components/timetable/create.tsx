@@ -91,8 +91,12 @@ export function CreateTimetable() {
         selectedGeneratorId: "default",
         selectedPlanId: defaultPlanId,
       };
-      timetableStore.createTimetable(timetable);
-      router.push(`/timetable/${id}`);
+      const res = timetableStore.createTimetable(timetable);
+      if (res.type === "success") {
+        router.push(`/timetable/${res.timetableId}`);
+      } else {
+        throw new Error(res.error);
+      }
     },
   });
 
