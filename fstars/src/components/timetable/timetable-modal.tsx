@@ -803,11 +803,18 @@ export function ImportPlanDialog({
       }
 
       if (options.type === "current") {
-        timetableStore.selectCourseIndexes(
+        const res = timetableStore.selectCourseIndexes(
           options.planRef,
           importCourseSelections,
           false
         );
+        if (res.type === "error") {
+          return {
+            type: "error",
+            message: res.error,
+            indices: [],
+          } as const;
+        }
       } else if (options.type === "copy") {
         const newPlan = timetableStore.createPlanCopy(options.planRef);
         if (newPlan.type === "error") {
@@ -817,13 +824,20 @@ export function ImportPlanDialog({
             indices: [],
           } as const;
         }
-        timetableStore.selectCourseIndexes(
+        const res = timetableStore.selectCourseIndexes(
           {
             timetableId: options.planRef.timetableId,
             planId: newPlan.planId,
           },
           importCourseSelections
         );
+        if (res.type === "error") {
+          return {
+            type: "error",
+            message: res.error,
+            indices: [],
+          } as const;
+        }
       } else if (options.type === "new") {
         const newPlan = timetableStore.createPlan(
           {
@@ -838,13 +852,20 @@ export function ImportPlanDialog({
             indices: [],
           } as const;
         }
-        timetableStore.selectCourseIndexes(
+        const res = timetableStore.selectCourseIndexes(
           {
             timetableId: options.timetableId,
             planId: newPlan.planId,
           },
           importCourseSelections
         );
+        if (res.type === "error") {
+          return {
+            type: "error",
+            message: res.error,
+            indices: [],
+          } as const;
+        }
       }
 
       return {

@@ -116,7 +116,14 @@ type TimetableStore = {
       index: CourseIndex;
     }[],
     override?: boolean
-  ) => void;
+  ) =>
+    | {
+        type: "success";
+      }
+    | {
+        type: "error";
+        error: string;
+      };
   // Plan CRUD.
   deletePlan: (ref: TimetablePlanRef, autoSelect?: boolean) => void;
   changePlanName: (ref: TimetablePlanRef, name: string) => void;
@@ -293,13 +300,26 @@ export const useTimetableStore = create<TimetableStore>()(
         }[],
         override: boolean = true
       ) => {
+        let res: ReturnType<TimetableStore["selectCourseIndexes"]> = {
+          type: "error",
+          error: "Failed to select course indexes",
+        };
+
         set((state) => {
           const timetable = state.timetables.get(ref.timetableId);
           if (!timetable) {
+            res = {
+              type: "error",
+              error: "Timetable not found",
+            };
             return {};
           }
           const plan = timetable.plans.get(ref.planId);
           if (!plan) {
+            res = {
+              type: "error",
+              error: "Plan not found",
+            };
             return {};
           }
 
@@ -325,10 +345,24 @@ export const useTimetableStore = create<TimetableStore>()(
             ...timetable,
             plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
           };
+
+          if (updatedPlan.courses.size > Config.limits.coursesInPlan) {
+            res = {
+              type: "error",
+              error: `Importing courses would exceed the course limit (${updatedPlan.courses.size} / ${Config.limits.coursesInPlan})`,
+            };
+            return {};
+          }
+
+          res = {
+            type: "success",
+          };
           return {
             timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
+
+        return res;
       },
       toggleIgnoreIndexes: (
         ref: TimetablePlanCourseRef,
