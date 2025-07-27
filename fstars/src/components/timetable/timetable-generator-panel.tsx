@@ -387,6 +387,7 @@ function GenerateTimetableSection({
               event: MessageEvent<GeneratedTimetableWithScore[]>
             ) => {
               resolve(event.data);
+              console.log("Generated timetables", event.data);
             };
             worker.onerror = (event: ErrorEvent) => {
               if (event.error instanceof Error) {

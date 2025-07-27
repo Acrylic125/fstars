@@ -10,6 +10,7 @@ addEventListener(
     e: MessageEvent<{
       factors: TimetableGenerator["factors"];
       courses: Record<CourseCode, CourseClasses>;
+      seed: string;
     }>
   ) => {
     const generator = new GeneticGenerator(
@@ -31,7 +32,8 @@ addEventListener(
       mutationProbability: 0.2,
       iterationSelectionAmount: 10,
       returnTopN: 25,
-      seed: "abcdefghijklmnopqrstuvwxyz",
+      seed: e.data.seed,
+      variability: 10,
     });
     postMessage(timetables);
   }

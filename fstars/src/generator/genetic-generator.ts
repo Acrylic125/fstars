@@ -459,6 +459,12 @@ export class GeneticGenerator {
       iterationSelectionAmount: number;
       returnTopN: number;
       seed: string;
+      // The variability provides an added level of randomisation, to reduce
+      // the likelihood of multiple users generating the same timetable.
+      //
+      // The variability ensures that plans up to {variability} can be considered
+      // as the top plan.
+      variability: number;
     } = {
       iterations: 100,
       generatePerIteration: 100,
@@ -466,6 +472,7 @@ export class GeneticGenerator {
       iterationSelectionAmount: 10,
       returnTopN: 25,
       seed: "abcdefghijklmnopqrstuvwxyz",
+      variability: 5,
     }
   ) {
     const rng = seedrandom(options.seed);
@@ -512,9 +519,24 @@ export class GeneticGenerator {
       options.returnTopN,
       true
     );
-    topN.forEach((timetable) => {
+    if (options.variability <= 0) {
+      return topN;
+    }
+    const range =
+      topN[0].score -
+      topN[Math.min(topN.length - 1, options.variability - 1)].score;
+    // Apply variability to the topN.
+    const newTopN = topN.map((timetable) => {
+      const newScore = timetable.score + rng.quick() * range;
+      return {
+        ...timetable,
+        score: newScore,
+      };
+    });
+    newTopN.sort((a, b) => b.score - a.score);
+    newTopN.forEach((timetable) => {
       this.reconcileMissingIndexes(timetable.timetable);
     });
-    return topN;
+    return newTopN;
   }
 }

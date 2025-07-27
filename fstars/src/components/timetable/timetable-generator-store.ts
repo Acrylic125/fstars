@@ -128,6 +128,7 @@ export type TimetableGenerator = z.infer<typeof TimetableGeneratorSchema>;
 export const TimetableGeneratorStateSchema = z.object({
   generators: z.map(TimetableGeneratorIdSchema, TimetableGeneratorSchema),
   selectedGeneratorId: TimetableGeneratorIdSchema.default(""),
+  seed: z.string().default(nanoid(24)),
 });
 
 type TimetableGeneratorState = z.infer<typeof TimetableGeneratorStateSchema>;
@@ -238,6 +239,7 @@ export const useTimetableGeneratorStore = create<TimetableGeneratorStore>()(
         defaultGenerator("default", "Default Generator")
       ),
       selectedGeneratorId: "default",
+      seed: nanoid(24),
       deleteGenerator: (id, autoSelect = true) => {
         set((state) => {
           const newGenerators = new Map(state.generators);
