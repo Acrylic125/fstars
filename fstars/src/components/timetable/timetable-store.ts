@@ -93,7 +93,14 @@ type TimetableStore = {
       index: CourseIndex;
       ignoreIndexes: string[];
     }
-  ) => void;
+  ) =>
+    | {
+        type: "success";
+      }
+    | {
+        type: "error";
+        error: string;
+      };
   removeCourseFromPlan: (ref: TimetablePlanCourseRef) => void;
   // Course index selection.
   toggleIgnoreIndexes: (
@@ -209,6 +216,10 @@ export const useTimetableStore = create<TimetableStore>()(
           ignoreIndexes: string[];
         }
       ) => {
+        let res: ReturnType<TimetableStore["addCourseToPlan"]> = {
+          type: "error",
+          error: "Failed to add course to plan",
+        };
         set((state) => {
           const timetable = state.timetables.get(ref.timetableId);
           if (!timetable) return {};
@@ -229,11 +240,24 @@ export const useTimetableStore = create<TimetableStore>()(
             ...timetable,
             plans: new Map(timetable.plans).set(ref.planId, updatedPlan),
           };
+          if (updatedPlan.courses.size > Config.limits.coursesInPlan) {
+            res = {
+              type: "error",
+              error: `Course limit reached (${updatedPlan.courses.size} / ${Config.limits.coursesInPlan})`,
+            };
+            return {};
+          }
+
+          res = {
+            type: "success",
+          };
 
           return {
             timetables: state.timetables.set(ref.timetableId, updatedTimetable),
           };
         });
+
+        return res;
       },
       removeCourseFromPlan: (ref: TimetablePlanCourseRef) => {
         set((state) => {

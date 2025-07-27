@@ -8,6 +8,8 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandItemBase,
+  CommandSeparator,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -31,6 +33,7 @@ import {
 } from "./timetable-store";
 import { useShallow } from "zustand/react/shallow";
 import { useMutation } from "@tanstack/react-query";
+import { Config } from "@/lib/config";
 
 const skeletons = Array.from({ length: 5 }, (_, i) => i);
 
@@ -72,6 +75,10 @@ export function SelectCourseCombobox({
     useShallow((state) => {
       return {
         addCourseToPlan: state.addCourseToPlan,
+        removeCourseFromPlan: state.removeCourseFromPlan,
+        planCourses: state.timetables
+          .get(timetableId)
+          ?.plans.get(selectedPlanId)?.courses,
       };
     })
   );
@@ -83,7 +90,7 @@ export function SelectCourseCombobox({
         program,
         acadYear,
       });
-      timetableStore.addCourseToPlan(
+      const addCourseRes = timetableStore.addCourseToPlan(
         {
           timetableId,
           planId: selectedPlanId,
@@ -94,11 +101,37 @@ export function SelectCourseCombobox({
           ignoreIndexes: res.map((r) => r.index),
         }
       );
-      return res;
+      if (addCourseRes.type === "error") {
+        throw new Error(addCourseRes.error);
+      }
+      return addCourseRes;
     },
   });
 
   const courseOptions = findCoursesRes.data ?? [];
+
+  const errorEle = [];
+  let hasReachedLimit = false;
+  if (timetableStore.planCourses) {
+    hasReachedLimit =
+      timetableStore.planCourses.size >= Config.limits.coursesInPlan;
+    if (hasReachedLimit) {
+      errorEle.push(
+        <p className="text-destructive">
+          Course limit reached ({timetableStore.planCourses.size} /{" "}
+          {Config.limits.coursesInPlan})
+        </p>
+      );
+    }
+  }
+  if (addCourseMutation.error) {
+    errorEle.push(
+      <Alert variant="error">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{addCourseMutation.error.message}</AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -143,20 +176,43 @@ export function SelectCourseCombobox({
                     <Skeleton className="h-6 w-full" />
                   </CommandItem>
                 ))}
-              {courseOptions.map((course) => (
-                <CommandItem
-                  key={course.id}
-                  value={course.name}
-                  onSelect={() => {
-                    setOpen(false);
-                    addCourseMutation.mutate(course.code);
-                  }}
-                >
-                  {course.code} {course.name}
-                </CommandItem>
-              ))}
+              {courseOptions.map((course) => {
+                const isSelected = timetableStore.planCourses?.has(course.code);
+                return (
+                  <CommandItemBase
+                    key={course.id}
+                    value={course.name}
+                    disabled={
+                      addCourseMutation.isPending ||
+                      (!isSelected && hasReachedLimit)
+                    }
+                    selected={isSelected}
+                    onSelect={() => {
+                      if (isSelected) {
+                        timetableStore.removeCourseFromPlan({
+                          timetableId,
+                          planId: selectedPlanId,
+                          courseCode: course.code,
+                        });
+                      } else {
+                        addCourseMutation.mutate(course.code);
+                      }
+                    }}
+                  >
+                    {course.code} {course.name}
+                  </CommandItemBase>
+                );
+              })}
             </CommandGroup>
           </ScrollArea>
+          {errorEle.length > 0 && (
+            <>
+              <CommandSeparator />
+              <div className="flex flex-row items-center justify-between px-2.5 py-4">
+                {errorEle}
+              </div>
+            </>
+          )}
         </Command>
       </PopoverContent>
     </Popover>
