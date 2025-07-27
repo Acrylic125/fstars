@@ -815,7 +815,7 @@ export function ImportPlanDialog({
         if (newPlan.type === "error") {
           return {
             type: "error",
-            message: "Failed to create plan copy.",
+            message: newPlan.error,
             indices: [],
           } as const;
         }
@@ -836,7 +836,7 @@ export function ImportPlanDialog({
         if (newPlan.type === "error") {
           return {
             type: "error",
-            message: "Failed to create new plan.",
+            message: newPlan.error,
             indices: [],
           } as const;
         }

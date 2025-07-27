@@ -7,7 +7,7 @@ export const Config = {
   limits: {
     timetables: 10,
     coursesInPlan: 10,
-    plans: 3,
+    plans: 10,
     generators: 10,
   },
 };

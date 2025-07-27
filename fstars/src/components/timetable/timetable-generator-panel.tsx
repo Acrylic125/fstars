@@ -333,6 +333,10 @@ function GenerateTimetableSection({
       if (!plan) return;
       if (!timetableGeneratorStore.factors) return;
 
+      if (plan.courses.size <= 0) {
+        return;
+      }
+
       let applyToPlanRef: TimetablePlanRef | null = null;
       if (options) {
         if (options.type === "copy") {
@@ -446,7 +450,11 @@ function GenerateTimetableSection({
           <Button
             variant="secondary"
             className="w-full"
-            disabled={generateTimetableRes.isPending}
+            disabled={
+              generateTimetableRes.isPending ||
+              !timetableStore?.selectedPlan ||
+              timetableStore.selectedPlan.courses.size <= 0
+            }
           >
             <p>Generate Timetable</p>
           </Button>
@@ -517,8 +525,8 @@ function GenerateTimetableSection({
           </AlertDescription>
         </Alert>
       )}
-      {generateTimetableRes.data &&
-        generateTimetableRes.data.result.length <= 0 && (
+      {generateTimetableRes.isSuccess &&
+        (generateTimetableRes.data?.result.length ?? 0) <= 0 && (
           <Alert variant="info">
             <AlertTitle>No Timetables Generated!</AlertTitle>
             <AlertDescription>

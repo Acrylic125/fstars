@@ -36,7 +36,10 @@ const formSchema = z.object({
     },
     "Please select a program"
   ),
-  name: z.string().min(1, "Please enter a timetable name"),
+  name: z
+    .string()
+    .min(1, "Please enter a timetable name")
+    .max(64, "Timetable name is too long, max 64 characters"),
 });
 
 export function CreateTimetable() {

@@ -176,7 +176,7 @@ export const useTimetableStore = create<TimetableStore>()(
           if (state.timetables.size >= Config.limits.timetables) {
             res = {
               type: "error",
-              error: `Timetable limit (${state.timetables.size} / ${Config.limits.timetables}) reached`,
+              error: `Timetable limit reached (${state.timetables.size} / ${Config.limits.timetables})`,
             };
             return {};
           }
@@ -467,7 +467,7 @@ export const useTimetableStore = create<TimetableStore>()(
           if (timetable.plans.size >= Config.limits.plans) {
             res = {
               type: "error",
-              error: `Plan limit (${timetable.plans.size} / ${Config.limits.plans}) reached`,
+              error: `Plan limit reached (${timetable.plans.size} / ${Config.limits.plans})`,
             };
             return {};
           }
@@ -518,7 +518,7 @@ export const useTimetableStore = create<TimetableStore>()(
           if (timetable.plans.size >= Config.limits.plans) {
             res = {
               type: "error",
-              error: `Plan limit (${timetable.plans.size} / ${Config.limits.plans}) reached`,
+              error: `Plan limit reached (${timetable.plans.size} / ${Config.limits.plans})`,
             };
             return {};
           }
