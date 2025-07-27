@@ -34,10 +34,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Button } from "../ui/button";
 import {
   AlertCircleIcon,
+  ArrowRightLeftIcon,
   CheckCircleIcon,
-  MoveHorizontalIcon,
-  MoveVerticalIcon,
-  TrashIcon,
   XIcon,
 } from "lucide-react";
 import { nanoid } from "nanoid";
@@ -917,7 +915,7 @@ CC0008: ?`}
             size="icon"
             disabled
           >
-            <MoveHorizontalIcon className="w-4 h-4" />
+            <ArrowRightLeftIcon className="w-4 h-4" />
           </Button>
           <ScrollArea className="w-full h-52 border-border border rounded-md">
             <div className="flex flex-col gap-2 p-2">
