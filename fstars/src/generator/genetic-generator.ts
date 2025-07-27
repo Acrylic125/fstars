@@ -472,7 +472,7 @@ export class GeneticGenerator {
       iterationSelectionAmount: 10,
       returnTopN: 25,
       seed: "abcdefghijklmnopqrstuvwxyz",
-      variability: 5,
+      variability: 0.5,
     }
   ) {
     const rng = seedrandom(options.seed);
@@ -522,21 +522,45 @@ export class GeneticGenerator {
     if (options.variability <= 0) {
       return topN;
     }
-    const range =
-      topN[0].score -
-      topN[Math.min(topN.length - 1, options.variability - 1)].score;
-    // Apply variability to the topN.
-    const newTopN = topN.map((timetable) => {
-      const newScore = timetable.score + rng.quick() * range;
-      return {
-        ...timetable,
-        score: newScore,
-      };
-    });
-    newTopN.sort((a, b) => b.score - a.score);
+
+    const mean =
+      topN.reduce((acc, timetable) => acc + timetable.score, 0) / topN.length;
+    const variance =
+      topN.reduce(
+        (acc, timetable) => acc + Math.pow(timetable.score - mean, 2),
+        0
+      ) / topN.length;
+    const sd = Math.sqrt(variance);
+
+    const maxScore = topN[0].score;
+    const threshold = Math.max(
+      maxScore - options.variability * sd,
+      maxScore * (1 - 0.1) // Cap at 10% of the max score.
+    );
+
+    // First we get all plans index that are within the threshold.
+    const firstIndexWithinThreshold = topN.findIndex(
+      (timetable) => timetable.score <= threshold
+    );
+
+    // Shuffle the plans within {variability} standard deviation of the max.
+    const withinThreshold = topN.slice(0, firstIndexWithinThreshold);
+    const outsideThreshold = topN.slice(firstIndexWithinThreshold, topN.length);
+
+    // Shuffle the plans inside 1SD.
+    for (let i = 0; i < withinThreshold.length; i++) {
+      const j = Math.floor(rng.quick() * (withinThreshold.length - i)) + i;
+      const temp = withinThreshold[i];
+      withinThreshold[i] = withinThreshold[j];
+      withinThreshold[j] = temp;
+    }
+
+    const newTopN = withinThreshold.concat(outsideThreshold);
+
     newTopN.forEach((timetable) => {
       this.reconcileMissingIndexes(timetable.timetable);
     });
+
     return newTopN;
   }
 }

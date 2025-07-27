@@ -185,15 +185,26 @@ export function SelectPlanCombobox({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
+              }}
+              onSelect={(e) => {
+                if (hasReachedLimit) {
+                  e.preventDefault();
+                  return;
+                }
                 timetableStore.createPlanCopy({
                   timetableId,
                   planId: plan.id,
                 });
               }}
-              disabled={hasReachedLimit}
-              className="data-[disabled]:opacity-100 opacity-100 group flex flex-row"
+              className={cn("flex flex-row", {
+                "hover:bg-transparent focus:bg-transparent": hasReachedLimit,
+              })}
             >
-              <span className="group-data-[disabled]:opacity-50 flex flex-row items-center gap-2">
+              <span
+                className={cn("flex flex-row items-center gap-2", {
+                  "opacity-50": hasReachedLimit,
+                })}
+              >
                 <CopyIcon className="h-4 w-4" /> Create Copy
               </span>
               {hasReachedLimit && (

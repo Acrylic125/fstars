@@ -39,8 +39,13 @@ import {
   TimetableGeneratorId,
   useTimetableGeneratorStore,
 } from "./timetable-generator-store";
+import { Config } from "@/lib/config";
 
-export function NewGeneratorDialogButton() {
+export function NewGeneratorDialogButton({
+  errorMessage,
+}: {
+  errorMessage?: string;
+}) {
   const modalStore = useTimetableModalStore(
     useShallow((state) => {
       return {
@@ -52,7 +57,7 @@ export function NewGeneratorDialogButton() {
   return (
     <Button
       variant="ghost"
-      className="w-full flex flex-row items-center justify-start"
+      className="w-full flex flex-row items-center justify-between group disabled:opacity-100 opacity-100 px-2"
       onClick={(e) => {
         e.stopPropagation();
         modalStore.setAction({
@@ -60,9 +65,13 @@ export function NewGeneratorDialogButton() {
           options: {},
         });
       }}
+      disabled={!!errorMessage}
     >
-      <PlusIcon className="h-4 w-4" />
-      New Generator
+      <span className="group-disabled:opacity-50 flex flex-row items-center gap-2">
+        <PlusIcon className="h-4 w-4" />
+        New Generator
+      </span>
+      {errorMessage && <span className="text-destructive">{errorMessage}</span>}
     </Button>
   );
 }
@@ -128,6 +137,89 @@ export function SelectGeneratorCombobox() {
     return Array.from(generatorStore.generators.values());
   }, [generatorStore?.generators]);
 
+  let ele = null;
+  let hasReachedLimit = false;
+  if (generatorStore) {
+    hasReachedLimit =
+      generatorStore.generators.size >= Config.limits.generators;
+    ele = generatorsArray.map((generator) => (
+      <CommandItemBase
+        key={generator.id}
+        value={generator.name}
+        onSelect={() => {
+          generatorStore.changeSelectedGeneratorId(generator.id);
+        }}
+        selected={generatorStore.selectedGeneratorId === generator.id}
+        className="group flex flex-row justify-between py-0"
+      >
+        {generator.name}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={stopPropagation}
+              className="p-2.5 h-fit w-fit hover:group-data-[selected=true]:bg-transparent dark:hover:group-data-[selected=true]:bg-transparent hover:group-data-[selected=true]:text-neutral-400 dark:hover:group-data-[selected=true]:text-neutral-400"
+            >
+              <EllipsisIcon className="h-4 w-4 text-current" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <RenameGeneratorDialogButton
+              generatorRef={generator.id}
+              defaultName={generator.name}
+            />
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              onSelect={(e) => {
+                if (hasReachedLimit) {
+                  e.preventDefault();
+                  return;
+                }
+                generatorStore.createGeneratorCopy(generator.id);
+              }}
+              className={cn("flex flex-row", {
+                "hover:bg-transparent focus:bg-transparent": hasReachedLimit,
+              })}
+            >
+              <span
+                className={cn("flex flex-row items-center gap-2", {
+                  "opacity-50": hasReachedLimit,
+                })}
+              >
+                <CopyIcon className="h-4 w-4" /> Create Copy
+              </span>
+              {hasReachedLimit && (
+                <span className="text-destructive">
+                  Generator limit reached{" "}
+                  {`(${generatorStore.generators.size} / ${Config.limits.generators})`}
+                </span>
+              )}
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                modalStore.setAction({
+                  type: "delete-generator-confirmation",
+                  options: {
+                    generatorRef: generator.id,
+                  },
+                });
+              }}
+            >
+              <TrashIcon className="h-4 w-4" /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CommandItemBase>
+    ));
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -158,67 +250,17 @@ export function SelectGeneratorCombobox() {
                 to create a new generator.
               </div>
             </CommandEmpty>
-            <CommandGroup>
-              {generatorsArray.map((generator) => (
-                <CommandItemBase
-                  key={generator.id}
-                  value={generator.name}
-                  onSelect={() => {
-                    generatorStore?.changeSelectedGeneratorId(generator.id);
-                  }}
-                  selected={generatorStore.selectedGeneratorId === generator.id}
-                  className="group flex flex-row justify-between py-0"
-                >
-                  {generator.name}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={stopPropagation}
-                        className="p-2.5 h-fit w-fit hover:group-data-[selected=true]:bg-transparent dark:hover:group-data-[selected=true]:bg-transparent hover:group-data-[selected=true]:text-neutral-400 dark:hover:group-data-[selected=true]:text-neutral-400"
-                      >
-                        <EllipsisIcon className="h-4 w-4 text-current" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <RenameGeneratorDialogButton
-                        generatorRef={generator.id}
-                        defaultName={generator.name}
-                      />
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          generatorStore?.createGeneratorCopy(generator.id);
-                        }}
-                      >
-                        <CopyIcon className="h-4 w-4" /> Create Copy
-                      </DropdownMenuItem>
-
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          modalStore.setAction({
-                            type: "delete-generator-confirmation",
-                            options: {
-                              generatorRef: generator.id,
-                            },
-                          });
-                        }}
-                      >
-                        <TrashIcon className="h-4 w-4" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CommandItemBase>
-              ))}
-            </CommandGroup>
+            <CommandGroup>{ele}</CommandGroup>
           </CommandList>
           <CommandSeparator />
           <div className="flex flex-row items-center justify-between pb-1">
-            <NewGeneratorDialogButton />
+            <NewGeneratorDialogButton
+              errorMessage={
+                hasReachedLimit && generatorStore
+                  ? `Generator limit reached (${generatorStore.generators.size} / ${Config.limits.generators})`
+                  : undefined
+              }
+            />
           </div>
         </Command>
       </PopoverContent>

@@ -6,6 +6,7 @@ import z from "zod";
 import { asPriorityNumber } from "./utils";
 import "@/lib/zod";
 import { fallback, injectDefaults } from "@/lib/zod";
+import { Config } from "@/lib/config";
 
 export const TimetableGeneratorIdSchema = z.string();
 
@@ -128,7 +129,7 @@ export type TimetableGenerator = z.infer<typeof TimetableGeneratorSchema>;
 export const TimetableGeneratorStateSchema = z.object({
   generators: z.map(TimetableGeneratorIdSchema, TimetableGeneratorSchema),
   selectedGeneratorId: TimetableGeneratorIdSchema.default(""),
-  seed: z.string().default(nanoid(24)),
+  seed: z.string().default(nanoid(12)),
 });
 
 type TimetableGeneratorState = z.infer<typeof TimetableGeneratorStateSchema>;
@@ -143,12 +144,31 @@ type TimetableGeneratorStore = {
   // CRUD for generators.
   deleteGenerator: (id: TimetableGeneratorId, autoSelect?: boolean) => void;
   changeGeneratorName: (id: TimetableGeneratorId, name: string) => void;
-  createGeneratorCopy: (id: TimetableGeneratorId, autoSelect?: boolean) => void;
+  createGeneratorCopy: (
+    id: TimetableGeneratorId,
+    autoSelect?: boolean
+  ) =>
+    | {
+        type: "success";
+        id: TimetableGeneratorId;
+      }
+    | {
+        type: "error";
+        error: string;
+      };
   createGenerator: (
     name: string,
     templateType: GeneratorTemplateType,
     autoSelect?: boolean
-  ) => void;
+  ) =>
+    | {
+        type: "success";
+        id: TimetableGeneratorId;
+      }
+    | {
+        type: "error";
+        error: string;
+      };
   // Update generator field.
   changeGeneratorField: <T extends keyof TimetableGenerator["factors"]>(
     id: TimetableGeneratorId,
@@ -239,7 +259,7 @@ export const useTimetableGeneratorStore = create<TimetableGeneratorStore>()(
         defaultGenerator("default", "Default Generator")
       ),
       selectedGeneratorId: "default",
-      seed: nanoid(24),
+      seed: nanoid(12),
       deleteGenerator: (id, autoSelect = true) => {
         set((state) => {
           const newGenerators = new Map(state.generators);
@@ -269,10 +289,28 @@ export const useTimetableGeneratorStore = create<TimetableGeneratorStore>()(
         });
       },
       createGeneratorCopy: (id, autoSelect = true) => {
+        let res: ReturnType<TimetableGeneratorStore["createGeneratorCopy"]> = {
+          type: "error",
+          error: "Failed to create generator",
+        };
         set((state) => {
           const newGenerators = new Map(state.generators);
           const generator = state.generators.get(id);
-          if (!generator) return state;
+          if (!generator) {
+            res = {
+              type: "error",
+              error: "Generator not found",
+            };
+            return {};
+          }
+
+          if (newGenerators.size >= Config.limits.generators) {
+            res = {
+              type: "error",
+              error: `Generator limit reached (${newGenerators.size} / ${Config.limits.generators})`,
+            };
+            return {};
+          }
 
           // Deep copy generator.
           const copy = superjson.parse(
@@ -281,6 +319,11 @@ export const useTimetableGeneratorStore = create<TimetableGeneratorStore>()(
           copy.id = nanoid();
           copy.name = `${copy.name} Copy`;
           newGenerators.set(copy.id, copy);
+
+          res = {
+            type: "success",
+            id: copy.id,
+          };
           return {
             generators: newGenerators,
             selectedGeneratorId: autoSelect
@@ -288,10 +331,30 @@ export const useTimetableGeneratorStore = create<TimetableGeneratorStore>()(
               : state.selectedGeneratorId,
           };
         });
+
+        return res;
       },
       createGenerator: (name, templateType, autoSelect = true) => {
+        let res: ReturnType<TimetableGeneratorStore["createGenerator"]> = {
+          type: "error",
+          error: "Failed to create generator",
+        };
+
         set((state) => {
+          if (state.generators.size >= Config.limits.generators) {
+            res = {
+              type: "error",
+              error: `Generator limit reached (${state.generators.size} / ${Config.limits.generators})`,
+            };
+            return {};
+          }
+
           const generator = defaultGenerator(nanoid(), name, templateType);
+
+          res = {
+            type: "success",
+            id: generator.id,
+          };
           return {
             generators: new Map(state.generators).set(generator.id, generator),
             selectedGeneratorId: autoSelect
@@ -299,6 +362,8 @@ export const useTimetableGeneratorStore = create<TimetableGeneratorStore>()(
               : state.selectedGeneratorId,
           };
         });
+
+        return res;
       },
       changeGeneratorField: <T extends keyof TimetableGenerator["factors"]>(
         id: TimetableGeneratorId,

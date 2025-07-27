@@ -120,12 +120,10 @@ function GeneratorUndoButton({
 function GeneratorApplyToPlan({
   generatedTimetables,
   lastGenerated,
-  originalTimetable,
   timetableId,
 }: {
   generatedTimetables: GeneratedTimetableWithScore[];
   lastGenerated?: Date;
-  originalTimetable?: GeneratedTimetable;
   timetableId: TimetableId;
 }) {
   const timetableStore = useTimetableStore(

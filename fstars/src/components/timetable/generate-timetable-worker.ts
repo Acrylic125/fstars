@@ -26,6 +26,7 @@ addEventListener(
         isSkewedThresholdSD: 3,
       }
     );
+
     const timetables = generator.generate({
       iterations: 100,
       generatePerIteration: 100,
@@ -33,7 +34,7 @@ addEventListener(
       iterationSelectionAmount: 10,
       returnTopN: 25,
       seed: e.data.seed,
-      variability: 10,
+      variability: 0.5,
     });
     postMessage(timetables);
   }
