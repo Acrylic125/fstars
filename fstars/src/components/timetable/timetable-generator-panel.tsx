@@ -292,6 +292,7 @@ function GenerateTimetableSection({
     useShallow((state) => {
       return {
         factors: state.generators.get(state.selectedGeneratorId)?.factors,
+        seed: state.seed,
       };
     })
   );
@@ -387,7 +388,6 @@ function GenerateTimetableSection({
               event: MessageEvent<GeneratedTimetableWithScore[]>
             ) => {
               resolve(event.data);
-              console.log("Generated timetables", event.data);
             };
             worker.onerror = (event: ErrorEvent) => {
               if (event.error instanceof Error) {
@@ -403,6 +403,7 @@ function GenerateTimetableSection({
             worker.postMessage({
               factors: timetableGeneratorStore.factors,
               courses: response,
+              seed: timetableGeneratorStore.seed,
             });
           } catch (error) {
             reject(error);
