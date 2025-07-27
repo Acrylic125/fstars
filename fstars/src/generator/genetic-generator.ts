@@ -519,7 +519,10 @@ export class GeneticGenerator {
       options.returnTopN,
       true
     );
-    if (options.variability <= 0) {
+    if (topN.length <= 0) {
+      topN.forEach((timetable) => {
+        this.reconcileMissingIndexes(timetable.timetable);
+      });
       return topN;
     }
 
