@@ -346,32 +346,32 @@ export const appRouter = createTRPCRouter({
           .where(
             and(
               eq(coursesTable.ay, input.acadYear.yearCode),
-              eq(coursesTable.semester, input.acadYear.semesterCode),
+              eq(coursesTable.semester, input.acadYear.semesterCode)
               // Subquery to check if there's a matching program
-              exists(
-                db
-                  .select({ id: courseIndexTable.id })
-                  .from(courseIndexTable)
-                  .innerJoin(
-                    courseIndexSourcesTable,
-                    eq(courseIndexSourcesTable.indexId, courseIndexTable.id)
-                  )
-                  .innerJoin(
-                    programsTable,
-                    eq(programsTable.id, courseIndexSourcesTable.source)
-                  )
-                  .where(
-                    and(
-                      eq(courseIndexTable.courseId, coursesTable.id),
-                      eq(programsTable.code, input.program.code),
-                      eq(programsTable.subCode, input.program.subCode ?? ""),
-                      eq(programsTable.year, input.program.year)
-                    )
-                  )
-              )
+              // exists(
+              //   db
+              //     .select({ id: courseIndexTable.id })
+              //     .from(courseIndexTable)
+              //     .innerJoin(
+              //       courseIndexSourcesTable,
+              //       eq(courseIndexSourcesTable.indexId, courseIndexTable.id)
+              //     )
+              //     .innerJoin(
+              //       programsTable,
+              //       eq(programsTable.id, courseIndexSourcesTable.source)
+              //     )
+              //     .where(
+              //       and(
+              //         eq(courseIndexTable.courseId, coursesTable.id),
+              //         eq(programsTable.code, input.program.code),
+              //         eq(programsTable.subCode, input.program.subCode ?? ""),
+              //         eq(programsTable.year, input.program.year)
+              //       )
+              //     )
+              // )
             )
           )
-          .limit(10);
+          .limit(20);
 
         return res.map((course) => course.courses);
       }
@@ -388,7 +388,7 @@ export const appRouter = createTRPCRouter({
           .where(
             sql`${coursesTable.searchText} @@ to_tsquery('english', ${searchTerms})`
           )
-          .limit(10);
+          .limit(20);
         return courses;
       } catch (e) {
         console.error("Failed to search courses:", e);
