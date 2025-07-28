@@ -21,7 +21,7 @@ Additionally, make sure to create an `out` folder in this directory.
 1. Go to OAS, under **Course Registration**, find **Class Schedule**. Click on the link.
 2. Inspect element, under inspector, copy the __entire html page__. Make a file called `./out/scrape-sources.html`, and paste the contents in.
 3. Run `npx ts-node ./scrape-sources.ts`. This will scrape `./out/scrape-sources.html` for all available programs, and upload it to `./out/program-sources.json`.
-4. Run `npx ts-node ./download-raw-schedules.ts`. This will use `./out/program-sources.json` to download the indexes for each program, and upload it to `./out/raw-schedules`.
+4. Run `npx ts-node ./download-raw-schedules.ts`. This will use `./out/program-sources.json` to download the indexes for each program, and upload it to `./out/raw-schedules`. **THIS MAY TAKE A WHILE DUE TO INTENTIONAL THROTTLING! DO NOT REMOVE!!!!!!!**
 5. Run `npx ts-node ./scrape.ts`. This will use `./out/raw-schedules` to compile all classes, and upload it to `./out/classes.json`.
 
 **Note:** 
