@@ -111,3 +111,35 @@ export function isMinuteInRange(minute: number, range: TimeMinuteRange) {
   }
   return minute >= range[0] && minute <= range[1];
 }
+
+/**
+ * * Course is available as Unrestricted Elective
+ * ~ Course is available as Broadening and Deepening Elective
+ * ^ Self - Paced Course
+ * # Course is available as General Education Prescribed Elective
+ */
+const courseFlags = ["*", "~", "^", "#"];
+
+export function extractCourseNameAndFlags(name: string) {
+  // Check from back to front for flags
+  const flags = [];
+  let firstFlagIndex = -1;
+  for (let i = name.length - 1; i >= 0; i--) {
+    const char = name[i];
+    if (courseFlags.includes(char)) {
+      firstFlagIndex = i;
+      flags.push(char);
+    } else {
+      break;
+    }
+  }
+  return {
+    name: name.slice(0, firstFlagIndex),
+    flags: {
+      isAvailableUE: flags.includes("*"),
+      isAvailableBD: flags.includes("~"),
+      isSelfPaced: flags.includes("^"),
+      isAvailableGEPE: flags.includes("#"),
+    },
+  };
+}

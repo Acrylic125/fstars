@@ -7,6 +7,8 @@ import {
   varchar,
   index,
   customType,
+  pgEnum,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const tsvector = customType<{
@@ -17,14 +19,17 @@ export const tsvector = customType<{
   },
 });
 
+export const programType = pgEnum("program_type", ["full_time", "part_time"]);
+
 export const programsTable = pgTable(
   "programs",
   {
     id: serial().notNull().primaryKey(),
     name: varchar({ length: 128 }).notNull(),
     code: varchar({ length: 32 }).notNull(),
-    subCode: varchar({ length: 32 }).notNull().default(""),
-    year: integer().notNull(),
+    subCode: varchar({ length: 32 }), //.notNull().default(""),
+    year: integer(),
+    type: programType().notNull(),
   },
   (t) => [unique("idx_code_subcode_year").on(t.code, t.subCode, t.year)]
 );
@@ -46,6 +51,14 @@ export const coursesTable = pgTable(
           ||
           setweight(to_tsvector('english', ${coursesTable.name}), 'B')`
       ),
+    //  * Course is available as Unrestricted Elective
+    isAvailableUE: boolean().notNull().default(false),
+    //  ~ Course is available as Broadening and Deepening Elective
+    isAvailableBD: boolean().notNull().default(false),
+    //  # Course is available as General Education Prescribed Elective
+    isAvailableGEPE: boolean().notNull().default(false),
+    //  ^ Self - Paced Course
+    isSelfPaced: boolean().notNull().default(false),
   },
   (t) => [
     unique("idx_code_ay_semester").on(t.code, t.ay, t.semester),

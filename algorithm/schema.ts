@@ -57,7 +57,7 @@ export const ProgramSchema = z.object({
   name: z.string(),
   code: z.string(),
   subCode: z.string().optional(),
-  year: z.number(),
+  year: z.number().optional(),
 });
 
 export const ProgramSourceSchema = z.object({

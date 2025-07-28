@@ -1,4 +1,8 @@
-import { ProgramCourseListSchema, MetadataSchema, Days } from "./schema";
+import {
+  ProgramCourseListSchema as ClassesSchema,
+  MetadataSchema,
+  Days,
+} from "./schema";
 import { db } from "./db";
 import {
   courseIndexClassesTable,
@@ -10,6 +14,7 @@ import {
 import path from "path";
 import fs from "fs";
 import { and, eq } from "drizzle-orm";
+import { extractCourseNameAndFlags } from "./utils";
 
 async function getMetadata(dir: string) {
   const metadata = MetadataSchema.parse(
@@ -19,8 +24,8 @@ async function getMetadata(dir: string) {
 }
 
 async function getScrapedResults(dir: string) {
-  const resultsPath = path.resolve(dir, "all-results.json");
-  const all = ProgramCourseListSchema.parse(
+  const resultsPath = path.resolve(dir, "./out/classes.json");
+  const all = ClassesSchema.parse(
     JSON.parse(fs.readFileSync(resultsPath, "utf8"))
   );
   return all;
@@ -35,8 +40,8 @@ function* batchIteration(batchSize: number, total: number) {
 }
 
 async function doProgramsInsert() {
-  const metadata = await getMetadata(path.resolve("./raw-schedules"));
-  const programs = metadata.map((m) => m.program);
+  const metadata = await getMetadata(path.resolve("./out/raw-schedules"));
+  const programs = metadata.map((m) => m.source);
   await db.insert(programsTable).values(programs);
   console.log("Programs inserted");
 }
@@ -44,12 +49,17 @@ async function doProgramsInsert() {
 async function doCoursesInsert(ay: string, semester: string) {
   const all = await getScrapedResults(__dirname);
   const courses = all.map((c) => {
+    const { name, flags } = extractCourseNameAndFlags(c.course.name);
     return {
       code: c.course.code,
-      name: c.course.name,
+      name,
       au: c.au,
       ay,
       semester,
+      isAvailableUE: flags.isAvailableUE,
+      isAvailableBD: flags.isAvailableBD,
+      isSelfPaced: flags.isSelfPaced,
+      isAvailableGEPE: flags.isAvailableGEPE,
     };
   });
   await db.insert(coursesTable).values(courses);
@@ -162,7 +172,7 @@ async function doInsertIndexSources(ay: string, semester: string) {
   const programMap = new Map<string, number>();
   for (const program of allPrograms) {
     programMap.set(
-      `${program.code}-${program.subCode}-${program.year}`,
+      `${program.code}-${program.subCode ?? "__NULL__"}-${program.year ?? "__NULL__"}`,
       program.id
     );
   }
@@ -172,11 +182,11 @@ async function doInsertIndexSources(ay: string, semester: string) {
     for (const index of course.indices) {
       for (const source of index.sources) {
         const programId = programMap.get(
-          `${source.code}-${source.subCode ?? ""}-${source.year}`
+          `${source.code}-${source.subCode ?? "__NULL__"}-${source.year ?? "__NULL__"}`
         );
         if (!programId) {
           throw new Error(
-            `Program ${source.code}-${source.subCode ?? ""}-${source.year} not found in ${JSON.stringify(allPrograms)}`
+            `Program ${source.code}-${source.subCode ?? "__NULL__"}-${source.year ?? "__NULL__"} not found in ${JSON.stringify(allPrograms)}`
           );
         }
         const indexId = courseIndexMap.get(
@@ -206,9 +216,9 @@ async function doInsertIndexSources(ay: string, semester: string) {
 (async () => {
   const ay = "25/26";
   const sem = "1";
-  await doProgramsInsert();
-  await doCoursesInsert(ay, sem);
-  await doCoursesIndexInsert(ay, sem);
-  await doIndexClassesInsert(ay, sem);
+  // await doProgramsInsert();
+  // await doCoursesInsert(ay, sem);
+  // await doCoursesIndexInsert(ay, sem);
+  // await doIndexClassesInsert(ay, sem);
   await doInsertIndexSources(ay, sem);
 })();
