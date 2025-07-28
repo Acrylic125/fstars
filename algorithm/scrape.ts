@@ -154,7 +154,7 @@ function scrapePageForCourses(html: string) {
   return results;
 }
 
-const rawSchedulesDir = path.resolve("./raw-schedules");
+const rawSchedulesDir = path.resolve("./out/raw-schedules");
 const metadata = MetadataSchema.parse(
   JSON.parse(
     fs.readFileSync(path.resolve(rawSchedulesDir, "metadata.json"), "utf8")
@@ -164,7 +164,11 @@ const metadata = MetadataSchema.parse(
 const courseSchedules = new Map<CourseCode, Course>();
 // course code -> serialized course
 // const checkDuplicates = new Map<string, string>();
-for (const entry of metadata) {
+for (let i = 0; i < metadata.length; i++) {
+  if (i % 20 === 0) {
+    console.log(`Processing ${i} of ${metadata.length}`);
+  }
+  const entry = metadata[i];
   const html = fs.readFileSync(path.resolve(entry.path), "utf8");
   const courses = scrapePageForCourses(html);
   for (const course of courses) {
@@ -180,7 +184,11 @@ for (const entry of metadata) {
         if (i !== undefined) {
           // console.log(`Already have index, ${index.index}. Adding source`);
           const curIndex = cur.indices[i];
-          curIndex.sources.push(entry.program);
+          curIndex.sources.push({
+            code: entry.source.code,
+            subCode: entry.source.subCode ?? undefined,
+            year: entry.source.year ?? undefined,
+          });
           continue;
         }
         cur.indices.push(index);
@@ -188,7 +196,11 @@ for (const entry of metadata) {
       continue;
     }
     for (const index of course.indices) {
-      index.sources.push(entry.program);
+      index.sources.push({
+        code: entry.source.code,
+        subCode: entry.source.subCode ?? undefined,
+        year: entry.source.year ?? undefined,
+      });
     }
     courseSchedules.set(course.course.code, course);
   }
@@ -197,6 +209,6 @@ for (const entry of metadata) {
 const results = Array.from(courseSchedules.values());
 // console.log(results)
 fs.writeFileSync(
-  path.resolve("./all-results.json"),
+  path.resolve("./out/classes.json"),
   JSON.stringify(results, null, 2)
 );

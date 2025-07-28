@@ -8,7 +8,7 @@ export const TimeSchema = z.object({
 
 export const Days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] as const;
 export const DaySchema = z.enum(Days);
-export const TypeSchema = z.enum(["LAB", "LEC", "TUT", "LEC/STUDIO", "SEM"]);
+export const TypeSchema = z.string(); // z.enum(["LAB", "LEC", "TUT", "LEC/STUDIO", "SEM"]);
 
 export const ClassSchema = z.object({
   type: TypeSchema,
@@ -34,10 +34,10 @@ export const IndexSchema = z.object({
   classes: z.array(ClassSchema),
   sources: z.array(
     z.object({
-      name: z.string(),
+      // name: z.string(),
       code: z.string(),
       subCode: z.string().optional(),
-      year: z.number(),
+      year: z.number().optional(),
     })
   ),
 });
@@ -60,8 +60,19 @@ export const ProgramSchema = z.object({
   year: z.number(),
 });
 
+export const ProgramSourceSchema = z.object({
+  name: z.string(),
+  code: z.string(),
+  subCode: z.string().optional().nullable(),
+  year: z.number().optional().nullable(),
+  type: z.enum(["full_time", "part_time"]),
+  ref: z.string(),
+});
+
+export type ProgramSource = z.infer<typeof ProgramSourceSchema>;
+
 export const MetadataEntrySchema = z.object({
-  program: ProgramSchema,
+  source: ProgramSourceSchema,
   path: z.string(),
 });
 

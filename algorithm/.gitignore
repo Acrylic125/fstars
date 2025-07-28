@@ -1,5 +1,4 @@
 node_modules
-raw-schedules
-all-results.json
 .env
 .DS_Store
+out/*
