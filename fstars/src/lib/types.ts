@@ -3,8 +3,8 @@ import { z } from "zod";
 export const ProgramSchema = z.object({
   name: z.string(),
   code: z.string(),
-  subCode: z.string().optional(),
-  year: z.number(),
+  subCode: z.string().optional().nullable(),
+  year: z.number().optional().nullable(),
 });
 
 export type Program = z.infer<typeof ProgramSchema>;

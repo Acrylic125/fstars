@@ -87,7 +87,7 @@ export function SelectCourseCombobox({
     mutationFn: async (courseCode: CourseCode) => {
       const res = await utils.client.getProgramExcludedCourseIndexes.query({
         courseCode,
-        program,
+        programs: [program],
         acadYear,
       });
       const addCourseRes = timetableStore.addCourseToPlan(
@@ -98,7 +98,7 @@ export function SelectCourseCombobox({
         {
           code: courseCode,
           index: "",
-          ignoreIndexes: res.map((r) => r.index),
+          ignoreIndexes: res,
         }
       );
       if (addCourseRes.type === "error") {

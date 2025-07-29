@@ -8,7 +8,17 @@ import {
   coursesTable,
   programsTable,
 } from "@/db/schema";
-import { and, eq, exists, inArray, like, not, or, sql } from "drizzle-orm";
+import {
+  and,
+  eq,
+  exists,
+  inArray,
+  isNull,
+  like,
+  not,
+  or,
+  sql,
+} from "drizzle-orm";
 import { AcadYearSchema, ProgramSchema } from "@/lib/types";
 import { CourseCode } from "@/components/timetable/timetable-store";
 import {
@@ -69,7 +79,7 @@ export const appRouter = createTRPCRouter({
     .input(
       z.object({
         courseCode: z.string(),
-        program: ProgramSchema,
+        programs: z.array(ProgramSchema),
         acadYear: AcadYearSchema,
       })
     )
@@ -78,36 +88,106 @@ export const appRouter = createTRPCRouter({
         .select({
           id: courseIndexTable.id,
           index: courseIndexTable.index,
+          source: {
+            code: programsTable.code,
+            subCode: programsTable.subCode,
+            year: programsTable.year,
+          },
         })
         .from(courseIndexTable)
         .innerJoin(coursesTable, eq(coursesTable.id, courseIndexTable.courseId))
+        .innerJoin(
+          courseIndexSourcesTable,
+          eq(courseIndexSourcesTable.indexId, courseIndexTable.id)
+        )
+        .innerJoin(
+          programsTable,
+          eq(programsTable.id, courseIndexSourcesTable.source)
+        )
         .where(
           and(
-            not(
-              exists(
-                db
-                  .select({ id: courseIndexSourcesTable.id })
-                  .from(courseIndexSourcesTable)
-                  .innerJoin(
-                    programsTable,
-                    eq(programsTable.id, courseIndexSourcesTable.source)
-                  )
-                  .where(
-                    and(
-                      eq(courseIndexSourcesTable.indexId, courseIndexTable.id),
-                      eq(programsTable.code, input.program.code),
-                      eq(programsTable.subCode, input.program.subCode ?? ""),
-                      eq(programsTable.year, input.program.year)
-                    )
-                  )
-              )
-            ),
             eq(coursesTable.code, input.courseCode),
             eq(coursesTable.ay, input.acadYear.yearCode),
             eq(coursesTable.semester, input.acadYear.semesterCode)
           )
         );
-      return courseIndexes;
+
+      const indexAndSources: Map<
+        string,
+        (typeof courseIndexes)[number]["source"][]
+      > = new Map();
+      for (const courseIndex of courseIndexes) {
+        const cur = indexAndSources.get(courseIndex.index);
+        if (!cur) {
+          indexAndSources.set(courseIndex.index, [courseIndex.source]);
+        } else {
+          cur.push(courseIndex.source);
+        }
+      }
+
+      const excludeIndexes = new Set<string>();
+      for (const courseIndex of courseIndexes) {
+        const cur = indexAndSources.get(courseIndex.index);
+        let isSourcedFromInputPrograms = false;
+        if (cur && cur.length >= 1) {
+          for (const source of cur) {
+            for (const program of input.programs) {
+              if (source.year !== null && source.year !== program.year) {
+                continue;
+              }
+              if (source.code !== "GLOAD") {
+                if (source.code !== program.code) {
+                  continue;
+                }
+                if (source.subCode !== (program.subCode ?? null)) {
+                  continue;
+                }
+              }
+              if (input.courseCode === "HY1001" && source.code === "GLOAD") {
+                console.log("YESSSSS");
+              }
+              isSourcedFromInputPrograms = true;
+              break;
+            }
+          }
+        }
+        if (!isSourcedFromInputPrograms) {
+          excludeIndexes.add(courseIndex.index);
+        }
+      }
+
+      // .where(
+      //   and(
+      //     not(
+      //       exists(
+      //         db
+      //           .select({ id: courseIndexSourcesTable.id })
+      //           .from(courseIndexSourcesTable)
+      //           .innerJoin(
+      //             programsTable,
+      //             eq(programsTable.id, courseIndexSourcesTable.source)
+      //           )
+      //           .where(
+      //             and(
+      //               eq(courseIndexSourcesTable.indexId, courseIndexTable.id),
+      //               eq(programsTable.code, input.program.code),
+      //               input.program.subCode
+      //                 ? eq(programsTable.subCode, input.program.subCode)
+      //                 : isNull(programsTable.subCode),
+      //               input.program.year !== null &&
+      //                 input.program.year !== undefined
+      //                 ? eq(programsTable.year, input.program.year)
+      //                 : isNull(programsTable.year)
+      //             )
+      //           )
+      //       )
+      //     ),
+      //     eq(coursesTable.code, input.courseCode),
+      //     eq(coursesTable.ay, input.acadYear.yearCode),
+      //     eq(coursesTable.semester, input.acadYear.semesterCode)
+      //   )
+      // );
+      return Array.from(excludeIndexes);
     }),
   getCourseIndexClasses: publicProcedure
     .input(
