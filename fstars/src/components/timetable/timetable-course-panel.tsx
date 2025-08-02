@@ -74,11 +74,12 @@ export function TimetableHeader({ id }: { id: string }) {
       <div className="w-full flex flex-col">
         {timetable !== null ? (
           <>
-            {/* <p className="text-sm text-muted-foreground h-6">
-              {timetable.program.name} - AY
-              {timetable.acadYear.yearCode} Semester{" "}
-              {timetable.acadYear.semesterCode}
-            </p> */}
+            <p className="text-sm text-muted-foreground h-6">
+              {/* {timetable.program.name} - AY */}
+              AY{
+                timetable.acadYear.yearCode
+              } Semester {timetable.acadYear.semesterCode}
+            </p>
             <h1 className="text-2xl font-semibold h-12">{timetable.name}</h1>
           </>
         ) : (

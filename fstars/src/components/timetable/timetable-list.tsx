@@ -58,7 +58,7 @@ export function TimetableList() {
     return Array.from(timetables.values()).map((timetable) => ({
       id: timetable.id,
       name: timetable.name,
-      program: timetable.program,
+      programs: timetable.programs,
       acadYear: timetable.acadYear,
     }));
   }, [timetables]);
@@ -75,7 +75,7 @@ export function TimetableList() {
             {timetable.name}
           </h3>
           <p className="text-sm text-muted-foreground">
-            {timetable.program.name} - AY{timetable.acadYear.yearCode} Semester{" "}
+            AY{timetable.acadYear.yearCode} Semester{" "}
             {timetable.acadYear.semesterCode}
           </p>
         </Link>
