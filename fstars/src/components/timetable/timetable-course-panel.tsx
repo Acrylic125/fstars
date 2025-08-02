@@ -12,7 +12,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDownIcon, ChevronUpIcon, TrashIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  EditIcon,
+  TrashIcon,
+} from "lucide-react";
 import { ColorScheme, getColorMapForCourses, sortCourseCodes } from "./utils";
 import { SelectIndexCombobox } from "./select-index-combobox";
 import { type AppRouter } from "@/server/router";
@@ -33,6 +38,7 @@ import {
 } from "./timetable-export-utils";
 import { nanoid } from "nanoid";
 import { useTimetableGeneratorStore } from "./timetable-generator-store";
+import Link from "next/link";
 
 export function TimetableHeader({ id }: { id: string }) {
   const timetable = useTimetableStore(
@@ -71,28 +77,40 @@ export function TimetableHeader({ id }: { id: string }) {
 
   return (
     <div className="w-full flex flex-row gap-2 justify-between items-center">
-      <div className="w-full flex flex-col">
-        {timetable !== null ? (
-          <>
-            <p className="text-sm text-muted-foreground h-6">
-              {/* {timetable.program.name} - AY */}
-              AY{
-                timetable.acadYear.yearCode
-              } Semester {timetable.acadYear.semesterCode}
-            </p>
-            <h1 className="text-2xl font-semibold h-12">{timetable.name}</h1>
-          </>
-        ) : (
-          <>
-            <div className="h-6 py-1 w-1/4">
-              <Skeleton className="h-full w-full rounded-md" />
-            </div>
-            <div className="h-12 py-2 w-1/2">
-              <Skeleton className="h-full w-full rounded-md" />
-            </div>
-          </>
-        )}
+      <div className="w-full flex flex-row items-center gap-4">
+        <div className="flex flex-col">
+          {timetable !== null ? (
+            <>
+              <p className="text-sm text-muted-foreground h-6">
+                {/* {timetable.program.name} - AY */}
+                AY{
+                  timetable.acadYear.yearCode
+                } Semester {timetable.acadYear.semesterCode}
+              </p>
+              <div className="flex flex-row items-center">
+                <h1 className="text-2xl font-semibold h-12">
+                  {timetable.name}
+                </h1>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="h-6 py-1 w-1/4">
+                <Skeleton className="h-full w-full rounded-md" />
+              </div>
+              <div className="h-12 py-2 w-1/2">
+                <Skeleton className="h-full w-full rounded-md" />
+              </div>
+            </>
+          )}
+        </div>
+        <Button variant="outline" size="icon" asChild>
+          <Link href={`/timetable/${id}/edit`}>
+            <EditIcon className="w-4 h-4" />
+          </Link>
+        </Button>
       </div>
+
       <div className="flex flex-row gap-2">
         <div className="relative flex flex-row gap-2">
           <Button variant="outline" onClick={exportTimetableFile}>

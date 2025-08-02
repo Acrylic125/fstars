@@ -83,6 +83,20 @@ type TimetableStore = {
         type: "error";
         error: string;
       };
+  updateTimetable: (
+    timetableId: TimetableId,
+    timetable: {
+      name: string;
+      programs: Program[];
+    }
+  ) =>
+    | {
+        type: "success";
+      }
+    | {
+        type: "error";
+        error: string;
+      };
   // Plan selection.
   changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => void;
   // Course CRUD.
@@ -202,6 +216,44 @@ export const useTimetableStore = create<TimetableStore>()(
             timetables: new Map(state.timetables).set(timetable.id, timetable),
           };
         });
+        return res;
+      },
+      updateTimetable: (
+        timetableId: TimetableId,
+        newTimetable: {
+          name: string;
+          programs: Program[];
+        }
+      ) => {
+        let res: ReturnType<TimetableStore["updateTimetable"]> = {
+          type: "error",
+          error: "Failed to update timetable",
+        };
+        set((state) => {
+          const timetable = state.timetables.get(timetableId);
+          if (!timetable) {
+            res = {
+              type: "error",
+              error: "Timetable not found",
+            };
+            return {};
+          }
+          const updatedTimetable = {
+            ...timetable,
+            name: newTimetable.name,
+            programs: newTimetable.programs,
+          };
+          res = {
+            type: "success",
+          };
+          return {
+            timetables: new Map(state.timetables).set(
+              timetableId,
+              updatedTimetable
+            ),
+          };
+        });
+
         return res;
       },
       changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => {

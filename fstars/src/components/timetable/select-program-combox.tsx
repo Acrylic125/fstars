@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/popover";
 import { Program } from "@/lib/types";
 import { Button } from "../ui/button";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useDebounce } from "use-debounce";
 import Fuse from "fuse.js";
@@ -175,11 +175,13 @@ export function SelectProgramCombobox({
   onChange,
   programs,
   limit,
+  disabled,
 }: {
   value: Program[];
   onChange: (value: Program) => void;
   programs: Program[];
   limit: number;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -189,6 +191,7 @@ export function SelectProgramCombobox({
         <Button
           variant="ghost"
           className="flex-row w-full h-12 border border-input rounded-md flex items-center justify-between px-3 truncate"
+          disabled={disabled}
         >
           <span
             className={cn("flex flex-row gap-2", {
@@ -202,9 +205,9 @@ export function SelectProgramCombobox({
                     key={i}
                     role="button"
                     className="rounded-xs bg-primary text-primary-foreground px-2 text-sm py-0 h-fit"
-                    onClick={() => {
-                      onChange(p);
-                    }}
+                    // onClick={() => {
+                    //   onChange(p);
+                    // }}
                   >
                     {toShortenedName(p)}
                   </div>
