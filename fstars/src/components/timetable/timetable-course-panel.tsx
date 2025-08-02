@@ -1,9 +1,9 @@
 "use client";
 import { useShallow } from "zustand/react/shallow";
-import { Plan, PlanId, useTimetableStore } from "./timetable-store";
+import { PlanId, useTimetableStore } from "./timetable-store";
 import { asProgramName } from "./select-program-combox";
 import { Skeleton } from "../ui/skeleton";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { SelectPlanCombobox } from "./select-plan-combobox";
 import { SelectCourseCombobox } from "./select-course-combobox";
 import { trpc } from "@/server/client";
@@ -14,12 +14,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronDownIcon, ChevronUpIcon, TrashIcon } from "lucide-react";
-import {
-  colorByIndex,
-  ColorScheme,
-  getColorMapForCourses,
-  sortCourseCodes,
-} from "./utils";
+import { ColorScheme, getColorMapForCourses, sortCourseCodes } from "./utils";
 import { SelectIndexCombobox } from "./select-index-combobox";
 import { type AppRouter } from "@/server/router";
 import { inferRouterOutputs } from "@trpc/server";
