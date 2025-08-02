@@ -28,15 +28,20 @@ import { useRouter } from "next/navigation";
 import { Program } from "@/lib/types";
 
 const formSchema = z.object({
-  program: z.object(
-    {
-      code: z.string().min(1, "Please select a program"),
-      name: z.string().min(1, "Please select a program"),
-      year: z.number().min(1, "Please select a program"),
-      subCode: z.string().min(1, "Please select a program").optional(),
-    },
-    "Please select a program"
-  ),
+  programs: z
+    .array(
+      z.object(
+        {
+          code: z.string().min(1, "Please select a program"),
+          name: z.string().min(1, "Please select a program"),
+          year: z.number().min(1, "Please select a program"),
+          subCode: z.string().min(1, "Please select a program").optional(),
+        },
+        "Please select a program"
+      )
+    )
+    .min(1, "Please select at least 1 program")
+    .max(5, "Please select up to 5 programs"),
   name: z
     .string()
     .min(1, "Please enter a timetable name")
@@ -48,7 +53,7 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      program: undefined,
+      programs: [],
       name: "",
     },
   });
@@ -60,17 +65,32 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
     })
   );
 
-  const programValue = form.watch("program");
+  const programsValue = form.watch("programs");
   // Update name field when program changes
   useEffect(() => {
     const isNameFieldDirty = form.getFieldState("name").isDirty;
-    if (!isNameFieldDirty && programValue !== undefined) {
-      form.setValue("name", `${programValue.name} Timetable`, {
-        shouldDirty: false,
-        shouldValidate: true,
-      });
+    if (!isNameFieldDirty && programsValue !== undefined) {
+      form.setValue(
+        "name",
+        `${programsValue
+          .map((p) => {
+            let name = p.code;
+            if (p.subCode) {
+              name += ` (${p.subCode})`;
+            }
+            if (p.year) {
+              name += ` Year ${p.year}`;
+            }
+            return name;
+          })
+          .join(", ")} Timetable`,
+        {
+          shouldDirty: false,
+          shouldValidate: true,
+        }
+      );
     }
-  }, [programValue, form]);
+  }, [programsValue, form]);
 
   const createTimetableMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
@@ -86,7 +106,7 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
       const timetable: Timetable = {
         id,
         name: data.name,
-        programs: [data.program],
+        programs: data.programs,
         acadYear: {
           yearCode: "25/26",
           semesterCode: "1",
@@ -118,24 +138,27 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
-            name="program"
+            name="programs"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-base md:text-lg">
-                  What programs are you in this semester?
+                  What programs are you in this semester? (i.e. Major, Minor,
+                  Scholar program)
                 </FormLabel>
                 <FormControl>
                   <SelectProgramCombobox
                     programs={programs}
-                    value={
-                      field.value !== undefined
-                        ? serializeProgram(field.value)
-                        : null
-                    }
+                    value={field.value}
                     onChange={(value) => {
-                      // console.log(value);
-                      // console.log(serializeProgram(value!));
-                      field.onChange(value);
+                      const serializedValue = serializeProgram(value);
+                      const i = field.value.findIndex((p) => {
+                        return serializeProgram(p) === serializedValue;
+                      });
+                      if (i !== -1) {
+                        field.onChange(field.value.filter((_, j) => j !== i));
+                      } else {
+                        field.onChange([...field.value, value]);
+                      }
                     }}
                   />
                 </FormControl>

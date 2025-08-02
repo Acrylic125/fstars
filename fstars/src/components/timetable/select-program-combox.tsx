@@ -18,16 +18,28 @@ import {
 } from "@/components/ui/popover";
 import { Program } from "@/lib/types";
 import { Button } from "../ui/button";
+import { useMemo } from "react";
 
 export function serializeProgram(program: Program) {
   return `${program.name}-${program.code}-${program.subCode}-${program.year}`;
 }
 
-export function toFullProgramName(program: Program) {
-  let name = program.name;
+export function toShortenedName(program: Program) {
+  let name = program.code;
   if (program.subCode) {
     name += ` (${program.subCode})`;
   }
+  if (program.year) {
+    name += ` Year ${program.year}`;
+  }
+  return name;
+}
+
+export function toFullProgramName(program: Program) {
+  let name = program.name;
+  // if (program.subCode) {
+  //   name += ` (${program.subCode})`;
+  // }
   if (program.year) {
     name += ` Year ${program.year}`;
   }
@@ -39,23 +51,38 @@ export function SelectProgramCombobox({
   onChange,
   programs,
 }: {
-  value: string | null;
-  onChange: (value: Program | null) => void;
+  value: Program[];
+  onChange: (value: Program) => void;
   programs: Program[];
 }) {
   const [open, setOpen] = React.useState(false);
+  const serializedPrograms = useMemo(() => {
+    return value.map(serializeProgram);
+  }, [value]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          className="flex-row w-full h-12 border border-input rounded-md flex items-center justify-between px-3"
+          className="flex-row w-full h-12 border border-input rounded-md flex items-center justify-between px-3 truncate"
         >
           <span
-            className={cn(value ? "text-foreground" : "text-muted-foreground")}
+            className={cn("flex flex-row gap-2", {
+              "text-foreground": value.length > 0,
+              "text-muted-foreground": value.length === 0,
+            })}
           >
-            {value ? value : "No Program Specified"}
+            {value.length > 0
+              ? value.map((p, i) => (
+                  <div
+                    key={i}
+                    className="rounded-sm bg-primary text-primary-foreground px-2 text-sm"
+                  >
+                    {toShortenedName(p)}
+                  </div>
+                ))
+              : "No Program Specified"}
           </span>
           <ChevronsUpDown className="opacity-50" />
         </Button>
@@ -74,16 +101,14 @@ export function SelectProgramCombobox({
             <CommandGroup>
               {programs.map((program) => {
                 const serialized = serializeProgram(program);
-                console.log(serialized, value);
                 return (
                   <CommandItemBase
                     key={serialized}
                     value={serialized}
                     onSelect={() => {
                       onChange(program);
-                      setOpen(false);
                     }}
-                    selected={value === serialized}
+                    selected={serializedPrograms.includes(serialized)}
                   >
                     {toFullProgramName(program)}
                   </CommandItemBase>
