@@ -17,21 +17,15 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { nanoid } from "nanoid";
 import { useMutation } from "@tanstack/react-query";
-import {
-  Plan,
-  Timetable,
-  TimetableId,
-  useTimetableStore,
-} from "./timetable-store";
+import { Timetable, TimetableId, useTimetableStore } from "./timetable-store";
 import { useShallow } from "zustand/react/shallow";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertCircleIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Program } from "@/lib/types";
 import { Config } from "@/lib/config";
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
+import { useTimetableInitialise } from "./use-timetable-initialise";
 
 const formSchema = z.object({
   programs: z
@@ -86,38 +80,21 @@ export function EditTimetable({
       };
     })
   );
-  const [initialLoadInState, setInitialLoadInState] = useState<
-    | {
-        type: "loading" | "success";
-      }
-    | {
-        type: "error";
-        error: string;
-      }
-  >({
-    type: "loading",
-  });
 
-  // Initialize defaults for RHF.
-  useEffect(() => {
-    const currentTimetable = useTimetableStore
-      .getState()
-      .timetables.get(timetableId);
-    if (!currentTimetable) {
-      setInitialLoadInState({
-        type: "error",
-        error: "Timetable not found",
+  const onInitialize = useCallback(
+    (timetable: Timetable) => {
+      form.reset({
+        programs: timetable.programs,
+        name: timetable.name,
       });
-      return;
-    }
-    form.reset({
-      programs: currentTimetable.programs,
-      name: currentTimetable.name,
-    });
-    setInitialLoadInState({
-      type: "success",
-    });
-  }, [form, timetableId, setInitialLoadInState]);
+    },
+    [form]
+  );
+
+  const { initialLoadInState } = useTimetableInitialise(
+    timetableId,
+    onInitialize
+  );
 
   const updateTimetableMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
