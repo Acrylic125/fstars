@@ -14,7 +14,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronDownIcon, ChevronUpIcon, TrashIcon } from "lucide-react";
-import { colorByIndex } from "./utils";
+import {
+  colorByIndex,
+  ColorScheme,
+  getColorMapForCourses,
+  sortCourseCodes,
+} from "./utils";
 import { SelectIndexCombobox } from "./select-index-combobox";
 import { type AppRouter } from "@/server/router";
 import { inferRouterOutputs } from "@trpc/server";
@@ -361,7 +366,9 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
 
   const selectedPlanCoursesArray = useMemo(() => {
     if (!timetableStore?.selectedPlanCourses) return [];
-    return Array.from(timetableStore.selectedPlanCourses.keys());
+    return sortCourseCodes(
+      Array.from(timetableStore.selectedPlanCourses.keys())
+    );
   }, [timetableStore?.selectedPlanCourses]);
 
   const selectedPlanCourses = trpc.getCoursesByCodes.useQuery(
@@ -382,6 +389,11 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
       selectedPlanCourses.data.map((course) => [course.code, course])
     );
   }, [selectedPlanCourses.data]);
+
+  const colorScheme: ColorScheme = "default";
+  const colorMap = useMemo(() => {
+    return getColorMapForCourses(selectedPlanCoursesArray, colorScheme);
+  }, [selectedPlanCoursesArray, colorScheme]);
 
   let ele;
   if (timetableStore) {
@@ -418,12 +430,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
                 <TimetableCoursesRow
                   key={courseCode}
                   id={id}
-                  color={
-                    colorByIndex(index, {
-                      max: selectedPlanCoursesArray.length,
-                      scheme: "default",
-                    }).backgroundColor
-                  }
+                  color={colorMap.get(courseCode)?.backgroundColor ?? ""}
                   planId={timetableStore.selectedPlanId}
                   courseCode={courseCode}
                   course={course}

@@ -1,3 +1,5 @@
+import { CourseCode } from "./timetable-store";
+
 export type ColorScheme =
   | "default"
   | "grayscale"
@@ -7,6 +9,27 @@ export type ColorScheme =
   | "blue-red-scale"
   | "blue-green-scale"
   | "red-green-scale";
+
+export function sortCourseCodes(courseCodes: CourseCode[]) {
+  return courseCodes.sort((a, b) => a.localeCompare(b));
+}
+
+export function getColorMapForCourses(
+  courseCodes: CourseCode[],
+  colorScheme: ColorScheme
+) {
+  // const max = Math.max(courseCodes.length, 10);
+  const max = courseCodes.length;
+  // Sort course codes by code
+  const sortedCourseCodes = sortCourseCodes(courseCodes);
+  const map = new Map<string, ReturnType<typeof colorByIndex>>();
+  for (let i = 0; i < sortedCourseCodes.length; i++) {
+    const courseCode = sortedCourseCodes[i];
+    const color = colorByIndex(i, { max, scheme: colorScheme });
+    map.set(courseCode, color);
+  }
+  return map;
+}
 
 export function colorByIndex(
   index: number,

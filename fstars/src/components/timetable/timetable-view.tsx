@@ -6,7 +6,7 @@ import "./fullcalendar.css";
 import { useTimetableStore } from "./timetable-store";
 import { useShallow } from "zustand/react/shallow";
 import { trpc } from "@/server/client";
-import { colorByIndex, ColorScheme } from "./utils";
+import { colorByIndex, ColorScheme, getColorMapForCourses } from "./utils";
 import {
   Popover,
   PopoverContent,
@@ -95,6 +95,16 @@ export function TimetableView({ id }: { id: string }) {
     }))
   );
 
+  const colorMap = useMemo(() => {
+    if (!timetableStore?.courses) {
+      return new Map();
+    }
+    return getColorMapForCourses(
+      courseCodes.map((c) => c.courseCode),
+      colorScheme
+    );
+  }, [timetableStore?.courses, courseCodes, colorScheme]);
+
   const events = useMemo(() => {
     if (!timetableStore?.courses) {
       return [];
@@ -113,13 +123,20 @@ export function TimetableView({ id }: { id: string }) {
       const groupKey = `${c.course.code}-${c.day}-${c.from.hour}:${c.from.minute}-${c.to.hour}${c.to.minute}`;
       const group = aggregatedEventMap.get(groupKey);
       if (!group) {
-        const i = courseCodes.findIndex(
-          (cc) => cc.courseCode === c.course.code
-        );
-        const color = colorByIndex(i, {
-          max: courseCodes.length,
-          scheme: colorScheme,
-        });
+        const color = colorMap.get(c.course.code);
+        if (!color) {
+          console.error("Color not found for course", c.course.code);
+          continue;
+        }
+
+        // const i = courseCodes.findIndex(
+        //   (cc) => cc.courseCode === c.course.code
+        // );
+
+        // const color = colorByIndex(i, {
+        //   max: courseCodes.length,
+        //   scheme: colorScheme,
+        // });
 
         const entry = {
           type: c.type,
@@ -225,6 +242,7 @@ export function TimetableView({ id }: { id: string }) {
     selectedCourseClasses.data,
     courseCodes,
     selectedWeeksBitMask,
+    colorMap,
   ]);
 
   return (
