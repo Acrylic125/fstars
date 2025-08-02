@@ -52,10 +52,12 @@ function SelectProgramCommand({
   value,
   onChange,
   programs,
+  limit,
 }: {
   value: Program[];
   onChange: (value: Program) => void;
   programs: Program[];
+  limit: number;
 }) {
   const serializedPrograms = useMemo(() => {
     return value.map(serializeProgram);
@@ -139,6 +141,7 @@ function SelectProgramCommand({
           {virtualOptions.map((virtualItem) => {
             const program = filteredOptions[virtualItem.index];
             const serialized = serializeProgram(program);
+            const isSelected = serializedPrograms.includes(serialized);
             return (
               <CommandItemBase
                 key={serialized}
@@ -152,7 +155,8 @@ function SelectProgramCommand({
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
                 className="py-0 absolute top-0 left-0 right-0"
-                selected={serializedPrograms.includes(serialized)}
+                selected={isSelected}
+                disabled={!isSelected && value.length >= limit}
               >
                 <div className="py-1.5 px-2 w-full">
                   {toFullProgramName(program)}
@@ -170,10 +174,12 @@ export function SelectProgramCombobox({
   value,
   onChange,
   programs,
+  limit,
 }: {
   value: Program[];
   onChange: (value: Program) => void;
   programs: Program[];
+  limit: number;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -205,7 +211,14 @@ export function SelectProgramCombobox({
                 ))
               : "No Program Specified"}
           </span>
-          <ChevronsUpDown className="opacity-50" />
+          <div className="flex flex-row gap-2 items-center">
+            {value.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {value.length} / {limit}
+              </span>
+            )}
+            <ChevronsUpDown className="opacity-50" />
+          </div>
         </Button>
         {/* <div className="flex-row w-full h-12 bg-input/30 border border-input rounded-md flex items-center justify-between px-3">
         </div> */}
@@ -216,6 +229,7 @@ export function SelectProgramCombobox({
           value={value}
           onChange={onChange}
           programs={programs}
+          limit={limit}
         />
       </PopoverContent>
     </Popover>

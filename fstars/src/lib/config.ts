@@ -1,6 +1,7 @@
 export const Config = {
   lastWeek: 14,
   currentAcademicYear: {
+    yearCode: "25/26",
     year: 2025,
     semester: 1,
   },

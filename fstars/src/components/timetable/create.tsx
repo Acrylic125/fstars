@@ -35,8 +35,16 @@ const formSchema = z.object({
         {
           code: z.string().min(1, "Please select a program"),
           name: z.string().min(1, "Please select a program"),
-          year: z.number().min(1, "Please select a program"),
-          subCode: z.string().min(1, "Please select a program").optional(),
+          year: z
+            .number()
+            .min(1, "Please select a program")
+            .nullable()
+            .optional(),
+          subCode: z
+            .string()
+            .min(1, "Please select a program")
+            .nullable()
+            .optional(),
         },
         "Please select a program"
       )
@@ -58,7 +66,7 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       programs: [],
-      name: "",
+      name: `My AY${Config.currentAcademicYear.yearCode} Semester ${Config.currentAcademicYear.semester} Timetable`,
     },
   });
   const timetableStore = useTimetableStore(
@@ -69,32 +77,32 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
     })
   );
 
-  const programsValue = form.watch("programs");
+  // const programsValue = form.watch("programs");
   // Update name field when program changes
-  useEffect(() => {
-    const isNameFieldDirty = form.getFieldState("name").isDirty;
-    if (!isNameFieldDirty && programsValue !== undefined) {
-      form.setValue(
-        "name",
-        `${programsValue
-          .map((p) => {
-            let name = p.code;
-            if (p.subCode) {
-              name += ` (${p.subCode})`;
-            }
-            if (p.year) {
-              name += ` Year ${p.year}`;
-            }
-            return name;
-          })
-          .join(", ")} Timetable`,
-        {
-          shouldDirty: false,
-          shouldValidate: true,
-        }
-      );
-    }
-  }, [programsValue, form]);
+  // useEffect(() => {
+  //   const isNameFieldDirty = form.getFieldState("name").isDirty;
+  //   if (!isNameFieldDirty && programsValue !== undefined) {
+  //     form.setValue(
+  //       "name",
+  //       `${programsValue
+  //         .map((p) => {
+  //           let name = p.code;
+  //           if (p.subCode) {
+  //             name += ` (${p.subCode})`;
+  //           }
+  //           if (p.year) {
+  //             name += ` Year ${p.year}`;
+  //           }
+  //           return name;
+  //         })
+  //         .join(", ")} Timetable`,
+  //       {
+  //         shouldDirty: false,
+  //         shouldValidate: true,
+  //       }
+  //     );
+  //   }
+  // }, [programsValue, form]);
 
   const createTimetableMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
@@ -112,7 +120,7 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
         name: data.name,
         programs: data.programs,
         acadYear: {
-          yearCode: "25/26",
+          yearCode: Config.currentAcademicYear.yearCode,
           semesterCode: "1",
         },
         plans: new Map([[defaultPlanId, defaultPlan]]),
@@ -135,7 +143,8 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
   return (
     <div className="flex flex-col w-full max-w-5xl px-12 py-8 md:px-20 md:py-12 gap-6 md:gap-8">
       <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
-        Create Timetable - AY25/26 Semester 1
+        Create Timetable - AY{Config.currentAcademicYear.yearCode} Semester{" "}
+        {Config.currentAcademicYear.semester}
       </h1>
 
       <Form {...form}>
@@ -151,6 +160,7 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
                 </FormLabel>
                 <FormControl>
                   <SelectProgramCombobox
+                    limit={Config.limits.programsInTimetable}
                     programs={programs}
                     value={field.value}
                     onChange={(value) => {
