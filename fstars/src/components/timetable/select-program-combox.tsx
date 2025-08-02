@@ -8,7 +8,7 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
+  CommandItemBase,
   CommandList,
 } from "@/components/ui/command";
 import {
@@ -19,89 +19,29 @@ import {
 import { Program } from "@/lib/types";
 import { Button } from "../ui/button";
 
-type AvailableProgram = {
-  name: string;
-  code: string;
-  subCodes?: string[];
-  years: number[];
-};
-
-const ALL_4_YEARS = [1, 2, 3, 4];
-const ALL_3_YEARS = [1, 2, 3];
-const ACAD_SEM = "2025;1";
-
-const AVAILABLE_PROGRAMS: AvailableProgram[] = [
-  { name: "Computer Science", code: "CSC", years: ALL_4_YEARS },
-  {
-    name: "Data Science and Artificial Intelligence",
-    code: "DSAI",
-    years: ALL_4_YEARS,
-  },
-  { name: "Arts, Design and Media", code: "ADM", years: [1] },
-  {
-    name: "Arts, Design and Media",
-    code: "ADM",
-    subCodes: ["DA", "MA"],
-    years: [2, 3, 4],
-  },
-];
-
-type ProgramOption = {
-  label: string;
-  program: Program;
-};
-
-const programOptions: ProgramOption[] = generateOptions(AVAILABLE_PROGRAMS);
-
-function generateOptions(sources: AvailableProgram[]) {
-  const options: ProgramOption[] = [];
-  for (const source of sources) {
-    for (const year of source.years) {
-      if (source.subCodes) {
-        for (const subCode of source.subCodes) {
-          const program: Program = {
-            code: source.code,
-            name: source.name,
-            year: year,
-            subCode: subCode,
-          };
-          options.push({
-            label: asProgramName(program),
-            program: program,
-          });
-        }
-      } else {
-        const program: Program = {
-          code: source.code,
-          name: source.name,
-          year: year,
-        };
-        options.push({
-          label: asProgramName(program),
-          program: program,
-        });
-      }
-    }
-  }
-  return options;
+export function serializeProgram(program: Program) {
+  return `${program.name}-${program.code}-${program.subCode}-${program.year}`;
 }
 
-export type ProgramName = string;
-
-export function asProgramName(program: Program): ProgramName {
+export function toFullProgramName(program: Program) {
+  let name = program.name;
   if (program.subCode) {
-    return `${program.name} (${program.subCode}) Year ${program.year}`;
-  } else {
-    return `${program.name} Year ${program.year}`;
+    name += ` (${program.subCode})`;
   }
+  if (program.year) {
+    name += ` Year ${program.year}`;
+  }
+  return name;
 }
 
 export function SelectProgramCombobox({
   value,
   onChange,
+  programs,
 }: {
-  value: ProgramName | null;
+  value: string | null;
   onChange: (value: Program | null) => void;
+  programs: Program[];
 }) {
   const [open, setOpen] = React.useState(false);
 
@@ -132,23 +72,23 @@ export function SelectProgramCombobox({
           <CommandList>
             <CommandEmpty>No program found.</CommandEmpty>
             <CommandGroup>
-              {programOptions.map((program) => (
-                <CommandItem
-                  key={program.label}
-                  value={program.label}
-                  onSelect={() => {
-                    onChange(program.program);
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    value === program.label
-                      ? "bg-primary text-primary-foreground active:bg-primary/90 hover:bg-primary/90 focus:bg-primary/90 data-[selected=true]:bg-primary/90 data-[selected=true]:text-primary-foreground"
-                      : ""
-                  )}
-                >
-                  {program.label}
-                </CommandItem>
-              ))}
+              {programs.map((program) => {
+                const serialized = serializeProgram(program);
+                console.log(serialized, value);
+                return (
+                  <CommandItemBase
+                    key={serialized}
+                    value={serialized}
+                    onSelect={() => {
+                      onChange(program);
+                      setOpen(false);
+                    }}
+                    selected={value === serialized}
+                  >
+                    {toFullProgramName(program)}
+                  </CommandItemBase>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>

@@ -42,13 +42,13 @@ export type RequestAddCourse = (
 ) => void;
 
 export function SelectCourseCombobox({
-  program,
+  programs,
   acadYear,
   timetableId,
   selectedPlanId,
   disabled,
 }: {
-  program: Program;
+  programs: Program[];
   acadYear: AcadYear;
   timetableId: TimetableId;
   selectedPlanId: PlanId;
@@ -63,7 +63,7 @@ export function SelectCourseCombobox({
   const findCoursesRes = trpc.findCourses.useQuery(
     {
       phrase: debouncedPhrase,
-      program,
+      // program,
       acadYear,
     },
     {
@@ -87,7 +87,7 @@ export function SelectCourseCombobox({
     mutationFn: async (courseCode: CourseCode) => {
       const res = await utils.client.getProgramExcludedCourseIndexes.query({
         courseCode,
-        programs: [program],
+        programs,
         acadYear,
       });
       const addCourseRes = timetableStore.addCourseToPlan(

@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  asProgramName,
   SelectProgramCombobox,
+  serializeProgram,
 } from "@/components/timetable/select-program-combox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ import { useShallow } from "zustand/react/shallow";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Program } from "@/lib/types";
 
 const formSchema = z.object({
   program: z.object(
@@ -42,7 +43,7 @@ const formSchema = z.object({
     .max(64, "Timetable name is too long, max 64 characters"),
 });
 
-export function CreateTimetable() {
+export function CreateTimetable({ programs }: { programs: Program[] }) {
   const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,7 +65,7 @@ export function CreateTimetable() {
   useEffect(() => {
     const isNameFieldDirty = form.getFieldState("name").isDirty;
     if (!isNameFieldDirty && programValue !== undefined) {
-      form.setValue("name", `${asProgramName(programValue)} Timetable`, {
+      form.setValue("name", `${programValue.name} Timetable`, {
         shouldDirty: false,
         shouldValidate: true,
       });
@@ -85,7 +86,7 @@ export function CreateTimetable() {
       const timetable: Timetable = {
         id,
         name: data.name,
-        program: data.program,
+        programs: [data.program],
         acadYear: {
           yearCode: "25/26",
           semesterCode: "1",
@@ -121,16 +122,21 @@ export function CreateTimetable() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-base md:text-lg">
-                  What program are you from?
+                  What programs are you in this semester?
                 </FormLabel>
                 <FormControl>
                   <SelectProgramCombobox
+                    programs={programs}
                     value={
                       field.value !== undefined
-                        ? asProgramName(field.value)
+                        ? serializeProgram(field.value)
                         : null
                     }
-                    onChange={(value) => field.onChange(value || "")}
+                    onChange={(value) => {
+                      // console.log(value);
+                      // console.log(serializeProgram(value!));
+                      field.onChange(value);
+                    }}
                   />
                 </FormControl>
                 <FormMessage />

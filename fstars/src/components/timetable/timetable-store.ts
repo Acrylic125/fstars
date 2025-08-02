@@ -40,7 +40,7 @@ export type Plan = z.infer<typeof PlanSchema>;
 export const TimetableSchema = z.object({
   id: TimetableIdSchema,
   name: z.string().default("New Timetable").or(fallback("New Timetable")),
-  program: ProgramSchema,
+  programs: z.array(ProgramSchema).or(fallback([])),
   acadYear: AcadYearSchema,
   plans: z
     .map(PlanIdSchema, PlanSchema)

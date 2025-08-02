@@ -412,7 +412,7 @@ export const appRouter = createTRPCRouter({
     .input(
       z.object({
         phrase: z.string(),
-        program: ProgramSchema,
+        // program: ProgramSchema,
         acadYear: AcadYearSchema,
       })
     )

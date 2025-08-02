@@ -1,7 +1,6 @@
 "use client";
 import { useShallow } from "zustand/react/shallow";
 import { PlanId, useTimetableStore } from "./timetable-store";
-import { asProgramName } from "./select-program-combox";
 import { Skeleton } from "../ui/skeleton";
 import { useCallback, useMemo } from "react";
 import { SelectPlanCombobox } from "./select-plan-combobox";
@@ -44,7 +43,7 @@ export function TimetableHeader({ id }: { id: string }) {
       }
       return {
         name: timetable.name,
-        program: timetable.program,
+        programs: timetable.programs,
         acadYear: timetable.acadYear,
       };
     })
@@ -75,11 +74,11 @@ export function TimetableHeader({ id }: { id: string }) {
       <div className="w-full flex flex-col">
         {timetable !== null ? (
           <>
-            <p className="text-sm text-muted-foreground h-6">
-              {asProgramName(timetable.program)} - AY
+            {/* <p className="text-sm text-muted-foreground h-6">
+              {timetable.program.name} - AY
               {timetable.acadYear.yearCode} Semester{" "}
               {timetable.acadYear.semesterCode}
-            </p>
+            </p> */}
             <h1 className="text-2xl font-semibold h-12">{timetable.name}</h1>
           </>
         ) : (
@@ -350,7 +349,7 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
       const plan = timetable.plans.get(timetable.selectedPlanId);
 
       return {
-        program: timetable.program,
+        programs: timetable.programs,
         acadYear: timetable.acadYear,
         plans: timetable.plans,
         selectedPlanId: timetable.selectedPlanId,
@@ -460,19 +459,14 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
         <SelectPlanCombobox timetableId={id} />
         {timetableStore && timetableStore.selectedPlanId ? (
           <SelectCourseCombobox
-            program={timetableStore.program}
+            programs={timetableStore.programs}
             acadYear={timetableStore.acadYear}
             timetableId={id}
             selectedPlanId={timetableStore.selectedPlanId}
           />
         ) : (
           <SelectCourseCombobox
-            program={{
-              name: "",
-              code: "",
-              subCode: "",
-              year: 0,
-            }}
+            programs={[]}
             acadYear={{
               yearCode: "",
               semesterCode: "",
