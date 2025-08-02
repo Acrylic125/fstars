@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -18,7 +17,10 @@ import {
 } from "@/components/ui/popover";
 import { Program } from "@/lib/types";
 import { Button } from "../ui/button";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useDebounce } from "use-debounce";
+import Fuse from "fuse.js";
 
 export function serializeProgram(program: Program) {
   return `${program.name}-${program.code}-${program.subCode}-${program.year}`;
@@ -46,6 +48,124 @@ export function toFullProgramName(program: Program) {
   return name;
 }
 
+function SelectProgramCommand({
+  value,
+  onChange,
+  programs,
+}: {
+  value: Program[];
+  onChange: (value: Program) => void;
+  programs: Program[];
+}) {
+  const serializedPrograms = useMemo(() => {
+    return value.map(serializeProgram);
+  }, [value]);
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch] = useDebounce(search, 300);
+
+  const fuse = useMemo(() => {
+    return new Fuse(programs, {
+      keys: [
+        {
+          name: "name",
+          weight: 1,
+        },
+        {
+          name: "code",
+          weight: 2,
+        },
+        {
+          name: "subCode",
+          weight: 2,
+        },
+        {
+          name: "year",
+          weight: 2,
+        },
+      ],
+    });
+  }, [programs]);
+
+  const filteredOptions = useMemo(() => {
+    if (parentRef.current) {
+      parentRef.current.scrollTo({
+        top: 0,
+        behavior: "instant",
+      });
+    }
+    if (debouncedSearch === "") {
+      return programs;
+    }
+    return fuse.search(debouncedSearch).map((r) => r.item);
+  }, [fuse, debouncedSearch, parentRef]);
+
+  const virtualizer = useVirtualizer({
+    count: filteredOptions.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 36,
+  });
+
+  const virtualOptions = virtualizer.getVirtualItems();
+
+  return (
+    <Command shouldFilter={false}>
+      <CommandInput
+        placeholder="Search program..."
+        className="h-10 text-base"
+        onValueChange={setSearch}
+        ref={inputRef}
+      />
+      <CommandList
+        ref={parentRef}
+        style={{
+          // height: `200px`,
+          width: "100%",
+          overflow: "auto",
+        }}
+      >
+        <CommandEmpty>No program found.</CommandEmpty>
+        <CommandGroup
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            width: "100%",
+            position: "relative",
+          }}
+          className="p-0"
+        >
+          {virtualOptions.map((virtualItem) => {
+            const program = filteredOptions[virtualItem.index];
+            const serialized = serializeProgram(program);
+            return (
+              <CommandItemBase
+                key={serialized}
+                value={serialized}
+                onSelect={() => {
+                  onChange(program);
+                  inputRef.current?.focus();
+                }}
+                style={{
+                  height: `${virtualItem.size}px`,
+                  transform: `translateY(${virtualItem.start}px)`,
+                }}
+                className="py-0 absolute top-0 left-0 right-0"
+                selected={serializedPrograms.includes(serialized)}
+              >
+                <div className="py-1.5 px-2 w-full">
+                  {toFullProgramName(program)}
+                </div>
+              </CommandItemBase>
+            );
+          })}
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  );
+}
+
 export function SelectProgramCombobox({
   value,
   onChange,
@@ -55,10 +175,7 @@ export function SelectProgramCombobox({
   onChange: (value: Program) => void;
   programs: Program[];
 }) {
-  const [open, setOpen] = React.useState(false);
-  const serializedPrograms = useMemo(() => {
-    return value.map(serializeProgram);
-  }, [value]);
+  const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -77,7 +194,11 @@ export function SelectProgramCombobox({
               ? value.map((p, i) => (
                   <div
                     key={i}
-                    className="rounded-sm bg-primary text-primary-foreground px-2 text-sm"
+                    role="button"
+                    className="rounded-xs bg-primary text-primary-foreground px-2 text-sm py-0 h-fit"
+                    onClick={() => {
+                      onChange(p);
+                    }}
                   >
                     {toShortenedName(p)}
                   </div>
@@ -91,32 +212,11 @@ export function SelectProgramCombobox({
       </PopoverTrigger>
       {/* https://github.com/shadcn-ui/ui/issues/1690 */}
       <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
-        <Command>
-          <CommandInput
-            placeholder="Search program..."
-            className="h-10 text-base"
-          />
-          <CommandList>
-            <CommandEmpty>No program found.</CommandEmpty>
-            <CommandGroup>
-              {programs.map((program) => {
-                const serialized = serializeProgram(program);
-                return (
-                  <CommandItemBase
-                    key={serialized}
-                    value={serialized}
-                    onSelect={() => {
-                      onChange(program);
-                    }}
-                    selected={serializedPrograms.includes(serialized)}
-                  >
-                    {toFullProgramName(program)}
-                  </CommandItemBase>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
+        <SelectProgramCommand
+          value={value}
+          onChange={onChange}
+          programs={programs}
+        />
       </PopoverContent>
     </Popover>
   );

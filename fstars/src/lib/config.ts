@@ -8,6 +8,7 @@ export const Config = {
     timetables: 10,
     coursesInPlan: 10,
     plans: 10,
-    generators: 3,
+    generators: 10,
+    programsInTimetable: 5,
   },
 };

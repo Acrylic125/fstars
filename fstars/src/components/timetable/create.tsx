@@ -26,6 +26,7 @@ import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Program } from "@/lib/types";
+import { Config } from "@/lib/config";
 
 const formSchema = z.object({
   programs: z
@@ -41,7 +42,10 @@ const formSchema = z.object({
       )
     )
     .min(1, "Please select at least 1 program")
-    .max(5, "Please select up to 5 programs"),
+    .max(
+      Config.limits.programsInTimetable,
+      `Please select up to ${Config.limits.programsInTimetable} programs`
+    ),
   name: z
     .string()
     .min(1, "Please enter a timetable name")
