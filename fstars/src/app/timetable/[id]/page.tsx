@@ -9,6 +9,8 @@ import { TimetableGeneratorPanel } from "@/components/timetable/timetable-genera
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { TimetableViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
 
+export const revalidate = 86400; // 24 hours
+
 export default async function Home(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
   return (

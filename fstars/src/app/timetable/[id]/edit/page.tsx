@@ -1,12 +1,5 @@
 import { MainNavbar } from "@/components/nav/main-navbar";
-import { TimetableView } from "@/components/timetable/timetable-view";
-import {
-  TimetableCoursesPanel,
-  TimetableHeader,
-} from "@/components/timetable/timetable-course-panel";
 import { TimetableModal } from "@/components/timetable/timetable-modal";
-import { TimetableGeneratorPanel } from "@/components/timetable/timetable-generator-panel";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
@@ -14,6 +7,8 @@ import { EditTimetable } from "@/components/timetable/edit-timetable";
 import { programsTable } from "@/db/schema";
 import { eq, not } from "drizzle-orm";
 import { db } from "@/db";
+
+export const revalidate = 86400; // 24 hours
 
 export default async function Home(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
