@@ -125,16 +125,23 @@ export const appRouter = createTRPCRouter({
         }
       }
 
-      const excludeIndexes = new Set<string>();
+      // const excludeIndexes = new Set<string>();
+
+      const allIndexes = new Set<string>();
+      const programIndexes = new Set<string>();
+      const gloadIndexes = new Set<string>();
+
       for (const courseIndex of courseIndexes) {
         const cur = indexAndSources.get(courseIndex.index);
-        let isSourcedFromInputPrograms = false;
+        allIndexes.add(courseIndex.index);
+        // let isSourcedFromInputPrograms = false;
         if (cur && cur.length >= 1) {
           for (const source of cur) {
             for (const program of input.programs) {
               if (source.year !== null && source.year !== program.year) {
                 continue;
               }
+              // console.log(source.code, program.code);
               if (source.code !== "GLOAD") {
                 if (source.code !== program.code) {
                   continue;
@@ -142,51 +149,37 @@ export const appRouter = createTRPCRouter({
                 if (source.subCode !== (program.subCode ?? null)) {
                   continue;
                 }
+                console.log(source.code, program.code);
+                programIndexes.add(courseIndex.index);
+              } else {
+                gloadIndexes.add(courseIndex.index);
               }
-              if (input.courseCode === "HY1001" && source.code === "GLOAD") {
-                console.log("YESSSSS");
+
+              // Break out early if programIndexes and gloadIndexes have this index.
+              if (
+                programIndexes.has(courseIndex.index) &&
+                gloadIndexes.has(courseIndex.index)
+              ) {
+                break;
               }
-              isSourcedFromInputPrograms = true;
-              break;
             }
           }
         }
-        if (!isSourcedFromInputPrograms) {
-          excludeIndexes.add(courseIndex.index);
+      }
+
+      const excludeIndexes = new Set<string>();
+      for (const index of allIndexes) {
+        if (programIndexes.size > 0) {
+          if (!programIndexes.has(index)) {
+            excludeIndexes.add(index);
+          }
+        } else {
+          if (!gloadIndexes.has(index)) {
+            excludeIndexes.add(index);
+          }
         }
       }
 
-      // .where(
-      //   and(
-      //     not(
-      //       exists(
-      //         db
-      //           .select({ id: courseIndexSourcesTable.id })
-      //           .from(courseIndexSourcesTable)
-      //           .innerJoin(
-      //             programsTable,
-      //             eq(programsTable.id, courseIndexSourcesTable.source)
-      //           )
-      //           .where(
-      //             and(
-      //               eq(courseIndexSourcesTable.indexId, courseIndexTable.id),
-      //               eq(programsTable.code, input.program.code),
-      //               input.program.subCode
-      //                 ? eq(programsTable.subCode, input.program.subCode)
-      //                 : isNull(programsTable.subCode),
-      //               input.program.year !== null &&
-      //                 input.program.year !== undefined
-      //                 ? eq(programsTable.year, input.program.year)
-      //                 : isNull(programsTable.year)
-      //             )
-      //           )
-      //       )
-      //     ),
-      //     eq(coursesTable.code, input.courseCode),
-      //     eq(coursesTable.ay, input.acadYear.yearCode),
-      //     eq(coursesTable.semester, input.acadYear.semesterCode)
-      //   )
-      // );
       return Array.from(excludeIndexes);
     }),
   getCourseIndexClasses: publicProcedure
