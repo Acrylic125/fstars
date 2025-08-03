@@ -97,6 +97,14 @@ type TimetableStore = {
         type: "error";
         error: string;
       };
+  deleteTimetable: (timetableId: TimetableId) =>
+    | {
+        type: "success";
+      }
+    | {
+        type: "error";
+        error: string;
+      };
   // Plan selection.
   changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => void;
   // Course CRUD.
@@ -254,6 +262,31 @@ export const useTimetableStore = create<TimetableStore>()(
           };
         });
 
+        return res;
+      },
+      deleteTimetable: (timetableId: TimetableId) => {
+        let res: ReturnType<TimetableStore["deleteTimetable"]> = {
+          type: "error",
+          error: "Failed to delete timetable",
+        };
+        set((state) => {
+          const timetable = state.timetables.get(timetableId);
+          if (!timetable) {
+            res = {
+              type: "error",
+              error: "Timetable not found",
+            };
+            return {};
+          }
+          res = {
+            type: "success",
+          };
+          const newTimetables = new Map(state.timetables);
+          newTimetables.delete(timetableId);
+          return {
+            timetables: newTimetables,
+          };
+        });
         return res;
       },
       changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => {
