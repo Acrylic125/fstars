@@ -6,7 +6,7 @@ import {
 } from "./timetable-generator-store";
 import superjson from "superjson";
 
-const ExportTimetableFileSchema = z.object({
+export const ExportTimetableFileSchema = z.object({
   version: z.literal(1).default(1),
   timetables: z.map(TimetableIdSchema, TimetableSchema),
   generators: z.map(TimetableGeneratorIdSchema, TimetableGeneratorSchema),

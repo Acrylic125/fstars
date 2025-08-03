@@ -105,6 +105,14 @@ type TimetableStore = {
         type: "error";
         error: string;
       };
+  importTimetables: (timetables: Timetable[]) =>
+    | {
+        type: "success";
+      }
+    | {
+        type: "error";
+        error: string;
+      };
   // Plan selection.
   changeTimetablePlan: (timetableId: TimetableId, planId: PlanId) => void;
   // Course CRUD.
@@ -286,6 +294,30 @@ export const useTimetableStore = create<TimetableStore>()(
           return {
             timetables: newTimetables,
           };
+        });
+        return res;
+      },
+      importTimetables: (timetables: Timetable[]) => {
+        let res: ReturnType<TimetableStore["importTimetables"]> = {
+          type: "error",
+          error: "Failed to import timetables",
+        };
+        set((state) => {
+          const newTimetables = new Map(state.timetables);
+          timetables.forEach((timetable) => {
+            newTimetables.set(timetable.id, timetable);
+          });
+          if (newTimetables.size > Config.limits.timetables) {
+            res = {
+              type: "error",
+              error: `Timetable limit reached (${newTimetables.size} / ${Config.limits.timetables})`,
+            };
+            return {};
+          }
+          res = {
+            type: "success",
+          };
+          return { timetables: newTimetables };
         });
         return res;
       },

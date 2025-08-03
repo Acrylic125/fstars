@@ -10,6 +10,8 @@ import { exportTimetable } from "./timetable-export-utils";
 import { nanoid } from "nanoid";
 import { Indicator, useIndicator } from "../ui/indicator";
 import { useTimetableGeneratorStore } from "./timetable-generator-store";
+import { Dialog, DialogTrigger } from "../ui/dialog";
+import { TimetableImportModal } from "./timetable-import";
 
 export function TimetableListHeader() {
   const controls = useIndicator();
@@ -19,28 +21,37 @@ export function TimetableListHeader() {
       <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
         Timetable
       </h1>
-      <div className="relative flex flex-row gap-2 w-fit">
-        <Indicator controls={controls} className="w-48 z-10" />
-        <Button
-          variant="default"
-          onClick={() => {
-            const timetables = useTimetableStore.getState().timetables;
-            const generators = useTimetableGeneratorStore.getState().generators;
-            const json = exportTimetable({
-              version: 1,
-              timetables,
-              generators,
-            });
-            const filename = `All Timetables ${nanoid(8)}.json`;
-            downloadObjectAsJSONFile(json, filename);
-            controls.showIndicator(
-              `Exported ${filename} to downloads!`,
-              "success"
-            );
-          }}
-        >
-          Export
-        </Button>
+      <div className="flex flex-row gap-2">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">Import</Button>
+          </DialogTrigger>
+          <TimetableImportModal />
+        </Dialog>
+        <div className="relative flex flex-row gap-2 w-fit">
+          <Indicator controls={controls} className="w-48 z-10" />
+          <Button
+            variant="default"
+            onClick={() => {
+              const timetables = useTimetableStore.getState().timetables;
+              const generators =
+                useTimetableGeneratorStore.getState().generators;
+              const json = exportTimetable({
+                version: 1,
+                timetables,
+                generators,
+              });
+              const filename = `All Timetables ${nanoid(8)}.json`;
+              downloadObjectAsJSONFile(json, filename);
+              controls.showIndicator(
+                `Exported ${filename} to downloads!`,
+                "success"
+              );
+            }}
+          >
+            Export
+          </Button>
+        </div>
       </div>
     </div>
   );
