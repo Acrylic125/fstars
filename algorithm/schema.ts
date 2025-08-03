@@ -38,6 +38,7 @@ export const IndexSchema = z.object({
       code: z.string(),
       subCode: z.string().optional(),
       year: z.number().optional(),
+      type: z.enum(["full_time", "part_time"]),
     })
   ),
 });
@@ -58,6 +59,7 @@ export const ProgramSchema = z.object({
   code: z.string(),
   subCode: z.string().optional(),
   year: z.number().optional(),
+  type: z.enum(["full_time", "part_time"]),
 });
 
 export const ProgramSourceSchema = z.object({
@@ -86,3 +88,5 @@ export type Course = z.infer<typeof ProgramCoursesSchema>;
 
 export type Program = z.infer<typeof ProgramSchema>;
 export type MetadataEntry = z.infer<typeof MetadataEntrySchema>;
+
+export type CourseCode = string;

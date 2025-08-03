@@ -2,6 +2,8 @@ import {
   ProgramCourseListSchema as ClassesSchema,
   MetadataSchema,
   Days,
+  ProgramSourceSchema,
+  ProgramSchema,
 } from "./schema";
 import { db } from "./db";
 import {
@@ -152,6 +154,15 @@ async function doIndexClassesInsert(ay: string, semester: string) {
   console.log("Index classes inserted");
 }
 
+function programToKey(program: {
+  code: string;
+  subCode?: string | null;
+  year?: number | null;
+  type: "full_time" | "part_time";
+}) {
+  return `${program.code}-${program.subCode ?? "__NULL__"}-${program.year ?? "__NULL__"}-${program.type}`;
+}
+
 async function doInsertIndexSources(ay: string, semester: string) {
   const all = await getScrapedResults(__dirname);
   const allIndexesWithinAYSemester = await db
@@ -171,22 +182,19 @@ async function doInsertIndexSources(ay: string, semester: string) {
 
   const programMap = new Map<string, number>();
   for (const program of allPrograms) {
-    programMap.set(
-      `${program.code}-${program.subCode ?? "__NULL__"}-${program.year ?? "__NULL__"}`,
-      program.id
-    );
+    const key = programToKey(program);
+    programMap.set(key, program.id);
   }
 
   const allIndexSources = [];
   for (const course of all) {
     for (const index of course.indices) {
       for (const source of index.sources) {
-        const programId = programMap.get(
-          `${source.code}-${source.subCode ?? "__NULL__"}-${source.year ?? "__NULL__"}`
-        );
+        const key = programToKey(source);
+        const programId = programMap.get(key);
         if (!programId) {
           throw new Error(
-            `Program ${source.code}-${source.subCode ?? "__NULL__"}-${source.year ?? "__NULL__"} not found in ${JSON.stringify(allPrograms)}`
+            `Program ${key} not found in ${JSON.stringify(allPrograms)}`
           );
         }
         const indexId = courseIndexMap.get(
@@ -217,8 +225,8 @@ async function doInsertIndexSources(ay: string, semester: string) {
   const ay = "25/26";
   const sem = "1";
   // await doProgramsInsert();
-  // await doCoursesInsert(ay, sem);
-  // await doCoursesIndexInsert(ay, sem);
-  // await doIndexClassesInsert(ay, sem);
+  await doCoursesInsert(ay, sem);
+  await doCoursesIndexInsert(ay, sem);
+  await doIndexClassesInsert(ay, sem);
   await doInsertIndexSources(ay, sem);
 })();

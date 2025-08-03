@@ -10,9 +10,10 @@ import {
   ClassSchema,
   ProgramCoursesSchema,
   MetadataSchema,
+  CourseCode,
 } from "./schema";
 import { parseTeachingWeeks } from "./utils";
-import { CourseCode, CourseIndexSchedule } from "./genetic-planner";
+
 // Helper function to parse time string (e.g., "1830" -> { hour: 18, minute: 30 })
 function parseTime(timeStr: string): Time {
   const hour = parseInt(timeStr.substring(0, 2));
@@ -160,6 +161,7 @@ const metadata = MetadataSchema.parse(
     fs.readFileSync(path.resolve(rawSchedulesDir, "metadata.json"), "utf8")
   )
 );
+console.log(metadata);
 
 const courseSchedules = new Map<CourseCode, Course>();
 // course code -> serialized course
@@ -169,7 +171,7 @@ for (let i = 0; i < metadata.length; i++) {
     console.log(`Processing ${i} of ${metadata.length}`);
   }
   const entry = metadata[i];
-  const html = fs.readFileSync(path.resolve(entry.path), "utf8");
+  const html = fs.readFileSync(path.resolve("./out", entry.path), "utf8");
   const courses = scrapePageForCourses(html);
   for (const course of courses) {
     const cur = courseSchedules.get(course.course.code);
@@ -188,6 +190,7 @@ for (let i = 0; i < metadata.length; i++) {
             code: entry.source.code,
             subCode: entry.source.subCode ?? undefined,
             year: entry.source.year ?? undefined,
+            type: entry.source.type,
           });
           continue;
         }
@@ -200,6 +203,7 @@ for (let i = 0; i < metadata.length; i++) {
         code: entry.source.code,
         subCode: entry.source.subCode ?? undefined,
         year: entry.source.year ?? undefined,
+        type: entry.source.type,
       });
     }
     courseSchedules.set(course.course.code, course);
