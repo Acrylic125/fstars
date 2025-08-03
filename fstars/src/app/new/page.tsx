@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { programsTable } from "@/db/schema";
 import { eq, not } from "drizzle-orm";
 
-// export const revalidate = 60 * 60 * 24; // 24 hours
+export const revalidate = 86400; // 24 hours
 
 export default async function Home() {
   const programs = await db
