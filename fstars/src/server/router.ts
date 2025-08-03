@@ -92,6 +92,7 @@ export const appRouter = createTRPCRouter({
             code: programsTable.code,
             subCode: programsTable.subCode,
             year: programsTable.year,
+            type: programsTable.type,
           },
         })
         .from(courseIndexTable)
@@ -149,8 +150,14 @@ export const appRouter = createTRPCRouter({
                 if (source.subCode !== (program.subCode ?? null)) {
                   continue;
                 }
+                if (source.type !== program.type) {
+                  continue;
+                }
                 programIndexes.add(courseIndex.index);
               } else {
+                if (source.type !== program.type) {
+                  continue;
+                }
                 gloadIndexes.add(courseIndex.index);
               }
 

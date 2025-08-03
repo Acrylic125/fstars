@@ -44,6 +44,7 @@ const formSchema = z.object({
             .min(1, "Please select a program")
             .nullable()
             .optional(),
+          type: z.enum(["full_time", "part_time"]),
         },
         "Please select a program"
       )

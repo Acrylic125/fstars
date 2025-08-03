@@ -5,6 +5,7 @@ export const ProgramSchema = z.object({
   code: z.string(),
   subCode: z.string().optional().nullable(),
   year: z.number().optional().nullable(),
+  type: z.enum(["full_time", "part_time"]),
 });
 
 export type Program = z.infer<typeof ProgramSchema>;

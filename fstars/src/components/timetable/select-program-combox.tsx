@@ -23,7 +23,7 @@ import { useDebounce } from "use-debounce";
 import Fuse from "fuse.js";
 
 export function serializeProgram(program: Program) {
-  return `${program.name}-${program.code}-${program.subCode}-${program.year}`;
+  return `${program.name}-${program.code}-${program.subCode}-${program.year}-${program.type}`;
 }
 
 export function toShortenedName(program: Program) {
@@ -33,6 +33,9 @@ export function toShortenedName(program: Program) {
   }
   if (program.year) {
     name += ` Year ${program.year}`;
+  }
+  if (program.type === "part_time") {
+    name += " (Part-time)";
   }
   return name;
 }

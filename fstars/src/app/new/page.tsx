@@ -13,6 +13,7 @@ export default async function Home() {
       code: programsTable.code,
       subCode: programsTable.subCode,
       year: programsTable.year,
+      type: programsTable.type,
     })
     .from(programsTable)
     // We exclude BDES / Global Load because they are not real programs
