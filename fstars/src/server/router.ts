@@ -149,7 +149,6 @@ export const appRouter = createTRPCRouter({
                 if (source.subCode !== (program.subCode ?? null)) {
                   continue;
                 }
-                console.log(source.code, program.code);
                 programIndexes.add(courseIndex.index);
               } else {
                 gloadIndexes.add(courseIndex.index);
