@@ -17,8 +17,28 @@ export const TimetableGeneratorSchema = z.object({
   name: z.string().default("New Generator").or(fallback("New Generator")),
   factors: injectDefaults(
     z.object({
-      noClassDays: z.object({
-        priority: z.number().min(0).max(3),
+      // noClassDays: z.object({
+      //   priority: z.number().min(0).max(3),
+      // }),
+      dayDuration: z.object({
+        noClass: z.object({
+          priority: z.number().min(0).max(3),
+        }),
+        below2h: z.object({
+          priority: z.number().min(0).max(3),
+        }),
+        between2hAnd4h: z.object({
+          priority: z.number().min(0).max(3),
+        }),
+        between4hAnd6h: z.object({
+          priority: z.number().min(0).max(3),
+        }),
+        between6hAnd8h: z.object({
+          priority: z.number().min(0).max(3),
+        }),
+        above8h: z.object({
+          priority: z.number().min(0).max(3),
+        }),
       }),
       consecutiveClasses: z.object({
         before1h: z.object({
@@ -86,7 +106,14 @@ export const TimetableGeneratorSchema = z.object({
       }),
     }),
     {
-      noClassDays: { priority: asPriorityNumber("Important") },
+      dayDuration: {
+        noClass: { priority: asPriorityNumber("Important") },
+        below2h: { priority: asPriorityNumber("Not Preferred") },
+        between2hAnd4h: { priority: asPriorityNumber("Preferred") },
+        between4hAnd6h: { priority: asPriorityNumber("Preferred") },
+        between6hAnd8h: { priority: asPriorityNumber("Preferred") },
+        above8h: { priority: asPriorityNumber("Not Preferred") },
+      },
       consecutiveClasses: {
         before1h: { priority: asPriorityNumber("Not Preferred") },
         between1hAnd2h: { priority: asPriorityNumber("Not Preferred") },
@@ -220,7 +247,15 @@ function defaultGenerator(
     id,
     name,
     factors: {
-      noClassDays: { priority: nonePriority },
+      // noClassDays: { priority: nonePriority },
+      dayDuration: {
+        noClass: { priority: nonePriority },
+        below2h: { priority: nonePriority },
+        between2hAnd4h: { priority: nonePriority },
+        between4hAnd6h: { priority: nonePriority },
+        between6hAnd8h: { priority: nonePriority },
+        above8h: { priority: nonePriority },
+      },
       consecutiveClasses: {
         before1h: { priority: nonePriority },
         between1hAnd2h: { priority: nonePriority },

@@ -85,7 +85,19 @@ export function SelectPriority({
   );
 }
 
-export function NoClassDaysFactorView({
+const dayDurationOptions: {
+  value: keyof TimetableGenerator["factors"]["dayDuration"];
+  label: string;
+}[] = [
+  { value: "noClass", label: "No class" },
+  { value: "below2h", label: "< 2h" },
+  { value: "between2hAnd4h", label: "2h - 4h" },
+  { value: "between4hAnd6h", label: "4h - 6h" },
+  { value: "between6hAnd8h", label: "6h - 8h" },
+  { value: "above8h", label: "After 8h" },
+];
+
+export function DayDurationFactorView({
   generatorId,
 }: {
   generatorId: TimetableGeneratorId;
@@ -96,29 +108,98 @@ export function NoClassDaysFactorView({
       if (!generator) return null;
       return {
         changeGeneratorField: state.changeGeneratorField,
-        noClassDays: generator.factors.noClassDays,
+        dayDuration: generator.factors.dayDuration,
       };
     })
   );
   const changeSelection = useCallback(
-    (selected: Priority) => {
-      generatorStore?.changeGeneratorField(generatorId, "noClassDays", {
-        priority: asPriorityNumber(selected),
-      });
+    (value: TimetableGenerator["factors"]["dayDuration"]) => {
+      generatorStore?.changeGeneratorField(generatorId, "dayDuration", value);
     },
     [generatorStore, generatorId]
   );
 
   return (
-    <div className="h-12 w-full flex flex-row justify-between items-center px-4">
-      <p className="text-sm">No class days</p>
-      <SelectPriority
-        selected={asPriority(generatorStore?.noClassDays.priority)}
-        onChange={changeSelection}
-      />
-    </div>
+    <Collapsible className="group/collapsible w-full">
+      <CollapsibleTrigger asChild>
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Consecutive classes"
+          className="h-12 w-full flex flex-row justify-between items-center px-4 hover:bg-neutral-100 focus-visible:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:bg-neutral-800 outline-0 ring-0 cursor-pointer [&_svg]:pointer-events-none select-none"
+        >
+          <p className="text-sm">Consecutive classes</p>
+          <div className="text-muted-foreground hidden lg:block">
+            <ChevronDownIcon className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
+            <ChevronUpIcon className="w-4 h-4 group-data-[state=closed]/collapsible:hidden" />
+          </div>
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        {generatorStore?.dayDuration && (
+          <div className="flex flex-col gap-2 px-4 py-2">
+            {dayDurationOptions.map((option) => (
+              <div
+                className="flex flex-row justify-between items-center"
+                key={option.value}
+              >
+                <p className="text-muted-foreground text-sm">{option.label}</p>
+                <SelectPriority
+                  selected={asPriority(
+                    generatorStore.dayDuration[option.value].priority
+                  )}
+                  onChange={(value) => {
+                    changeSelection({
+                      ...generatorStore.dayDuration,
+                      [option.value]: {
+                        priority: asPriorityNumber(value),
+                      },
+                    });
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
+
+// export function NoClassDaysFactorView({
+//   generatorId,
+// }: {
+//   generatorId: TimetableGeneratorId;
+// }) {
+//   const generatorStore = useTimetableGeneratorStore(
+//     useShallow((state) => {
+//       const generator = state.generators.get(generatorId);
+//       if (!generator) return null;
+//       return {
+//         changeGeneratorField: state.changeGeneratorField,
+//         noClassDays: generator.factors.noClassDays,
+//       };
+//     })
+//   );
+//   const changeSelection = useCallback(
+//     (selected: Priority) => {
+//       generatorStore?.changeGeneratorField(generatorId, "noClassDays", {
+//         priority: asPriorityNumber(selected),
+//       });
+//     },
+//     [generatorStore, generatorId]
+//   );
+
+//   return (
+//     <div className="h-12 w-full flex flex-row justify-between items-center px-4">
+//       <p className="text-sm">No class days</p>
+//       <SelectPriority
+//         selected={asPriority(generatorStore?.noClassDays.priority)}
+//         onChange={changeSelection}
+//       />
+//     </div>
+//   );
+// }
 
 const consecutiveClassesOptions: {
   value: keyof TimetableGenerator["factors"]["consecutiveClasses"];

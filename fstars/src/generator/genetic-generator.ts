@@ -129,8 +129,8 @@ export class GeneticGenerator {
       // THis makes it a lot easier to compute consecutive classes, gaps, and collisions.
       //
       // Additionally, we can deduce the following:
-      // - Whether the day is free
-      // - Whether the week is skewed. i.e. Mean and standard deviation of the class times
+      // - The day duration.
+      // - Whether the week is skewed. i.e. Mean and standard deviation of the class times.
       // - The start and end times of each day.
       let totalMinutes = 0;
       let daysWithClasses = 0;
@@ -161,6 +161,24 @@ export class GeneticGenerator {
           totalMinutes += dayMinutes;
           weekTimes[day] = dayMinutes;
 
+          if (dayMinutes < 120) {
+            score += priorityScore(this.factors.dayDuration.below2h.priority);
+          } else if (dayMinutes < 240) {
+            score += priorityScore(
+              this.factors.dayDuration.between2hAnd4h.priority
+            );
+          } else if (dayMinutes < 360) {
+            score += priorityScore(
+              this.factors.dayDuration.between4hAnd6h.priority
+            );
+          } else if (dayMinutes < 480) {
+            score += priorityScore(
+              this.factors.dayDuration.between6hAnd8h.priority
+            );
+          } else {
+            score += priorityScore(this.factors.dayDuration.above8h.priority);
+          }
+
           if (
             firstClassStartTime <
             toMinutes(this.factors.startAfterAndEndBefore.startAfter)
@@ -175,8 +193,11 @@ export class GeneticGenerator {
           }
         } else {
           // Factor in no class days.
-          if (this.factors.noClassDays.priority !== asPriorityNumber("None")) {
-            score += priorityScore(this.factors.noClassDays.priority);
+          if (
+            this.factors.dayDuration.noClass.priority !==
+            asPriorityNumber("None")
+          ) {
+            score += priorityScore(this.factors.dayDuration.noClass.priority);
           }
           // Factor in start after and end before.
           score += defaultStartAfterScore;

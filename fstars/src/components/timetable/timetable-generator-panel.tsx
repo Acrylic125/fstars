@@ -36,8 +36,8 @@ import { useTimetableGeneratorUndoStore } from "./timetable-generator-undo-store
 import {
   ClassDistributionView,
   ConsecutiveClassesFactorView,
+  DayDurationFactorView,
   GapsBetweenClassesFactorView,
-  NoClassDaysFactorView,
   StartAfterTimeView,
 } from "./timetable-generator-factors";
 
@@ -572,7 +572,7 @@ export function TimetableGeneratorPanel({
       <div className="flex flex-col w-full py-2 items-center">
         {generatorStore?.selectedGenerator ? (
           <>
-            <NoClassDaysFactorView
+            <DayDurationFactorView
               generatorId={generatorStore.selectedGeneratorId}
             />
             <ConsecutiveClassesFactorView
