@@ -53,11 +53,11 @@ export class GeneticGenerator {
       isSkewedThresholdSD: number;
     } = {
       minsConstituteAsConsecutive: 10,
-      isSkewedThresholdSD: 3,
+      isSkewedThresholdSD: 3 * 60,
     }
   ) {}
 
-  public evaluateTimetable(timetable: GeneratedTimetable) {
+  public evaluateTimetable(timetable: GeneratedTimetable, debug = false) {
     // Before we start, we will define some fallback scores
     // in the event that the factor is not appropriate for consideration.
     // i.e. Days without classes.
@@ -216,6 +216,13 @@ export class GeneticGenerator {
               }, 0) / daysWithClasses
             )
           : 0;
+
+      if (debug) {
+        console.log(
+          `Mean minutes: ${meanMinutes}, SD: ${sd}, Days with classes: ${daysWithClasses}`
+        );
+      }
+
       if (
         this.factors.classDistribution.priority !== asPriorityNumber("None")
       ) {
@@ -584,6 +591,8 @@ export class GeneticGenerator {
     newTopN.forEach((timetable) => {
       this.reconcileMissingIndexes(timetable.timetable);
     });
+
+    console.log(this.evaluateTimetable(newTopN[0].timetable, true));
 
     return newTopN;
   }

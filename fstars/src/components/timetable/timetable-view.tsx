@@ -70,12 +70,12 @@ export function TimetableView({ id }: { id: string }) {
     if (!timetableStore?.courses) {
       return [];
     }
-    return Array.from(timetableStore.courses.entries())
-      .map(([courseCode, index]) => ({
+    return Array.from(timetableStore.courses.entries()).map(
+      ([courseCode, index]) => ({
         courseCode,
         index: index.index,
-      }))
-      .filter((c) => c.index !== "");
+      })
+    );
   }, [timetableStore?.courses]);
   const selectedCourseClasses = trpc.getCourseIndexClasses.useQuery(
     {
@@ -104,6 +104,7 @@ export function TimetableView({ id }: { id: string }) {
       colorScheme
     );
   }, [timetableStore?.courses, courseCodes, colorScheme]);
+  console.log(colorMap);
 
   const events = useMemo(() => {
     if (!timetableStore?.courses) {

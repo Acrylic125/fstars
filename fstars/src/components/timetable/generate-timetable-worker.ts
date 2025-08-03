@@ -23,7 +23,7 @@ addEventListener(
       e.data.factors,
       {
         minsConstituteAsConsecutive: 10,
-        isSkewedThresholdSD: 3,
+        isSkewedThresholdSD: 4 * 60,
       }
     );
 
