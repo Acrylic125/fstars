@@ -30,6 +30,7 @@ import superjson from "superjson";
 import { Timetable, TimetableId, useTimetableStore } from "./timetable-store";
 import {
   TimetableGenerator,
+  TimetableGeneratorId,
   useTimetableGeneratorStore,
 } from "./timetable-generator-store";
 import { cn, deepCompare } from "@/lib/utils";
@@ -302,10 +303,11 @@ export function TimetableImportModalTimetablePage({
     }
     for (const timetableId of selectedTimetables) {
       if (importedTimetables.has(timetableId)) {
-        return false;
+        continue;
       }
+      return true;
     }
-    return true;
+    return false;
   }, [selectedTimetables, importedTimetables]);
 
   const importTimetablesMutation = useMutation({
@@ -345,6 +347,7 @@ export function TimetableImportModalTimetablePage({
       if (!selectedTimetables) {
         return;
       }
+      setSelectedTimetables(new Set());
       setImportedTimetables((prev) => {
         for (const timetableId of selectedTimetables) {
           prev.add(timetableId);
@@ -462,6 +465,216 @@ export function TimetableImportModalTimetablePage({
   );
 }
 
+export function TimetableImportModalGeneratorPage({
+  importMutation,
+  previousPage,
+  selectedGenerators,
+  setSelectedGenerators,
+  importedGenerators,
+  setImportedGenerators,
+}: {
+  importMutation: UseMutationResult<ImportResponse, Error, File[]>;
+  previousPage?: () => void;
+  selectedGenerators: Set<TimetableGeneratorId>;
+  setSelectedGenerators: (
+    generators:
+      | Set<TimetableGeneratorId>
+      | ((generators: Set<TimetableGeneratorId>) => Set<TimetableGeneratorId>)
+  ) => void;
+  importedGenerators: Set<TimetableGeneratorId>;
+  setImportedGenerators: (
+    generators:
+      | Set<TimetableGeneratorId>
+      | ((generators: Set<TimetableGeneratorId>) => Set<TimetableGeneratorId>)
+  ) => void;
+}) {
+  const handleCheckedChange = useCallback(
+    (id: TimetableGeneratorId, checked: boolean) => {
+      setSelectedGenerators((generators) => {
+        if (checked) {
+          generators.add(id);
+        } else {
+          generators.delete(id);
+        }
+        return new Set(generators);
+      });
+    },
+    [setSelectedGenerators]
+  );
+  const generatorStore = useTimetableGeneratorStore(
+    useShallow((state) => {
+      return {
+        importGenerators: state.importGenerators,
+      };
+    })
+  );
+
+  const hasValidSelected = useMemo(() => {
+    if (selectedGenerators.size === 0) {
+      return false;
+    }
+    for (const generatorId of selectedGenerators) {
+      if (importedGenerators.has(generatorId)) {
+        continue;
+      }
+      return true;
+    }
+    return false;
+  }, [selectedGenerators, importedGenerators]);
+
+  const importGeneratorsMutation = useMutation({
+    mutationFn: async () => {
+      if (!hasValidSelected) {
+        return;
+      }
+      const data = importMutation.data;
+      if (!data) {
+        return;
+      }
+      const allGenerators = [
+        ...data.generators.toAdd,
+        ...data.generators.toUpdate,
+        ...data.generators.withNoChanges,
+      ];
+      const toImportGenerators: TimetableGenerator[] = [];
+      for (const generator of allGenerators) {
+        // Skip imported.
+        if (importedGenerators.has(generator.id)) {
+          continue;
+        }
+        if (selectedGenerators.has(generator.id)) {
+          toImportGenerators.push(generator);
+        }
+      }
+      if (toImportGenerators.length === 0) {
+        return;
+      }
+      const res = generatorStore.importGenerators(toImportGenerators);
+      if (res.type === "error") {
+        throw new Error(res.error);
+      }
+      return selectedGenerators;
+    },
+    onSuccess: (selectedGenerators) => {
+      if (!selectedGenerators) {
+        return;
+      }
+      setSelectedGenerators(new Set());
+      setImportedGenerators((prev) => {
+        for (const generatorId of selectedGenerators) {
+          prev.add(generatorId);
+        }
+        return new Set(prev);
+      });
+    },
+  });
+
+  return (
+    <div className="flex flex-col gap-4 px-4">
+      <DialogHeader className="px-2">
+        <DialogTitle>Select Generators to Import</DialogTitle>
+      </DialogHeader>
+
+      <DialogDescription className="sr-only">
+        Select generators to import
+      </DialogDescription>
+
+      {importMutation.isSuccess && importMutation.data && (
+        <div className="w-full flex flex-col gap-2">
+          <h3 className="text-sm font-medium px-2">Generators</h3>
+          <ScrollArea className="flex flex-col max-h-48">
+            <div className="flex flex-col">
+              {importMutation.data.generators.toAdd.map((generator) => (
+                <ImportRow
+                  key={generator.id}
+                  id={generator.id}
+                  name={generator.name}
+                  type="add"
+                  imported={importedGenerators.has(generator.id)}
+                  onCheckedChange={handleCheckedChange}
+                  checked={selectedGenerators.has(generator.id)}
+                />
+              ))}
+              {importMutation.data.generators.toUpdate.map((generator) => (
+                <ImportRow
+                  key={generator.id}
+                  id={generator.id}
+                  name={generator.name}
+                  type="update"
+                  imported={importedGenerators.has(generator.id)}
+                  onCheckedChange={handleCheckedChange}
+                  checked={selectedGenerators.has(generator.id)}
+                />
+              ))}
+              {importMutation.data.generators.withNoChanges.map((generator) => (
+                <ImportRow
+                  key={generator.id}
+                  id={generator.id}
+                  name={generator.name}
+                  type="unchanged"
+                  imported={importedGenerators.has(generator.id)}
+                  onCheckedChange={handleCheckedChange}
+                  checked={selectedGenerators.has(generator.id)}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
+
+      {importGeneratorsMutation.isError && importGeneratorsMutation.error && (
+        <div className="w-full flex flex-col px-2">
+          <Alert variant="error">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              {importGeneratorsMutation.error.message}
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+      {importGeneratorsMutation.isSuccess && importGeneratorsMutation.data && (
+        <div className="w-full flex flex-col px-2">
+          <Alert variant="success">
+            <AlertTitle>Imported</AlertTitle>
+            <AlertDescription>
+              {importGeneratorsMutation.data.size} timetables imported.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      <DialogFooter className="flex flex-row justify-between sm:justify-between gap-2 px-2">
+        <div className="flex flex-row gap-2">
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button
+            variant="default"
+            onClick={() => importGeneratorsMutation.mutate()}
+            disabled={importGeneratorsMutation.isPending || !hasValidSelected}
+          >
+            Import
+          </Button>
+        </div>
+        <div className="flex flex-row gap-2">
+          <Button
+            variant="ghost"
+            disabled={!previousPage}
+            onClick={previousPage}
+          >
+            <ArrowLeftIcon /> Back
+          </Button>
+          <DialogClose asChild>
+            <Button variant="default" disabled={!importMutation.isSuccess}>
+              Done <ArrowRightIcon />
+            </Button>
+          </DialogClose>
+        </div>
+      </DialogFooter>
+    </div>
+  );
+}
+
 export function TimetableImportModal() {
   const [page, setPage] = useState<
     "import-from-file" | "import-timetables" | "import-generators"
@@ -472,6 +685,13 @@ export function TimetableImportModal() {
   >(new Set());
   const [importedTimetables, setImportedTimetables] = useState<
     Set<TimetableId>
+  >(new Set());
+
+  const [selectedGenerators, setSelectedGenerators] = useState<
+    Set<TimetableGeneratorId>
+  >(new Set());
+  const [importedGenerators, setImportedGenerators] = useState<
+    Set<TimetableGeneratorId>
   >(new Set());
 
   const importMutation = useMutation({
@@ -529,6 +749,8 @@ export function TimetableImportModal() {
     onSuccess: (data) => {
       setSelectedTimetables(new Set(data.timetables.toAdd.map((t) => t.id)));
       setImportedTimetables(new Set());
+      setSelectedGenerators(new Set(data.generators.toAdd.map((g) => g.id)));
+      setImportedGenerators(new Set());
     },
   });
 
@@ -553,6 +775,19 @@ export function TimetableImportModal() {
         setSelectedTimetables={setSelectedTimetables}
         importedTimetables={importedTimetables}
         setImportedTimetables={setImportedTimetables}
+      />
+    );
+  }
+
+  if (page === "import-generators") {
+    ele = (
+      <TimetableImportModalGeneratorPage
+        importMutation={importMutation}
+        previousPage={() => setPage("import-timetables")}
+        selectedGenerators={selectedGenerators}
+        setSelectedGenerators={setSelectedGenerators}
+        importedGenerators={importedGenerators}
+        setImportedGenerators={setImportedGenerators}
       />
     );
   }

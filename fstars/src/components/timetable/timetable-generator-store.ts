@@ -196,6 +196,14 @@ type TimetableGeneratorStore = {
         type: "error";
         error: string;
       };
+  importGenerators: (generators: TimetableGenerator[]) =>
+    | {
+        type: "success";
+      }
+    | {
+        type: "error";
+        error: string;
+      };
   // Update generator field.
   changeGeneratorField: <T extends keyof TimetableGenerator["factors"]>(
     id: TimetableGeneratorId,
@@ -398,6 +406,30 @@ export const useTimetableGeneratorStore = create<TimetableGeneratorStore>()(
           };
         });
 
+        return res;
+      },
+      importGenerators: (generators: TimetableGenerator[]) => {
+        let res: ReturnType<TimetableGeneratorStore["importGenerators"]> = {
+          type: "error",
+          error: "Failed to import generators",
+        };
+        set((state) => {
+          const newGenerators = new Map(state.generators);
+          generators.forEach((generator) => {
+            newGenerators.set(generator.id, generator);
+          });
+          if (newGenerators.size > Config.limits.generators) {
+            res = {
+              type: "error",
+              error: `Generator limit reached (${newGenerators.size} / ${Config.limits.generators})`,
+            };
+            return {};
+          }
+          res = {
+            type: "success",
+          };
+          return { generators: newGenerators };
+        });
         return res;
       },
       changeGeneratorField: <T extends keyof TimetableGenerator["factors"]>(

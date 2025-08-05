@@ -113,11 +113,6 @@ export function TimetableHeader({ id }: { id: string }) {
 
       <div className="flex flex-row gap-2">
         <div className="relative flex flex-row gap-2">
-          <Button variant="outline" onClick={exportTimetableFile}>
-            Import
-          </Button>
-        </div>
-        <div className="relative flex flex-row gap-2">
           <Indicator controls={controls} className="w-48 z-10" />
           <Button variant="default" onClick={exportTimetableFile}>
             Export
