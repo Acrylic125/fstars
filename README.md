@@ -1,4 +1,4 @@
-# FSars
+# FStars
 Plan your semester in less than 5 minutes.
 
 ## Major pain points
