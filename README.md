@@ -19,4 +19,4 @@ Really simple:
 - Have fun.
 
 ## Contribution / Feedback
-File and issue indicating your interest / feedback. No format yet, just put in what you think should be included.
+File an issue indicating your interest / feedback. No format yet, just put in what you think should be included.
