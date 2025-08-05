@@ -207,7 +207,7 @@ export default function Home() {
             </div>
             <div className="absolute flex flex-col items-center justify-center gap-8 md:gap-12 h-full">
               <Favicon className="size-24 md:size-32 lg:size-40" />
-              <div className="flex flex-col gap-4 lg:gap-6 items-center">
+              <div className="flex flex-col gap-2 md:gap-4 items-center">
                 <span>
                   <FStarsLogo className="w-24 md:w-28 lg:w-32 aspect-[150/53]" />
                   <h1 className="sr-only">FStars</h1>
