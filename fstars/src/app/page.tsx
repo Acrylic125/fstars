@@ -263,6 +263,7 @@ export default function Home() {
                       src="/create.webp"
                       alt="Create Timetable"
                       fill
+                      objectFit="contain"
                       className="object-contain rounded-md border border-border w-full h-full"
                     />
                   </div>
@@ -288,6 +289,7 @@ export default function Home() {
                       src="/select.webp"
                       alt="Select Courses"
                       fill
+                      objectFit="contain"
                       className="w-full h-full border border-border rounded-md"
                     />
                   </div>
@@ -314,10 +316,11 @@ export default function Home() {
                         src="/generate.webp"
                         alt="Generate Plan"
                         fill
+                        objectFit="contain"
                         className="w-full h-full border border-border rounded-md"
                       />
                     </div>
-                    <div className="w-1/w">
+                    <div className="w-2/5">
                       <GeneratedArrow />
                     </div>
                   </div>
@@ -327,6 +330,7 @@ export default function Home() {
                         src="/timetable.webp"
                         alt="Generated Timetable"
                         fill
+                        objectFit="contain"
                         className="w-full h-full border border-border rounded-md"
                       />
                     </div>
@@ -350,6 +354,7 @@ export default function Home() {
                   src="/filter.webp"
                   alt="Filter"
                   fill
+                  objectFit="contain"
                   className="w-full h-full border border-border rounded-md"
                 />
               </div>

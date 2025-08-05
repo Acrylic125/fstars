@@ -24,7 +24,7 @@ export function MainNavbar() {
             <div className="relative h-full aspect-square">
               <Favicon />
             </div>
-            <div className="relative h-8 aspect-[150/53]">
+            <div className="relative h-6 aspect-[150/53]">
               <FStarsLogo />
             </div>
           </Link>
