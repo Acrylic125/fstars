@@ -794,19 +794,4 @@ export function TimetableImportModal() {
   return (
     <DialogContent className="max-w-2xl sm:max-w-2xl px-0">{ele}</DialogContent>
   );
-  //   return (
-  //     <Dialog>
-  //       <DialogTrigger asChild></DialogTrigger>
-  //     </Dialog>
-  //   );
 }
-
-// export function TimetableImportButton() {
-//   return (
-//     <Dialog>
-//       <DialogTrigger asChild>
-//         <Button>Import</Button>
-//       </DialogTrigger>
-//     </Dialog>
-//   );
-// }

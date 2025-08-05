@@ -2,7 +2,7 @@
 
 import { useShallow } from "zustand/react/shallow";
 import { useTimetableStore } from "./timetable-store";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { downloadObjectAsJSONFile } from "./timetable-export-utils";
@@ -15,6 +15,13 @@ import { TimetableImportModal } from "./timetable-import";
 
 export function TimetableListHeader() {
   const controls = useIndicator();
+  const [modalKey, setModalKey] = useState<{
+    isOpen: boolean;
+    key: string;
+  }>({
+    isOpen: false,
+    key: "",
+  });
 
   return (
     <div className="flex flex-row justify-between items-center">
@@ -22,11 +29,26 @@ export function TimetableListHeader() {
         Timetable
       </h1>
       <div className="flex flex-row gap-2">
-        <Dialog>
+        <Dialog
+          open={modalKey.isOpen}
+          onOpenChange={(open) => {
+            if (open) {
+              setModalKey({
+                isOpen: true,
+                key: nanoid(8),
+              });
+            } else {
+              setModalKey((prev) => ({
+                isOpen: false,
+                key: prev.key,
+              }));
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button variant="outline">Import</Button>
           </DialogTrigger>
-          <TimetableImportModal />
+          <TimetableImportModal key={modalKey.key} />
         </Dialog>
         <div className="relative flex flex-row gap-2 w-fit">
           <Indicator controls={controls} className="w-48 z-10" />
