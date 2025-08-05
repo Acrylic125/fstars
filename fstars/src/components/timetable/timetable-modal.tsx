@@ -100,11 +100,7 @@ type ExtractOptions<T extends TimetableModalAction["type"]> = Extract<
 >["options"];
 
 type TimetableModalStore = {
-  action:
-    | ({
-        key: string;
-      } & TimetableModalAction)
-    | null;
+  action: TimetableModalAction | null;
   setAction: (
     action: TimetableModalAction | null,
     refreshKey?: boolean
@@ -114,26 +110,14 @@ type TimetableModalStore = {
 export const useTimetableModalStore = create<TimetableModalStore>(
   (set, get) => ({
     action: null,
-    setAction: (action, refreshKey = true) => {
+    setAction: (action) => {
       if (action === null) {
         return set({
           action: null,
         });
       }
-      const curKey = get().action?.key;
-      if (refreshKey && curKey) {
-        return set({
-          action: {
-            ...action,
-            key: curKey,
-          },
-        });
-      }
       return set({
-        action: {
-          ...action,
-          key: nanoid(16),
-        },
+        action: action,
       });
     },
   })
@@ -145,12 +129,10 @@ const NewPlanFormSchema = z.object({
 
 export function NewPlanDialog({
   options,
-  isOpen,
-  setIsOpen,
+  close,
 }: {
-  options?: ExtractOptions<"create-plan">;
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
+  options: ExtractOptions<"create-plan">;
+  close: () => void;
 }) {
   const form = useForm<z.infer<typeof NewPlanFormSchema>>({
     resolver: zodResolver(NewPlanFormSchema),
@@ -179,7 +161,7 @@ export function NewPlanDialog({
         data.name
       );
       if (res.type === "success") {
-        setIsOpen(false);
+        close();
       } else {
         throw new Error(res.error);
       }
@@ -191,56 +173,54 @@ export function NewPlanDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>New Plan</DialogTitle>
-          <DialogDescription>
-            Create a new plan for this timetable.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Plan Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter timetable name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {createPlanMutation.isError && (
-              <Alert variant="error">
-                <AlertCircleIcon />
-                <AlertTitle>Unable to create timetable.</AlertTitle>
-                <AlertDescription>
-                  <p>{createPlanMutation.error.message}</p>
-                </AlertDescription>
-              </Alert>
+    <>
+      <DialogHeader>
+        <DialogTitle>New Plan</DialogTitle>
+        <DialogDescription>
+          Create a new plan for this timetable.
+        </DialogDescription>
+      </DialogHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Plan Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter timetable name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
+          />
 
-            <div className="flex flex-row gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-                disabled={createPlanMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createPlanMutation.isPending}>
-                {createPlanMutation.isPending ? "Creating..." : "Create"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          {createPlanMutation.isError && (
+            <Alert variant="error">
+              <AlertCircleIcon />
+              <AlertTitle>Unable to create timetable.</AlertTitle>
+              <AlertDescription>
+                <p>{createPlanMutation.error.message}</p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={close}
+              disabled={createPlanMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createPlanMutation.isPending}>
+              {createPlanMutation.isPending ? "Creating..." : "Create"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </>
   );
 }
 
@@ -250,12 +230,10 @@ const RenamePlanFormSchema = z.object({
 
 export function RenamePlanDialog({
   options,
-  isOpen,
-  setIsOpen,
+  close,
 }: {
-  options?: ExtractOptions<"rename-plan">;
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
+  options: ExtractOptions<"rename-plan">;
+  close: () => void;
 }) {
   const form = useForm<z.infer<typeof RenamePlanFormSchema>>({
     resolver: zodResolver(RenamePlanFormSchema),
@@ -287,63 +265,61 @@ export function RenamePlanDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>New Plan</DialogTitle>
-          <DialogDescription>
-            Create a new plan for this timetable.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Plan Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter timetable name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {createPlanMutation.isError && (
-              <Alert variant="error">
-                <AlertCircleIcon />
-                <AlertTitle>Unable to rename plan.</AlertTitle>
-                <AlertDescription>
-                  <p>{createPlanMutation.error.message}</p>
-                </AlertDescription>
-              </Alert>
+    <>
+      <DialogHeader>
+        <DialogTitle>New Plan</DialogTitle>
+        <DialogDescription>
+          Create a new plan for this timetable.
+        </DialogDescription>
+      </DialogHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Plan Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter timetable name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
+          />
 
-            {createPlanMutation.isSuccess && (
-              <Alert variant="success">
-                <CheckCircleIcon />
-                <AlertTitle>Plan renamed.</AlertTitle>
-              </Alert>
-            )}
+          {createPlanMutation.isError && (
+            <Alert variant="error">
+              <AlertCircleIcon />
+              <AlertTitle>Unable to rename plan.</AlertTitle>
+              <AlertDescription>
+                <p>{createPlanMutation.error.message}</p>
+              </AlertDescription>
+            </Alert>
+          )}
 
-            <div className="flex flex-row gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-                disabled={createPlanMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createPlanMutation.isPending}>
-                {createPlanMutation.isPending ? "Renaming..." : "Rename"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          {createPlanMutation.isSuccess && (
+            <Alert variant="success">
+              <CheckCircleIcon />
+              <AlertTitle>Plan renamed.</AlertTitle>
+            </Alert>
+          )}
+
+          <div className="flex flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={close}
+              disabled={createPlanMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createPlanMutation.isPending}>
+              {createPlanMutation.isPending ? "Renaming..." : "Rename"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </>
   );
 }
 
@@ -352,13 +328,7 @@ const CreateGeneratorFormSchema = z.object({
   templateType: GeneratorTemplateTypeSchema,
 });
 
-export function CreateGeneratorDialog({
-  isOpen,
-  setIsOpen,
-}: {
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
-}) {
+export function CreateGeneratorDialog({ close }: { close: () => void }) {
   const form = useForm<z.infer<typeof CreateGeneratorFormSchema>>({
     resolver: zodResolver(CreateGeneratorFormSchema),
     defaultValues: {
@@ -378,7 +348,7 @@ export function CreateGeneratorDialog({
   const createPlanMutation = useMutation({
     mutationFn: async (data: z.infer<typeof CreateGeneratorFormSchema>) => {
       timetableGeneratorStore?.createGenerator(data.name, data.templateType);
-      setIsOpen(false);
+      close();
     },
   });
 
@@ -387,109 +357,107 @@ export function CreateGeneratorDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>New Generator</DialogTitle>
-          <DialogDescription>
-            Create a new generator. This is available to all your timetables.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Generator Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter generator name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="templateType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Template</FormLabel>
-                  <FormControl>
-                    <div className="flex flex-row gap-2">
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full",
-                          {
-                            "border-primary dark:border-primary":
-                              field.value === "default",
-                          }
-                        )}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          field.onChange("default");
-                        }}
-                      >
-                        <h3 className="font-medium">Default</h3>
-                        <p className="text-left text-muted-foreground wrap-break-word whitespace-normal">
-                          A basic generator that will try to generate a
-                          timetable that is as balanced as possible.
-                        </p>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full",
-                          {
-                            "border-primary dark:border-primary":
-                              field.value === "empty",
-                          }
-                        )}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          field.onChange("empty");
-                        }}
-                      >
-                        <h3 className="font-medium">Empty</h3>
-                        <p className="text-left text-muted-foreground wrap-break-word whitespace-normal">
-                          An empty generator that will not have any constraints.
-                        </p>
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {createPlanMutation.isError && (
-              <Alert variant="error">
-                <AlertCircleIcon />
-                <AlertTitle>Unable to create generator.</AlertTitle>
-                <AlertDescription>
-                  <p>{createPlanMutation.error.message}</p>
-                </AlertDescription>
-              </Alert>
+    <>
+      <DialogHeader>
+        <DialogTitle>New Generator</DialogTitle>
+        <DialogDescription>
+          Create a new generator. This is available to all your timetables.
+        </DialogDescription>
+      </DialogHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Generator Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter generator name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
+          />
+          <FormField
+            control={form.control}
+            name="templateType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Template</FormLabel>
+                <FormControl>
+                  <div className="flex flex-row gap-2">
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full",
+                        {
+                          "border-primary dark:border-primary":
+                            field.value === "default",
+                        }
+                      )}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        field.onChange("default");
+                      }}
+                    >
+                      <h3 className="font-medium">Default</h3>
+                      <p className="text-left text-muted-foreground wrap-break-word whitespace-normal">
+                        A basic generator that will try to generate a timetable
+                        that is as balanced as possible.
+                      </p>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full",
+                        {
+                          "border-primary dark:border-primary":
+                            field.value === "empty",
+                        }
+                      )}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        field.onChange("empty");
+                      }}
+                    >
+                      <h3 className="font-medium">Empty</h3>
+                      <p className="text-left text-muted-foreground wrap-break-word whitespace-normal">
+                        An empty generator that will not have any constraints.
+                      </p>
+                    </Button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <div className="flex flex-row gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-                disabled={createPlanMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createPlanMutation.isPending}>
-                {createPlanMutation.isPending ? "Creating..." : "Create"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          {createPlanMutation.isError && (
+            <Alert variant="error">
+              <AlertCircleIcon />
+              <AlertTitle>Unable to create generator.</AlertTitle>
+              <AlertDescription>
+                <p>{createPlanMutation.error.message}</p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={close}
+              disabled={createPlanMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createPlanMutation.isPending}>
+              {createPlanMutation.isPending ? "Creating..." : "Create"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </>
   );
 }
 
@@ -499,12 +467,10 @@ const RenameGeneratorFormSchema = z.object({
 
 export function RenameGeneratorDialog({
   options,
-  isOpen,
-  setIsOpen,
+  close,
 }: {
-  options?: ExtractOptions<"rename-generator">;
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
+  options: ExtractOptions<"rename-generator">;
+  close: () => void;
 }) {
   const form = useForm<z.infer<typeof RenameGeneratorFormSchema>>({
     resolver: zodResolver(RenameGeneratorFormSchema),
@@ -536,75 +502,68 @@ export function RenameGeneratorDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Rename Generator</DialogTitle>
-          <DialogDescription>Rename this generator.</DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Generator Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter generator name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {renameGeneratorMutation.isError && (
-              <Alert variant="error">
-                <AlertCircleIcon />
-                <AlertTitle>Unable to rename generator.</AlertTitle>
-                <AlertDescription>
-                  <p>{renameGeneratorMutation.error.message}</p>
-                </AlertDescription>
-              </Alert>
+    <>
+      <DialogHeader>
+        <DialogTitle>Rename Generator</DialogTitle>
+        <DialogDescription>Rename this generator.</DialogDescription>
+      </DialogHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Generator Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter generator name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
+          />
 
-            {renameGeneratorMutation.isSuccess && (
-              <Alert variant="success">
-                <CheckCircleIcon />
-                <AlertTitle>Generator renamed.</AlertTitle>
-              </Alert>
-            )}
+          {renameGeneratorMutation.isError && (
+            <Alert variant="error">
+              <AlertCircleIcon />
+              <AlertTitle>Unable to rename generator.</AlertTitle>
+              <AlertDescription>
+                <p>{renameGeneratorMutation.error.message}</p>
+              </AlertDescription>
+            </Alert>
+          )}
 
-            <div className="flex flex-row gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-                disabled={renameGeneratorMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={renameGeneratorMutation.isPending}
-              >
-                {renameGeneratorMutation.isPending ? "Renaming..." : "Rename"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          {renameGeneratorMutation.isSuccess && (
+            <Alert variant="success">
+              <CheckCircleIcon />
+              <AlertTitle>Generator renamed.</AlertTitle>
+            </Alert>
+          )}
+
+          <div className="flex flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={close}
+              disabled={renameGeneratorMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={renameGeneratorMutation.isPending}>
+              {renameGeneratorMutation.isPending ? "Renaming..." : "Rename"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </>
   );
 }
 
 export function DeleteGeneratorConfirmationDialog({
   options,
-  isOpen,
-  setIsOpen,
+  close,
 }: {
-  options?: ExtractOptions<"delete-generator-confirmation">;
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
+  options: ExtractOptions<"delete-generator-confirmation">;
+  close: () => void;
 }) {
   const timetableStore = useTimetableGeneratorStore(
     useShallow((state) => {
@@ -622,64 +581,60 @@ export function DeleteGeneratorConfirmationDialog({
       }
       const { generatorRef } = options;
       timetableStore?.deleteGenerator(generatorRef);
-      setIsOpen(false);
+      close();
     },
   });
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete Generator</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this generator? This generator is
-            used by all your timetables, so deleting it will remove it from all
-            of them.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <DialogHeader>
+        <DialogTitle>Delete Generator</DialogTitle>
+        <DialogDescription>
+          Are you sure you want to delete this generator? This generator is used
+          by all your timetables, so deleting it will remove it from all of
+          them.
+        </DialogDescription>
+      </DialogHeader>
 
-        {deleteGeneratorMutation.isError && (
-          <Alert variant="error">
-            <AlertCircleIcon />
-            <AlertTitle>Unable to delete generator.</AlertTitle>
-            <AlertDescription>
-              <p>{deleteGeneratorMutation.error.message}</p>
-            </AlertDescription>
-          </Alert>
-        )}
+      {deleteGeneratorMutation.isError && (
+        <Alert variant="error">
+          <AlertCircleIcon />
+          <AlertTitle>Unable to delete generator.</AlertTitle>
+          <AlertDescription>
+            <p>{deleteGeneratorMutation.error.message}</p>
+          </AlertDescription>
+        </Alert>
+      )}
 
-        <div className="flex flex-row gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setIsOpen(false)}
-            disabled={deleteGeneratorMutation.isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => deleteGeneratorMutation.mutate()}
-            disabled={
-              deleteGeneratorMutation.isPending ||
-              deleteGeneratorMutation.isSuccess
-            }
-          >
-            {deleteGeneratorMutation.isPending ? "Deleting..." : "Delete"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <div className="flex flex-row gap-2">
+        <Button
+          variant="outline"
+          onClick={close}
+          disabled={deleteGeneratorMutation.isPending}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={() => deleteGeneratorMutation.mutate()}
+          disabled={
+            deleteGeneratorMutation.isPending ||
+            deleteGeneratorMutation.isSuccess
+          }
+        >
+          {deleteGeneratorMutation.isPending ? "Deleting..." : "Delete"}
+        </Button>
+      </div>
+    </>
   );
 }
 
 export function ImportPlanDialog({
   options,
-  isOpen,
-  setIsOpen,
+  close,
 }: {
-  options?: ExtractOptions<"import-plan">;
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
+  options: ExtractOptions<"import-plan">;
+  close: () => void;
 }) {
   const timetableStore = useTimetableStore(
     useShallow((state) => {
@@ -876,151 +831,147 @@ export function ImportPlanDialog({
   });
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="w-full max-w-lg md:max-w-xl lg:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Import Plan</DialogTitle>
-          <DialogDescription>
-            {options?.type === "current" && (
-              <span>
-                Import a <span className="text-primary">shared plan</span> to
-                current plan,{" "}
-                {timetableStore?.planRefName ? (
-                  <span className="text-primary">
-                    {timetableStore.planRefName}
-                  </span>
-                ) : (
-                  <span className="text-red-600 dark:text-red-400">
-                    Unknown Plan
-                  </span>
-                )}{" "}
-              </span>
-            )}
-            {options?.type === "copy" && (
-              <span>
-                Import a <span className="text-primary">shared plan</span> to
-                copy of plan,{" "}
-                {timetableStore?.planRefName ? (
-                  <span className="text-primary">
-                    {timetableStore.planRefName}
-                  </span>
-                ) : (
-                  <span className="text-red-600 dark:text-red-400">
-                    Unknown Plan
-                  </span>
-                )}{" "}
-                (Copy)
-              </span>
-            )}
-            {options?.type === "new" && (
-              <span>
-                Import a <span className="text-primary">shared plan</span> to a
-                new plan
-              </span>
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-row items-center gap-4">
-          <Textarea
-            className="resize-none h-52"
-            value={rawImport}
-            onChange={(e) => setRawImport(e.target.value)}
-            placeholder={`Import a shared plan. E.g.
+    <>
+      <DialogHeader>
+        <DialogTitle>Import Plan</DialogTitle>
+        <DialogDescription>
+          {options?.type === "current" && (
+            <span>
+              Import a <span className="text-primary">shared plan</span> to
+              current plan,{" "}
+              {timetableStore?.planRefName ? (
+                <span className="text-primary">
+                  {timetableStore.planRefName}
+                </span>
+              ) : (
+                <span className="text-red-600 dark:text-red-400">
+                  Unknown Plan
+                </span>
+              )}{" "}
+            </span>
+          )}
+          {options?.type === "copy" && (
+            <span>
+              Import a <span className="text-primary">shared plan</span> to copy
+              of plan,{" "}
+              {timetableStore?.planRefName ? (
+                <span className="text-primary">
+                  {timetableStore.planRefName}
+                </span>
+              ) : (
+                <span className="text-red-600 dark:text-red-400">
+                  Unknown Plan
+                </span>
+              )}{" "}
+              (Copy)
+            </span>
+          )}
+          {options?.type === "new" && (
+            <span>
+              Import a <span className="text-primary">shared plan</span> to a
+              new plan
+            </span>
+          )}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex flex-row items-center gap-4">
+        <Textarea
+          className="resize-none h-52"
+          value={rawImport}
+          onChange={(e) => setRawImport(e.target.value)}
+          placeholder={`Import a shared plan. E.g.
 CC0001: 10011
 CC0007: 10012
 CC0008: ?`}
-          />
-          <Button
-            variant="outline"
-            className="opacity-100 disabled:opacity-100"
-            size="icon"
-            disabled
-          >
-            <ArrowRightLeftIcon className="w-4 h-4" />
-          </Button>
-          <ScrollArea className="w-full h-52 border-border border rounded-md">
-            <div className="flex flex-col gap-2 p-2">
-              {importCourses.map((course, index) => {
-                const err = importPlanMutation.data?.indices?.[index];
-                const isErrored =
-                  err !== null &&
-                  err?.courseCode === course.courseCode &&
-                  err?.index === course.index;
-                return (
-                  <div key={index} className="flex flex-row items-center">
-                    <p className="text-foreground truncate text-sm break-words flex-1">
-                      {course.courseCode}
-                    </p>
-                    <Input
-                      value={course.index ?? "Not Selected"}
-                      disabled
-                      className={cn("flex-1", {
-                        "text-red-600 dark:text-red-400 border-red-600 dark:border-red-400 opacity-50 disabled:opacity-100":
-                          isErrored,
-                      })}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setRawImport(
-                          rawImport
-                            .split("\n")
-                            .filter((_, i) => i !== index)
-                            .join("\n")
-                        );
-                      }}
-                    >
-                      <XIcon className="w-4 h-4" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </div>
-        {importPlanMutation.isSuccess &&
-          importPlanMutation.data?.type === "error" && (
-            <Alert variant="error">
-              <AlertTitle>Unable to import plan.</AlertTitle>
-              <AlertDescription>
-                {importPlanMutation.data.message}
-              </AlertDescription>
-            </Alert>
-          )}
-        {importPlanMutation.isSuccess &&
-          importPlanMutation.data?.type === "success" && (
-            <Alert variant="success">
-              <AlertTitle>Plan imported successfully.</AlertTitle>
-            </Alert>
-          )}
-        {importPlanMutation.isError && (
+        />
+        <Button
+          variant="outline"
+          className="opacity-100 disabled:opacity-100"
+          size="icon"
+          disabled
+        >
+          <ArrowRightLeftIcon className="w-4 h-4" />
+        </Button>
+        <ScrollArea className="w-full h-52 border-border border rounded-md">
+          <div className="flex flex-col gap-2 p-2">
+            {importCourses.map((course, index) => {
+              const err = importPlanMutation.data?.indices?.[index];
+              const isErrored =
+                err !== null &&
+                err?.courseCode === course.courseCode &&
+                err?.index === course.index;
+              return (
+                <div key={index} className="flex flex-row items-center">
+                  <p className="text-foreground truncate text-sm break-words flex-1">
+                    {course.courseCode}
+                  </p>
+                  <Input
+                    value={course.index ?? "Not Selected"}
+                    disabled
+                    className={cn("flex-1", {
+                      "text-red-600 dark:text-red-400 border-red-600 dark:border-red-400 opacity-50 disabled:opacity-100":
+                        isErrored,
+                    })}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setRawImport(
+                        rawImport
+                          .split("\n")
+                          .filter((_, i) => i !== index)
+                          .join("\n")
+                      );
+                    }}
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </div>
+      {importPlanMutation.isSuccess &&
+        importPlanMutation.data?.type === "error" && (
           <Alert variant="error">
             <AlertTitle>Unable to import plan.</AlertTitle>
+            <AlertDescription>
+              {importPlanMutation.data.message}
+            </AlertDescription>
           </Alert>
         )}
-        <DialogFooter className="sm:justify-start">
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
-          </DialogClose>
-          <Button
-            type="button"
-            variant="default"
-            disabled={
-              importCourses.length <= 0 ||
-              importPlanMutation.isPending ||
-              (importPlanMutation.isSuccess &&
-                importPlanMutation.data?.type !== "error")
-            }
-            onClick={() => importPlanMutation.mutate(importCourses)}
-          >
-            Import
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      {importPlanMutation.isSuccess &&
+        importPlanMutation.data?.type === "success" && (
+          <Alert variant="success">
+            <AlertTitle>Plan imported successfully.</AlertTitle>
+          </Alert>
+        )}
+      {importPlanMutation.isError && (
+        <Alert variant="error">
+          <AlertTitle>Unable to import plan.</AlertTitle>
+        </Alert>
+      )}
+      <DialogFooter className="sm:justify-start">
+        <Button type="button" variant="outline" onClick={close}>
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          variant="default"
+          disabled={
+            importCourses.length <= 0 ||
+            importPlanMutation.isPending ||
+            (importPlanMutation.isSuccess &&
+              importPlanMutation.data?.type !== "error")
+          }
+          onClick={() => importPlanMutation.mutate(importCourses)}
+        >
+          Import
+        </Button>
+      </DialogFooter>
+    </>
   );
 }
 
@@ -1040,63 +991,39 @@ export function TimetableModal() {
     [modalStore.setAction]
   );
 
+  const isOpen = modalStore.action !== null;
+  const close = useCallback(() => {
+    modalStore.setAction(null);
+  }, [modalStore.setAction]);
+
   return (
-    <>
-      <NewPlanDialog
-        key={`create-plan-${modalStore.action?.key}`}
-        options={
-          modalStore.action?.type === "create-plan"
-            ? modalStore.action.options
-            : undefined
-        }
-        isOpen={modalStore.action?.type === "create-plan"}
-        setIsOpen={setOpen}
-      />
-      <RenamePlanDialog
-        key={`rename-plan-${modalStore.action?.key}`}
-        options={
-          modalStore.action?.type === "rename-plan"
-            ? modalStore.action.options
-            : undefined
-        }
-        isOpen={modalStore.action?.type === "rename-plan"}
-        setIsOpen={setOpen}
-      />
-      <CreateGeneratorDialog
-        key={`create-generator-${modalStore.action?.key}`}
-        isOpen={modalStore.action?.type === "create-generator"}
-        setIsOpen={setOpen}
-      />
-      <RenameGeneratorDialog
-        key={`rename-generator-${modalStore.action?.key}`}
-        options={
-          modalStore.action?.type === "rename-generator"
-            ? modalStore.action.options
-            : undefined
-        }
-        isOpen={modalStore.action?.type === "rename-generator"}
-        setIsOpen={setOpen}
-      />
-      <DeleteGeneratorConfirmationDialog
-        key={`delete-generator-confirmation-${modalStore.action?.key}`}
-        options={
-          modalStore.action?.type === "delete-generator-confirmation"
-            ? modalStore.action.options
-            : undefined
-        }
-        isOpen={modalStore.action?.type === "delete-generator-confirmation"}
-        setIsOpen={setOpen}
-      />
-      <ImportPlanDialog
-        key={`import-plan-${modalStore.action?.key}`}
-        options={
-          modalStore.action?.type === "import-plan"
-            ? modalStore.action.options
-            : undefined
-        }
-        isOpen={modalStore.action?.type === "import-plan"}
-        setIsOpen={setOpen}
-      />
-    </>
+    <Dialog open={isOpen} onOpenChange={setOpen}>
+      <DialogContent className="w-full max-w-lg md:max-w-xl lg:max-w-2xl">
+        {modalStore.action?.type === "create-plan" && (
+          <NewPlanDialog options={modalStore.action.options} close={close} />
+        )}
+        {modalStore.action?.type === "rename-plan" && (
+          <RenamePlanDialog options={modalStore.action.options} close={close} />
+        )}
+        {modalStore.action?.type === "create-generator" && (
+          <CreateGeneratorDialog close={close} />
+        )}
+        {modalStore.action?.type === "rename-generator" && (
+          <RenameGeneratorDialog
+            options={modalStore.action.options}
+            close={close}
+          />
+        )}
+        {modalStore.action?.type === "delete-generator-confirmation" && (
+          <DeleteGeneratorConfirmationDialog
+            options={modalStore.action.options}
+            close={close}
+          />
+        )}
+        {modalStore.action?.type === "import-plan" && (
+          <ImportPlanDialog options={modalStore.action.options} close={close} />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
