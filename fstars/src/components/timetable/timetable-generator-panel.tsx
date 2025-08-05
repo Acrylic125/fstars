@@ -565,7 +565,9 @@ export function TimetableGeneratorPanel({
 
   return (
     <div className="w-full border border-border bg-card rounded-lg pt-4 pb-0 flex flex-col">
-      <h2 className="text-base font-semibold px-4 pb-2">Generator</h2>
+      <h2 className="text-base font-semibold px-4 pb-2">
+        2. Configure and Generate
+      </h2>
       <div className="flex flex-row gap-2 px-4">
         <SelectGeneratorCombobox />
       </div>

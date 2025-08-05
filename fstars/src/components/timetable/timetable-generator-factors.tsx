@@ -128,7 +128,7 @@ export function DayDurationFactorView({
           aria-label="Consecutive classes"
           className="h-12 w-full flex flex-row justify-between items-center px-4 hover:bg-neutral-100 focus-visible:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:bg-neutral-800 outline-0 ring-0 cursor-pointer [&_svg]:pointer-events-none select-none"
         >
-          <p className="text-sm">Consecutive classes</p>
+          <p className="text-sm">Day Duration</p>
           <div className="text-muted-foreground hidden lg:block">
             <ChevronDownIcon className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
             <ChevronUpIcon className="w-4 h-4 group-data-[state=closed]/collapsible:hidden" />
@@ -165,41 +165,6 @@ export function DayDurationFactorView({
     </Collapsible>
   );
 }
-
-// export function NoClassDaysFactorView({
-//   generatorId,
-// }: {
-//   generatorId: TimetableGeneratorId;
-// }) {
-//   const generatorStore = useTimetableGeneratorStore(
-//     useShallow((state) => {
-//       const generator = state.generators.get(generatorId);
-//       if (!generator) return null;
-//       return {
-//         changeGeneratorField: state.changeGeneratorField,
-//         noClassDays: generator.factors.noClassDays,
-//       };
-//     })
-//   );
-//   const changeSelection = useCallback(
-//     (selected: Priority) => {
-//       generatorStore?.changeGeneratorField(generatorId, "noClassDays", {
-//         priority: asPriorityNumber(selected),
-//       });
-//     },
-//     [generatorStore, generatorId]
-//   );
-
-//   return (
-//     <div className="h-12 w-full flex flex-row justify-between items-center px-4">
-//       <p className="text-sm">No class days</p>
-//       <SelectPriority
-//         selected={asPriority(generatorStore?.noClassDays.priority)}
-//         onChange={changeSelection}
-//       />
-//     </div>
-//   );
-// }
 
 const consecutiveClassesOptions: {
   value: keyof TimetableGenerator["factors"]["consecutiveClasses"];
@@ -247,7 +212,7 @@ export function ConsecutiveClassesFactorView({
           aria-label="Consecutive classes"
           className="h-12 w-full flex flex-row justify-between items-center px-4 hover:bg-neutral-100 focus-visible:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:bg-neutral-800 outline-0 ring-0 cursor-pointer [&_svg]:pointer-events-none select-none"
         >
-          <p className="text-sm">Consecutive classes</p>
+          <p className="text-sm">Consecutive Classes Duration</p>
           <div className="text-muted-foreground hidden lg:block">
             <ChevronDownIcon className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
             <ChevronUpIcon className="w-4 h-4 group-data-[state=closed]/collapsible:hidden" />
@@ -331,7 +296,7 @@ export function GapsBetweenClassesFactorView({
           aria-label="Gaps between classes"
           className="h-12 w-full flex flex-row justify-between items-center px-4 hover:bg-neutral-100 focus-visible:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:bg-neutral-800 outline-0 ring-0 cursor-pointer [&_svg]:pointer-events-none select-none"
         >
-          <p className="text-sm">Gaps between classes</p>
+          <p className="text-sm">Gaps Between Classes Duration</p>
           <div className="text-muted-foreground hidden lg:block">
             <ChevronDownIcon className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
             <ChevronUpIcon className="w-4 h-4 group-data-[state=closed]/collapsible:hidden" />
@@ -493,7 +458,7 @@ export function StartAfterTimeView({
           aria-label="Start after and end before"
           className="h-12 w-full flex flex-row justify-between items-center px-4 hover:bg-neutral-100 focus-visible:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:bg-neutral-800 outline-0 ring-0 cursor-pointer [&_svg]:pointer-events-none select-none"
         >
-          <p className="text-sm">Start after and End before</p>
+          <p className="text-sm">Day Start and End Time</p>
           <div className="text-muted-foreground hidden lg:block">
             <ChevronDownIcon className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
             <ChevronUpIcon className="w-4 h-4 group-data-[state=closed]/collapsible:hidden" />
@@ -629,7 +594,7 @@ export function ClassDistributionView({
           aria-label="Start after and end before"
           className="h-12 w-full flex flex-row justify-between items-center px-4 hover:bg-neutral-100 focus-visible:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:bg-neutral-800 outline-0 ring-0 cursor-pointer [&_svg]:pointer-events-none select-none"
         >
-          <p className="text-sm">Class Distribution</p>
+          <p className="text-sm">Daily Load Preference</p>
           <div className="text-muted-foreground hidden lg:block">
             <ChevronDownIcon className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
             <ChevronUpIcon className="w-4 h-4 group-data-[state=closed]/collapsible:hidden" />

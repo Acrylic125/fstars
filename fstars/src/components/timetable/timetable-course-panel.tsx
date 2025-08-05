@@ -260,7 +260,7 @@ export function TimetableCoursePlansHeader({ id }: { id: string }) {
 
   return (
     <div className="w-full h-fit flex flex-row items-center justify-between gap-2 px-4 pb-4">
-      <h2 className="text-base font-semibold">Course Plans</h2>
+      <h2 className="text-base font-semibold">1. Select Courses</h2>
       <div className="flex flex-row gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
