@@ -1,22 +1,15 @@
-# FSars
-Plan your semester in less than 5 minutes.
+# FStars Web App
 
-## Major pain points
-NTU Stars is a universally hated system, forced onto us students, to plan and bid for courses.
+## Setup
+1. Configure your `.env` / Environment variables as follows:
+```
+DATABASE_URL=
+```
+2. Run `pnpm i`.
+3. Run `pnpm run dev` to start development.
 
-- Sifting through a sea of indexes and courses is incredibly overwhelming.
-- Planning out time slots, fighting with slot collisions is incredibly time consuming.
-- Planning out based on needs is near impossible to do manually.
+## Simple Rules
+- Dont overabstract, flatten it until you smell a good abstraction from feeling the pain of not having it.
+- Dont overthink. Prioritise straightforward, easy to change code.
 
-Do all that and realise you get screwed over due to lack of vacancies. So you need to replan and find fallbacks.
-
-TL;DR: Unfun, tedious, time consuming, stress inducing. *I HATE STARS!!!!!!!!!!!*
-
-## Goals
-Really simple:
-- Address the aforementioned pain points.
-- Act as a catalyst for more initiatives in NTU.
-- Have fun.
-
-
-
+That's all. 
