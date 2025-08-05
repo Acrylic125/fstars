@@ -1,11 +1,12 @@
 "use client";
 
 import { MoonIcon, PlusIcon, SunIcon } from "lucide-react";
-import { FullLogo } from "../icons/full-logo";
 import { useThemeStore } from "../theme-store";
 import { Button } from "../ui/button";
 import { useShallow } from "zustand/react/shallow";
 import Link from "next/link";
+import { Favicon } from "../icons/favicon";
+import { FStarsLogo } from "../icons/fstars-logo";
 
 export function MainNavbar() {
   const { theme, setTheme } = useThemeStore(
@@ -19,8 +20,13 @@ export function MainNavbar() {
     <nav className="flex flex-col items-center border-b border-border">
       <div className="w-full h-14 md:h-16 max-w-ui flex flex-row items-center justify-between py-1.5 px-4 md:px-8">
         <div className="flex flex-row items-center h-full">
-          <Link href="/" className="h-full">
-            <FullLogo />
+          <Link href="/" className="h-full flex flex-row items-center gap-4">
+            <div className="relative h-full aspect-square">
+              <Favicon />
+            </div>
+            <div className="relative h-8 aspect-[150/53]">
+              <FStarsLogo />
+            </div>
           </Link>
           <Button variant="ghost" asChild className="h-full">
             <Link href="/timetable">Timetable</Link>
