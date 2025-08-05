@@ -1,8 +1,10 @@
+"use client";
 import { Favicon } from "@/components/icons/favicon";
 import { FStarsLogo } from "@/components/icons/fstars-logo";
 import { MainNavbar } from "@/components/nav/main-navbar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
@@ -207,7 +209,7 @@ export default function Home() {
               <Favicon className="size-24 md:size-32 lg:size-40" />
               <div className="flex flex-col gap-4 lg:gap-6 items-center">
                 <span>
-                  <FStarsLogo className="size-24 md:size-28 lg:size-32 h-fit md:h-fit lg:h-fit" />
+                  <FStarsLogo className="w-24 md:w-28 lg:w-32 aspect-[150/53]" />
                   <h1 className="sr-only">FStars</h1>
                 </span>
                 <p className="text-muted-foreground text-center text-base md:text-lg lg:text-xl">
@@ -255,13 +257,15 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-                <div className="col-span-5 lg:col-span-3 h-full">
-                  <img
-                    src="/create.webp"
-                    alt="Create Timetable"
-                    className="w-full h-full border border-border rounded-md"
-                    // loading="lazy"
-                  />
+                <div className="col-span-5 lg:col-span-3 aspect-[688/311]">
+                  <div className="relative w-full h-full">
+                    <Image
+                      src="/create.webp"
+                      alt="Create Timetable"
+                      fill
+                      className="object-contain rounded-md border border-border w-full h-full"
+                    />
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-5 w-full gap-8 lg:gap-4">
@@ -278,13 +282,15 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-                <div className="col-span-5 lg:col-span-3 h-full">
-                  <img
-                    src="/select.webp"
-                    alt="Select Courses"
-                    className="w-full h-full border border-border rounded-md"
-                    // loading="lazy"
-                  />
+                <div className="col-span-5 lg:col-span-3 aspect-[687/390]">
+                  <div className="relative w-full h-full">
+                    <Image
+                      src="/select.webp"
+                      alt="Select Courses"
+                      fill
+                      className="w-full h-full border border-border rounded-md"
+                    />
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-5 w-full gap-8 lg:gap-4">
@@ -303,23 +309,27 @@ export default function Home() {
                 </div>
                 <div className="relative col-span-5 lg:col-span-3 h-full flex flex-col gap-4">
                   <div className="flex flex-row items-baseline">
-                    <img
-                      src="/generate.webp"
-                      alt="Generate Plan"
-                      className="w-3/4 border border-border rounded-md"
-                      // loading="lazy"
-                    />
+                    <div className="relative w-3/5 aspect-[349/245]">
+                      <Image
+                        src="/generate.webp"
+                        alt="Generate Plan"
+                        fill
+                        className="w-full h-full border border-border rounded-md"
+                      />
+                    </div>
                     <div className="w-1/w">
                       <GeneratedArrow />
                     </div>
                   </div>
                   <div className="flex flex-row justify-end w-full">
-                    <img
-                      src="/timetable.webp"
-                      alt="Generated Timetable"
-                      className="border border-border rounded-md w-[90%]"
-                      // loading="lazy"
-                    />
+                    <div className="relative w-5/6 aspect-[349/245]">
+                      <Image
+                        src="/timetable.webp"
+                        alt="Generated Timetable"
+                        fill
+                        className="w-full h-full border border-border rounded-md"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -335,12 +345,14 @@ export default function Home() {
               </p>
             </header>
             <div className="w-full flex flex-col max-w-xl md:max-w-2xl lg:max-w-3xl gap-8">
-              <img
-                src="/filter.webp"
-                alt="Filter"
-                className="border border-border rounded-md"
-                // loading="lazy"
-              />
+              <div className="relative w-full aspect-[583/306]">
+                <Image
+                  src="/filter.webp"
+                  alt="Filter"
+                  fill
+                  className="w-full h-full border border-border rounded-md"
+                />
+              </div>
             </div>
           </section>
           <section className="relative w-full flex flex-col items-center gap-8 min-h-96">
