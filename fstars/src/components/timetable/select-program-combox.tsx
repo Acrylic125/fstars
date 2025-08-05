@@ -27,6 +27,14 @@ export function serializeProgram(program: Program) {
 }
 
 export function toShortenedName(program: Program) {
+  // Special rendering for MLOAD (i.e. Minor)
+  if (program.code === "MLOAD") {
+    if (program.subCode) {
+      return `${program.subCode} (Minor)`;
+    }
+    return "Minor";
+  }
+
   let name = program.code;
   if (program.subCode) {
     name += ` (${program.subCode})`;
@@ -42,9 +50,6 @@ export function toShortenedName(program: Program) {
 
 export function toFullProgramName(program: Program) {
   let name = program.name;
-  // if (program.subCode) {
-  //   name += ` (${program.subCode})`;
-  // }
   if (program.year) {
     name += ` Year ${program.year}`;
   }

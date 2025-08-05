@@ -142,8 +142,7 @@ function DecisionsImage(props: React.SVGProps<SVGSVGElement>) {
         d="M665.537 143.497c.934 3.604 7.489.786 5.932-2.966-4.672-1.705-3.604 2.329-5.932 2.966ZM686.299 112.354c3.5 4.775 5.991-5.22 0 0Z"
       />
       <path
-        fill="#262626"
-        stroke="#404040"
+        className="fill-neutral-300 stroke-neutral-600 dark:fill-neutral-500 dark:stroke-neutral-700"
         strokeWidth={2}
         d="m20.5 31 241 52.5v179L20.5 318V31Z"
       />
@@ -153,8 +152,7 @@ function DecisionsImage(props: React.SVGProps<SVGSVGElement>) {
         d="M35.5 298.5V47L256 93v162.5l-220.5 43Z"
       />
       <path
-        fill="#262626"
-        stroke="#404040"
+        className="fill-neutral-300 stroke-neutral-600 dark:fill-neutral-500 dark:stroke-neutral-700"
         strokeWidth={2}
         d="M1 311.511 20.526 318 22 31 1 43.478v268.033Z"
       />
@@ -182,13 +180,11 @@ function DecisionsImage(props: React.SVGProps<SVGSVGElement>) {
         d="M105.209 97.247c-.182.546-.458 2.193-.005 3.625.192.609 2.091-1.208 2.842-1.637.75-.43.75.026.705.443-.086.788-.231 1.611-.003 2.028 1.152 2.108 2.805-3.353 3.173-3.54.484-.244-.089 1.923.047 3.12.187 1.639 2.529-2.84 2.668-2.846 1.84-.091-.506 3.677-.231 4.276.456-.039 1.102-.682 1.973-1.69.506-.554 1.143-1.191 1.8-1.296M141.081 104.697c0 .273 0 .546.455.596 3.485.38 6.526-2.249 7.951-2.526.506-.098.606.269.471.865s-.5 1.507-.642 2.112c-.142.606-.051.879.36.974 1.111.257 2.346-.089 3.081.093 1.385.343.189 2.756.508 3.537 1.098 2.691 6.387-.955 8.688-1.421.408-.082.375.726.876.916 2.715 1.032 4.367-.361 6.069-.501 1.906-.156 4.001-.506 5.104-.324.906.15.928 1.377 1.018 2.067 1.743.143 4.676-.041 6.435.417.368.093.824.093 1.293.093M210.342 113.251c-.638.546-1.275 1.093-1.194 1.42.577 2.316 4.223-.046 5.374.51.687.184 1.609.277 2.664.369.509.091.965.273 2.262.46"
       />
       <path
-        fill="#262626"
-        stroke="#404040"
+        className="fill-neutral-300 stroke-neutral-600 dark:fill-neutral-500 dark:stroke-neutral-700"
         d="m113.5 315.5 61.5-18 30.5 12-68 23.5-24-17.5Z"
       />
       <path
-        fill="#262626"
-        stroke="#404040"
+        className="fill-neutral-300 stroke-neutral-600 dark:fill-neutral-500 dark:stroke-neutral-700"
         d="M156.25 316v-29l11-2.5v28.054l-11 3.446ZM148.5 312l7.5 4v-29l-7 1.5-.5 23.5Z"
       />
     </svg>
@@ -257,7 +253,7 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-                <div className="col-span-5 lg:col-span-3 aspect-[688/311]">
+                <div className="col-span-5 lg:col-span-3 aspect-[1.61/1]">
                   <div className="relative w-full h-full">
                     <Image
                       src="/create.webp"
@@ -283,7 +279,7 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-                <div className="col-span-5 lg:col-span-3 aspect-[687/390]">
+                <div className="col-span-5 lg:col-span-3 aspect-[1.61/1]">
                   <div className="relative w-full h-full">
                     <Image
                       src="/select.webp"
@@ -311,7 +307,7 @@ export default function Home() {
                 </div>
                 <div className="relative col-span-5 lg:col-span-3 h-full flex flex-col gap-4">
                   <div className="flex flex-row items-baseline">
-                    <div className="relative w-3/5 aspect-[349/245]">
+                    <div className="relative w-3/5 aspect-[1.61/1]">
                       <Image
                         src="/generate.webp"
                         alt="Generate Plan"
@@ -325,7 +321,7 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="flex flex-row justify-end w-full">
-                    <div className="relative w-5/6 aspect-[349/245]">
+                    <div className="relative w-5/6 aspect-[1.61/1]">
                       <Image
                         src="/timetable.webp"
                         alt="Generated Timetable"
@@ -349,7 +345,7 @@ export default function Home() {
               </p>
             </header>
             <div className="w-full flex flex-col max-w-xl md:max-w-2xl lg:max-w-3xl gap-8">
-              <div className="relative w-full aspect-[583/306]">
+              <div className="relative w-full aspect-[1.61/1]">
                 <Image
                   src="/filter.webp"
                   alt="Filter"
