@@ -421,7 +421,7 @@ export function CreateGeneratorDialog({ close }: { close: () => void }) {
                         field.onChange("empty");
                       }}
                     >
-                      <h3 className="font-medium">Empty</h3>
+                      <h3 className="font-medium">Custom</h3>
                       <p className="text-left text-muted-foreground wrap-break-word whitespace-normal">
                         An empty generator that will not have any constraints.
                       </p>
