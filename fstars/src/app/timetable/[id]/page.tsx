@@ -25,7 +25,7 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
             <ScrollBar orientation="horizontal" />
             <TimetableViewWeekSelector className="absolute bottom-4 md:bottom-8 lg:bottom-12 left-1/2 -translate-x-1/2" />
           </ScrollArea>
-          <ScrollArea className="w-md md:w-lg lg:w-xl flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)]">
+          <ScrollArea className="hidden w-md md:w-lg lg:w-xl lg:flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)]">
             <div className="flex flex-col gap-2 md:gap-4 items-center py-8 pl-2 pr-4 md:pl-4 md:pr-8">
               <TimetableCoursesPanel id={id} />
               <TimetableGeneratorPanel timetableId={id} />
