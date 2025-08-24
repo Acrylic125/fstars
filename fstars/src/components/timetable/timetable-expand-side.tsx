@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "../ui/button";
-import { ChevronRight, Hamburger } from "lucide-react";
+import { ChevronLeft, ChevronRight, Hamburger } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function TimetableExpandSideButton({
@@ -14,17 +14,17 @@ export function TimetableExpandSideButton({
 
   return (
     <Button
-      variant="outline"
+      variant="secondary"
       size="icon"
       onClick={() => setIsExpanded(!isExpanded)}
       className={cn(
         {
-          "expand-side-button": isExpanded,
+          "expand-side-button-hidden": !isExpanded,
         },
         className
       )}
     >
-      <Hamburger />
+      {isExpanded ? <ChevronRight /> : <ChevronLeft />}
     </Button>
   );
 }
