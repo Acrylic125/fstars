@@ -112,6 +112,7 @@ export function TimetableHeader({ id }: { id: string }) {
       </div>
 
       <div className="flex flex-row gap-2">
+        <Button variant="secondary">Preview</Button>
         <div className="relative flex flex-row gap-2">
           <Indicator controls={controls} className="w-48 z-10" />
           <Button variant="default" onClick={exportTimetableFile}>

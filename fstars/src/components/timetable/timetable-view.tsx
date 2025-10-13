@@ -62,7 +62,7 @@ export function TimetableView({ id }: { id: string }) {
 
       return {
         acadYear: timetable.acadYear,
-        courses: plan?.courses ?? null,
+      courses: plan?.courses ?? null,
       };
     })
   );
@@ -104,7 +104,6 @@ export function TimetableView({ id }: { id: string }) {
       colorScheme
     );
   }, [timetableStore?.courses, courseCodes, colorScheme]);
-  console.log(colorMap);
 
   const events = useMemo(() => {
     if (!timetableStore?.courses) {
@@ -129,15 +128,6 @@ export function TimetableView({ id }: { id: string }) {
           console.error("Color not found for course", c.course.code);
           continue;
         }
-
-        // const i = courseCodes.findIndex(
-        //   (cc) => cc.courseCode === c.course.code
-        // );
-
-        // const color = colorByIndex(i, {
-        //   max: courseCodes.length,
-        //   scheme: colorScheme,
-        // });
 
         const entry = {
           type: c.type,
