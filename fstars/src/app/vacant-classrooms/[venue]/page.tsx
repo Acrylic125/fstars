@@ -15,20 +15,24 @@ import {
 } from "@/db/schema";
 import { db } from "@/db";
 import { eq, sql } from "drizzle-orm";
+import { DateTime, WeekdayNumbers } from "luxon";
 
-function getEventDate(dayOffset: number, timeInMinutes: number) {
-  // Start of the week is Monday
-  const now = new Date();
-  const startOfWeek = new Date(now);
-  //   startOfWeek.setDate(dayOffset);
-  startOfWeek.setDate(now.getDate() - now.getDay() + dayOffset + 1);
-  startOfWeek.setHours(
-    Math.floor(timeInMinutes / 60),
-    timeInMinutes % 60,
-    0,
-    0
-  );
-  return startOfWeek;
+function getEventDate(
+  dayOffset: number,
+  timeInMinutes: number,
+  nowDateTime: DateTime
+) {
+  // Duplicate nowDateTime
+  const now = DateTime.fromJSDate(nowDateTime.toJSDate()).set({
+    weekday: (dayOffset + 1) as WeekdayNumbers,
+    hour: Math.floor(timeInMinutes / 60) + nowDateTime.offset / 60,
+    minute: timeInMinutes % 60,
+  });
+  console.log(now.toISO());
+  // now.set({ weekday: dayOffset + 1 });
+  // now.set({ hour: Math.floor(timeInMinutes / 60) });
+  // now.set({ minute: timeInMinutes % 60 });
+  return now;
 }
 
 export default async function VacentClassroomPage(props: {
@@ -62,18 +66,20 @@ export default async function VacentClassroomPage(props: {
     }
   >();
 
+  const nowDateTime = DateTime.now().setZone("Asia/Singapore");
+
   for (const event of events) {
-    const from = getEventDate(event.day, event.from);
-    const to = getEventDate(event.day, event.to);
+    const from = getEventDate(event.day, event.from, nowDateTime);
+    const to = getEventDate(event.day, event.to, nowDateTime);
     const key =
-      `${event.for} ${event.day}-${from.getHours()}:${from.getMinutes()}-${to.getHours()}:${to.getMinutes()}` as const;
+      `${event.for} ${event.day}-${from.hour}:${from.minute}-${to.hour}:${to.minute}` as const;
     if (mappings.has(key)) {
       continue;
     }
     mappings.set(key, {
       day: event.day.toString(),
-      from,
-      to,
+      from: from.toJSDate(),
+      to: to.toJSDate(),
       for: event.for,
     });
   }
