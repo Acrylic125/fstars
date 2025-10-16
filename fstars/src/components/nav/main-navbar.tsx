@@ -33,7 +33,7 @@ export function MainNavbar() {
               <Link href="/timetable">Timetable</Link>
             </Button>
             <Button variant="ghost" asChild className="h-full px-2">
-              <Link href="/timetable">Vacant Classrooms</Link>
+              <Link href="/vacant-classrooms">Vacant Classrooms</Link>
             </Button>
           </div>
         </div>
