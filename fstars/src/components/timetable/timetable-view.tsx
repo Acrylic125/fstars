@@ -104,7 +104,6 @@ export function TimetableView({ id }: { id: string }) {
       colorScheme
     );
   }, [timetableStore?.courses, courseCodes, colorScheme]);
-  console.log(colorMap);
 
   const events = useMemo(() => {
     if (!timetableStore?.courses) {
