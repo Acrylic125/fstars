@@ -3,11 +3,23 @@
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import "../timetable/fullcalendar.css";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { cn } from "@/lib/utils";
+import { ArrowDownRightIcon } from "lucide-react";
+
+export type VacantClassroomEvent = {
+  for: { code: string; name: string };
+  from: string;
+  to: string;
+  fromTime: { hour: number; minute: number };
+  toTime: { hour: number; minute: number };
+  weeks: number[];
+};
 
 export function VacantClassroomCalendar({
   events,
 }: {
-  events: { for: string; from: string; to: string }[];
+  events: VacantClassroomEvent[];
 }) {
   return (
     <FullCalendar
@@ -18,14 +30,50 @@ export function VacantClassroomCalendar({
       timeZone="Asia/Singapore"
       events={[
         ...events.map((event) => ({
-          title: event.for,
+          title: `${event.for.code}: ${event.for.name}`,
           start: event.from,
           end: event.to,
+          extendedProps: event,
           backgroundColor: "#6e11b0",
           borderColor: "#6e11b0",
-          textColor: "#ffffff",
         })),
       ]}
+      eventContent={(arg) => {
+        // TODO: Annoying type casting.
+        const event = arg.event.extendedProps as VacantClassroomEvent;
+        const timeStr = `${event.fromTime.hour}:${event.fromTime.minute.toString().padStart(2, "0")} - ${event.toTime.hour}:${event.toTime.minute.toString().padStart(2, "0")}`;
+
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <div
+                className={cn(
+                  "relative flex flex-col justify-between w-full h-full px-1.5 py-0.5 rounded-xs cursor-pointer bg-purple-800 border border-purple-700 text-white"
+                )}
+              >
+                <h3 className="text-sm font-bold text-white">
+                  {event.for.code}: {event.for.name}
+                </h3>
+                <div className="text-xs text-white">{timeStr}</div>
+                <div
+                  className={cn(
+                    "absolute bottom-0 right-0 pb-1 pr-1 text-neutral-900"
+                  )}
+                >
+                  <ArrowDownRightIcon className="size-4 text-white" />
+                </div>
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 flex flex-col gap-2">
+              <h3 className="text-sm font-bold break-words">
+                {event.for.code}: {event.for.name}
+              </h3>
+              <div className="text-sm">Wk {event.weeks.join(", ")}</div>
+              <div className="text-xs text-neutral-500">{timeStr}</div>
+            </PopoverContent>
+          </Popover>
+        );
+      }}
       allDaySlot={false}
       nowIndicator={true}
       height="100%"

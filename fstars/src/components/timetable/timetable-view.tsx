@@ -158,7 +158,7 @@ export function TimetableView({ id }: { id: string }) {
           title: c.course.code,
           start: getEventDate(c.day + 1, c.from.hour, c.from.minute),
           end: getEventDate(c.day + 1, c.to.hour, c.to.minute),
-          timeStr: `${c.from.hour}:${c.from.minute} - ${c.to.hour}:${c.to.minute}`,
+          timeStr: `${c.from.hour.toString().padStart(2, "0")}:${c.from.minute.toString().padStart(2, "0")} - ${c.to.hour.toString().padStart(2, "0")}:${c.to.minute.toString().padStart(2, "0")}`,
           backgroundColor: color.backgroundColor,
           borderColor: color.backgroundColor,
           textColor: color.color,
@@ -358,6 +358,7 @@ export function TimetableView({ id }: { id: string }) {
       slotMaxTime="23:59:00"
       dayHeaderFormat={{ weekday: "short" }}
       slotLabelFormat={{ hour: "numeric", minute: "2-digit", hour12: false }}
+      eventTimeFormat={{ hour: "numeric", minute: "2-digit", hour12: false }}
       // contentHeight="auto"
     />
   );

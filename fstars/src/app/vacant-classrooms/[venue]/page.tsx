@@ -1,13 +1,9 @@
-import {
-  TimetableCoursesPanel,
-  TimetableHeader,
-} from "@/components/timetable/timetable-course-panel";
-import { TimetableModal } from "@/components/timetable/timetable-modal";
-import { TimetableGeneratorPanel } from "@/components/timetable/timetable-generator-panel";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { TimetableViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
 import { MainNavbar } from "@/components/nav/main-navbar";
-import { VacantClassroomCalendar } from "@/components/vacant-classrooms/vacant-classroom-calendar";
+import {
+  VacantClassroomCalendar,
+  VacantClassroomEvent,
+} from "@/components/vacant-classrooms/vacant-classroom-calendar";
 import {
   courseIndexClassesTable,
   courseIndexTable,
@@ -41,7 +37,11 @@ export default async function VacentClassroomPage(props: {
 
   const events = await db
     .select({
-      for: coursesTable.name,
+      for: {
+        code: coursesTable.code,
+        name: coursesTable.name,
+      },
+      weeks: courseIndexClassesTable.weeks,
       day: courseIndexClassesTable.day,
       from: sql<number>`${courseIndexClassesTable.timeFromHour} * 60 + ${courseIndexClassesTable.timeFromMinute}`,
       to: sql<number>`${courseIndexClassesTable.timeToHour} * 60 + ${courseIndexClassesTable.timeToMinute}`,
@@ -54,15 +54,7 @@ export default async function VacentClassroomPage(props: {
     .innerJoin(coursesTable, eq(courseIndexTable.courseId, coursesTable.id))
     .where(eq(courseIndexClassesTable.venue, venue));
 
-  const mappings = new Map<
-    string,
-    {
-      for: string;
-      day: string;
-      from: string;
-      to: string;
-    }
-  >();
+  const mappings = new Map<string, VacantClassroomEvent>();
 
   // Get current week's Monday in Singapore timezone
   const nowDateTime = DateTime.now().setZone("Asia/Singapore");
@@ -83,10 +75,15 @@ export default async function VacentClassroomPage(props: {
       continue;
     }
     mappings.set(key, {
-      day: event.day.toString(),
+      weeks: event.weeks,
+      fromTime: { hour: Math.floor(event.from / 60), minute: event.from % 60 },
+      toTime: { hour: Math.floor(event.to / 60), minute: event.to % 60 },
       from: fromISO,
       to: toISO,
-      for: event.for,
+      for: {
+        code: event.for.code,
+        name: event.for.name,
+      },
     });
   }
 
