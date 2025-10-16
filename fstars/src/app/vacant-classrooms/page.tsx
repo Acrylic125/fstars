@@ -4,17 +4,15 @@ import { db } from "@/db";
 import { courseIndexClassesTable } from "@/db/schema";
 import { and, asc, eq, gte, inArray, lte, not, or, sql } from "drizzle-orm";
 import Link from "next/link";
+import { DateTime } from "luxon";
 
 export default async function VacentClassroomsPage() {
   // Current time and day
-  const currentTime = new Date();
-  // First day of the week is Monday (0)
-  const currentDay = (currentTime.getDay() + 6) % 7;
-  const currentHour = currentTime.getHours();
-  const currentMinute = currentTime.getMinutes();
-  //   const currentDay = 1;
-  //   const currentHour = 10;
-  //   const currentMinute = 0;
+  // Set to UTC+8
+  const currentDateTime = DateTime.now().setZone("Asia/Singapore");
+  const currentDay = currentDateTime.weekday - 1;
+  const currentHour = currentDateTime.hour;
+  const currentMinute = currentDateTime.minute;
 
   const allVenues = await db
     .selectDistinctOn([courseIndexClassesTable.venue], {

@@ -38,6 +38,7 @@
     "drizzle-orm": "^0.44.2",
     "fuse.js": "^7.1.0",
     "lucide-react": "^0.525.0",
+    "luxon": "^3.7.2",
     "nanoid": "^5.1.5",
     "next": "15.3.5",
     "postgres": "^3.4.7",
@@ -56,6 +57,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@tanstack/eslint-plugin-query": "^5.81.2",
+    "@types/luxon": "^3.7.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

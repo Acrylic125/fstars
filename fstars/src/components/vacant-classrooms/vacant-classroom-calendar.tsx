@@ -15,6 +15,7 @@ export function VacantClassroomCalendar({
       initialView="timeGridWeek"
       headerToolbar={false}
       expandRows={true}
+      timeZone="Asia/Singapore"
       events={[
         ...events.map((event) => ({
           title: event.for,
