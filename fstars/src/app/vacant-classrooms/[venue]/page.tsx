@@ -88,6 +88,7 @@ export default async function VacentClassroomPage(props: {
           <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
             <VacantClassroomCalendar events={eventsWithDates} />
           </div>
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
     </main>
