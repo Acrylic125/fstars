@@ -6,6 +6,7 @@ import "../timetable/fullcalendar.css";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import { ArrowDownRightIcon } from "lucide-react";
+import { formatTime } from "@/lib/utils";
 
 export type VacantClassroomEvent = {
   for: { code: string; name: string };
@@ -41,7 +42,7 @@ export function VacantClassroomCalendar({
       eventContent={(arg) => {
         // TODO: Annoying type casting.
         const event = arg.event.extendedProps as VacantClassroomEvent;
-        const timeStr = `${event.fromTime.hour}:${event.fromTime.minute.toString().padStart(2, "0")} - ${event.toTime.hour}:${event.toTime.minute.toString().padStart(2, "0")}`;
+        const timeStr = `${formatTime(event.fromTime.hour, event.fromTime.minute)} - ${formatTime(event.toTime.hour, event.toTime.minute)}`;
 
         return (
           <Popover>
@@ -52,7 +53,7 @@ export function VacantClassroomCalendar({
                 )}
               >
                 <h3 className="text-sm font-bold text-white">
-                  {event.for.code}: {event.for.name}
+                  {event.for.code} {event.for.name}
                 </h3>
                 <div className="text-xs text-white">{timeStr}</div>
                 <div
@@ -66,7 +67,7 @@ export function VacantClassroomCalendar({
             </PopoverTrigger>
             <PopoverContent className="w-80 flex flex-col gap-2">
               <h3 className="text-sm font-bold break-words">
-                {event.for.code}: {event.for.name}
+                {event.for.code} {event.for.name}
               </h3>
               <div className="text-sm">Wk {event.weeks.join(", ")}</div>
               <div className="text-xs text-neutral-500">{timeStr}</div>

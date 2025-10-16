@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { isIntersectingDate } from "@/generator/utils";
-import { cn } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
 import { AlertTriangleIcon, ArrowDownRightIcon } from "lucide-react";
 import { useTimetableViewWeekSelector } from "./timetable-view-week-selector";
 
@@ -158,7 +158,7 @@ export function TimetableView({ id }: { id: string }) {
           title: c.course.code,
           start: getEventDate(c.day + 1, c.from.hour, c.from.minute),
           end: getEventDate(c.day + 1, c.to.hour, c.to.minute),
-          timeStr: `${c.from.hour.toString().padStart(2, "0")}:${c.from.minute.toString().padStart(2, "0")} - ${c.to.hour.toString().padStart(2, "0")}:${c.to.minute.toString().padStart(2, "0")}`,
+          timeStr: `${formatTime(c.from.hour, c.from.minute)} - ${formatTime(c.to.hour, c.to.minute)}`,
           backgroundColor: color.backgroundColor,
           borderColor: color.backgroundColor,
           textColor: color.color,

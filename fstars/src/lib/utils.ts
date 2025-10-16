@@ -67,3 +67,7 @@ export function deepCompare(obj1: any, obj2: any) {
   // If all checks passed, the objects are deeply equal
   return true;
 }
+
+export function formatTime(hour: number, minute: number): string {
+  return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+}
