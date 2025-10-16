@@ -19,7 +19,7 @@ export function MainNavbar() {
   return (
     <nav className="flex flex-col items-center border-b border-border">
       <div className="w-full h-14 md:h-16 max-w-ui flex flex-row items-center justify-between py-1.5 px-4 md:px-8">
-        <div className="flex flex-row items-center h-full">
+        <div className="flex flex-row items-center h-full gap-4">
           <Link href="/" className="h-full flex flex-row items-center gap-4">
             <div className="relative h-full aspect-square">
               <Favicon />
@@ -28,9 +28,14 @@ export function MainNavbar() {
               <FStarsLogo />
             </div>
           </Link>
-          <Button variant="ghost" asChild className="h-full">
-            <Link href="/timetable">Timetable</Link>
-          </Button>
+          <div className="flex flex-row items-center">
+            <Button variant="ghost" asChild className="h-full px-2">
+              <Link href="/timetable">Timetable</Link>
+            </Button>
+            <Button variant="ghost" asChild className="h-full px-2">
+              <Link href="/timetable">Vacant Classrooms</Link>
+            </Button>
+          </div>
         </div>
         <div className="flex flex-row items-center gap-2">
           <Button
