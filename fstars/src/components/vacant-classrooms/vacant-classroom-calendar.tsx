@@ -7,7 +7,7 @@ import "../timetable/fullcalendar.css";
 export function VacantClassroomCalendar({
   events,
 }: {
-  events: { for: string; from: Date; to: Date }[];
+  events: { for: string; from: string; to: string }[];
 }) {
   return (
     <FullCalendar
@@ -27,13 +27,13 @@ export function VacantClassroomCalendar({
         })),
       ]}
       allDaySlot={false}
-      nowIndicator={false}
-      now={undefined}
+      nowIndicator={true}
       height="100%"
       slotMinTime="08:00:00"
       slotMaxTime="23:59:00"
       dayHeaderFormat={{ weekday: "short" }}
       slotLabelFormat={{ hour: "numeric", minute: "2-digit", hour12: false }}
+      eventTimeFormat={{ hour: "numeric", minute: "2-digit", hour12: false }}
     />
   );
 }

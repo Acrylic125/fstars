@@ -22,17 +22,15 @@ function getEventDate(
   timeInMinutes: number,
   nowDateTime: DateTime
 ) {
-  // Duplicate nowDateTime
-  const now = DateTime.fromJSDate(nowDateTime.toJSDate()).set({
+  // Create a new DateTime in the same timezone as nowDateTime
+  const eventDate = nowDateTime.set({
     weekday: (dayOffset + 1) as WeekdayNumbers,
-    hour: Math.floor(timeInMinutes / 60) + nowDateTime.offset / 60,
+    hour: Math.floor(timeInMinutes / 60),
     minute: timeInMinutes % 60,
+    second: 0,
+    millisecond: 0,
   });
-  console.log(now.toISO());
-  // now.set({ weekday: dayOffset + 1 });
-  // now.set({ hour: Math.floor(timeInMinutes / 60) });
-  // now.set({ minute: timeInMinutes % 60 });
-  return now;
+  return eventDate;
 }
 
 export default async function VacentClassroomPage(props: {
@@ -61,25 +59,33 @@ export default async function VacentClassroomPage(props: {
     {
       for: string;
       day: string;
-      from: Date;
-      to: Date;
+      from: string;
+      to: string;
     }
   >();
 
+  // Get current week's Monday in Singapore timezone
   const nowDateTime = DateTime.now().setZone("Asia/Singapore");
+  const startOfWeek = nowDateTime.startOf("week");
 
   for (const event of events) {
-    const from = getEventDate(event.day, event.from, nowDateTime);
-    const to = getEventDate(event.day, event.to, nowDateTime);
+    const from = getEventDate(event.day, event.from, startOfWeek);
+    const to = getEventDate(event.day, event.to, startOfWeek);
     const key =
       `${event.for} ${event.day}-${from.hour}:${from.minute}-${to.hour}:${to.minute}` as const;
     if (mappings.has(key)) {
       continue;
     }
+    const fromISO = from.toISO();
+    const toISO = to.toISO();
+    if (!fromISO || !toISO) {
+      console.error("Failed to convert to ISO", from, to);
+      continue;
+    }
     mappings.set(key, {
       day: event.day.toString(),
-      from: from.toJSDate(),
-      to: to.toJSDate(),
+      from: fromISO,
+      to: toISO,
       for: event.for,
     });
   }
