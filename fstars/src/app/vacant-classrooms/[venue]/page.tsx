@@ -17,16 +17,18 @@ import { db } from "@/db";
 import { eq, sql } from "drizzle-orm";
 
 function getEventDate(dayOffset: number, timeInMinutes: number) {
+  // Start of the week is Monday
   const now = new Date();
   const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay());
-  const date = new Date(startOfWeek);
-  date.setDate(date.getDate() + dayOffset);
-
-  const hours = Math.floor(timeInMinutes / 60);
-  const minutes = timeInMinutes % 60;
-  date.setHours(hours, minutes, 0, 0);
-  return date;
+  //   startOfWeek.setDate(dayOffset);
+  startOfWeek.setDate(now.getDate() - now.getDay() + dayOffset + 1);
+  startOfWeek.setHours(
+    Math.floor(timeInMinutes / 60),
+    timeInMinutes % 60,
+    0,
+    0
+  );
+  return startOfWeek;
 }
 
 export default async function VacentClassroomPage(props: {
@@ -50,14 +52,33 @@ export default async function VacentClassroomPage(props: {
     .innerJoin(coursesTable, eq(courseIndexTable.courseId, coursesTable.id))
     .where(eq(courseIndexClassesTable.venue, venue));
 
-  const eventsWithDates = events.map((event) => ({
-    ...event,
-    from: getEventDate(event.day, event.from),
-    to: getEventDate(event.day, event.to),
-  }));
+  const mappings = new Map<
+    string,
+    {
+      for: string;
+      day: string;
+      from: Date;
+      to: Date;
+    }
+  >();
 
-  console.log(venue);
-  console.log(eventsWithDates);
+  for (const event of events) {
+    const from = getEventDate(event.day, event.from);
+    const to = getEventDate(event.day, event.to);
+    const key =
+      `${event.for} ${event.day}-${from.getHours()}:${from.getMinutes()}-${to.getHours()}:${to.getMinutes()}` as const;
+    if (mappings.has(key)) {
+      continue;
+    }
+    mappings.set(key, {
+      day: event.day.toString(),
+      from,
+      to,
+      for: event.for,
+    });
+  }
+
+  const eventsWithDates = Array.from(mappings.values());
 
   return (
     <main className="flex flex-col w-full">

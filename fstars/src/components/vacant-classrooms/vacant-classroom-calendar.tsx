@@ -20,9 +20,9 @@ export function VacantClassroomCalendar({
           title: event.for,
           start: event.from,
           end: event.to,
-          backgroundColor: "bg-green-500",
-          borderColor: "bg-green-500",
-          textColor: "text-white",
+          backgroundColor: "#6e11b0",
+          borderColor: "#6e11b0",
+          textColor: "#ffffff",
         })),
       ]}
       allDaySlot={false}
