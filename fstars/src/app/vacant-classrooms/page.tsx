@@ -14,12 +14,14 @@ export default async function VacentClassroomsPage() {
   const currentHour = currentDateTime.hour;
   const currentMinute = currentDateTime.minute;
 
+  const ignoreVenues = ["ONLINE", ""];
+
   const allVenues = await db
     .selectDistinctOn([courseIndexClassesTable.venue], {
       venue: courseIndexClassesTable.venue,
     })
     .from(courseIndexClassesTable)
-    .where(and(not(eq(courseIndexClassesTable.venue, "ONLINE"))));
+    .where(and(not(inArray(courseIndexClassesTable.venue, ignoreVenues))));
 
   const classroomsInUseNow = await db
     .selectDistinctOn([courseIndexClassesTable.venue], {
@@ -28,7 +30,7 @@ export default async function VacentClassroomsPage() {
     .from(courseIndexClassesTable)
     .where(
       and(
-        not(eq(courseIndexClassesTable.venue, "ONLINE")),
+        not(inArray(courseIndexClassesTable.venue, ignoreVenues)),
         // Current day and time
         eq(courseIndexClassesTable.day, currentDay),
         // Current time must be between the start and end time of the class
