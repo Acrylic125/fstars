@@ -27,6 +27,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@t3-oss/env-core": "^0.13.8",
     "@tanstack/react-query": "^5.83.0",
+    "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
     "@trpc/client": "^11.4.3",
     "@trpc/react-query": "^11.4.3",

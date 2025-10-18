@@ -5,12 +5,12 @@ import { courseIndexClassesTable } from "@/db/schema";
 import { and, asc, eq, gte, inArray, lte, not, or, sql } from "drizzle-orm";
 import Link from "next/link";
 import { DateTime } from "luxon";
+import { formatTime } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { VacantTable } from "@/components/vacant-classrooms/vacant-table";
 
 export default async function VacentClassroomsPage() {
-  // Current time and day
-  // Set to UTC+8
   const currentDateTime = DateTime.now().setZone("Asia/Singapore");
-  // const currentDateTime = DateTime.now().setZone("UTC-8");
 
   const currentDay = currentDateTime.weekday - 1;
   const currentHour = currentDateTime.hour;
@@ -50,9 +50,8 @@ export default async function VacentClassroomsPage() {
       )
     );
 
-  const vacantClassrooms = allVenues.filter(
-    (venue) =>
-      !classroomsInUseNow.some((classroom) => classroom.venue === venue.venue)
+  const classroomInUseSet = new Set(
+    classroomsInUseNow.map((classroom) => classroom.venue)
   );
 
   // Get next time slot for each classroom
@@ -87,10 +86,7 @@ export default async function VacentClassroomsPage() {
   for (const nextTimeSlot of nextTimeSlots) {
     const hours = Math.floor(nextTimeSlot.time / 60);
     const minutes = nextTimeSlot.time % 60;
-    timingMap.set(
-      nextTimeSlot.venue,
-      `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
-    );
+    timingMap.set(nextTimeSlot.venue, formatTime(hours, minutes));
   }
 
   return (
@@ -104,23 +100,55 @@ export default async function VacentClassroomsPage() {
               <p className="text-muted-foreground">
                 As of {currentDateTime.toFormat("yyyy-MM-dd HH:mm:ss")}
               </p>
-              <p className="text-muted-foreground">
-                {currentDay} {currentHour}:{currentMinute}{" "}
-                {currentDateTime.zoneName} {DateTime.now().zoneName}
-              </p>
             </div>
-            <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {vacantClassrooms.map((vacantClassroom) => (
-                <Link
-                  href={`/vacant-classrooms/${encodeURIComponent(vacantClassroom.venue)}`}
-                  key={vacantClassroom.venue}
-                  className="w-full"
-                >
-                  {vacantClassroom.venue} -{" "}
-                  {timingMap.get(vacantClassroom.venue) ?? "No more class"}
-                </Link>
-              ))}
+            <div className="w-full">
+              <VacantTable
+                data={allVenues.map((venue) => {
+                  const status = classroomInUseSet.has(venue.venue)
+                    ? "in use"
+                    : "vacant";
+                  let freeUntil = "";
+                  if (status === "vacant") {
+                    freeUntil = timingMap.get(venue.venue) ?? "No more class";
+                  }
+                  return {
+                    venue: venue.venue,
+                    status: status,
+                    freeUntil: freeUntil,
+                  };
+                })}
+              />
             </div>
+            {/* <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {allVenues.map((venue) => {
+                if (classroomInUseSet.has(venue.venue)) {
+                  return (
+                    <Link
+                      href={`/vacant-classrooms/${encodeURIComponent(venue.venue)}`}
+                      key={venue.venue}
+                      className="w-full bg-card border border-border rounded-md p-4"
+                    >
+                      <div className="flex flex-row items-center gap-2">
+                        {venue.venue}{" "}
+                        <Badge variant="destructive">In use</Badge>
+                      </div>
+                    </Link>
+                  );
+                }
+                return (
+                  <Link
+                    href={`/vacant-classrooms/${encodeURIComponent(venue.venue)}`}
+                    key={venue.venue}
+                    className="w-full bg-card border border-border rounded-md p-4"
+                  >
+                    <div className="flex flex-row items-center gap-2">
+                      {venue.venue}
+                      <Badge variant="default">Vacant</Badge>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div> */}
           </div>
         </div>
       </ScrollArea>
