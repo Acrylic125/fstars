@@ -105,7 +105,8 @@ export default async function VacentClassroomsPage() {
                 As of {currentDateTime.toFormat("yyyy-MM-dd HH:mm:ss")}
               </p>
               <p className="text-muted-foreground">
-                {currentDay} {currentHour}:{currentMinute}
+                {currentDay} {currentHour}:{currentMinute}{" "}
+                {currentDateTime.zoneName} {DateTime.now().zoneName}
               </p>
             </div>
             <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
