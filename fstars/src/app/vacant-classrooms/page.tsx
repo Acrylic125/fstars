@@ -15,7 +15,6 @@ import {
   inArray,
   lte,
   not,
-  or,
   sql,
 } from "drizzle-orm";
 import { DateTime } from "luxon";
@@ -23,22 +22,24 @@ import { formatTime } from "@/lib/utils";
 import { VacantTable } from "@/components/vacant-classrooms/vacant-table";
 import { getAcadWeek } from "@/lib/acad";
 import { Badge } from "@/components/ui/badge";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
-export default async function VacentClassroomsPage() {
-  const currentDateTime = DateTime.now().setZone("Asia/Singapore");
-  // const currentDateTime = DateTime.now().setZone("Asia/Singapore").set({
-  //   day: 14,
-  //   hour: 12,
-  //   minute: 30,
-  // });
-  const acadWeek = getAcadWeek(currentDateTime);
-
+async function TableLoader({
+  currentDateTime,
+  acadWeek,
+}: {
+  currentDateTime: DateTime;
+  acadWeek: {
+    acadYear: string;
+    week: number;
+  } | null;
+}) {
   const currentDay = currentDateTime.weekday - 1;
   const currentHour = currentDateTime.hour;
   const currentMinute = currentDateTime.minute;
-
   const ignoreVenues = ["ONLINE", ""];
 
   const [allVenues, classroomsInUseNow] = await Promise.all([
@@ -149,6 +150,42 @@ export default async function VacentClassroomsPage() {
   }
 
   return (
+    <VacantTable
+      data={allVenues.map((venue) => {
+        const classroomsInUse = classroomInUseMap.get(venue.venue);
+        const status = !!classroomsInUse ? "in use" : "vacant";
+        let freeUntil = "";
+        if (status === "vacant") {
+          freeUntil = timingMap.get(venue.venue) ?? "No more class";
+        } else if (classroomsInUse) {
+          const usedTill = classroomsInUse.reduce((acc, classroom) => {
+            return Math.max(
+              acc,
+              classroom.timeToHour * 60 + classroom.timeToMinute
+            );
+          }, 0);
+          freeUntil = `Used until ${formatTime(Math.floor(usedTill / 60), usedTill % 60)}`;
+        }
+        return {
+          venue: venue.venue,
+          status: status,
+          freeUntil: freeUntil,
+        };
+      })}
+    />
+  );
+}
+
+export default async function VacentClassroomsPage() {
+  const currentDateTime = DateTime.now().setZone("Asia/Singapore");
+  // const currentDateTime = DateTime.now().setZone("Asia/Singapore").set({
+  //   day: 14,
+  //   hour: 12,
+  //   minute: 30,
+  // });
+  const acadWeek = getAcadWeek(currentDateTime);
+
+  return (
     <main className="flex flex-col w-full">
       <MainNavbar />
       <ScrollArea className="relative w-full flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] overflow-x-auto">
@@ -168,32 +205,12 @@ export default async function VacentClassroomsPage() {
               </div>
             </div>
             <div className="w-full">
-              <VacantTable
-                data={allVenues.map((venue) => {
-                  const classroomsInUse = classroomInUseMap.get(venue.venue);
-                  const status = !!classroomsInUse ? "in use" : "vacant";
-                  let freeUntil = "";
-                  if (status === "vacant") {
-                    freeUntil = timingMap.get(venue.venue) ?? "No more class";
-                  } else if (classroomsInUse) {
-                    const usedTill = classroomsInUse.reduce(
-                      (acc, classroom) => {
-                        return Math.max(
-                          acc,
-                          classroom.timeToHour * 60 + classroom.timeToMinute
-                        );
-                      },
-                      0
-                    );
-                    freeUntil = `Used until ${formatTime(Math.floor(usedTill / 60), usedTill % 60)}`;
-                  }
-                  return {
-                    venue: venue.venue,
-                    status: status,
-                    freeUntil: freeUntil,
-                  };
-                })}
-              />
+              <Suspense fallback={<Skeleton className="w-full aspect-video" />}>
+                <TableLoader
+                  currentDateTime={currentDateTime}
+                  acadWeek={acadWeek}
+                />
+              </Suspense>
             </div>
           </div>
         </div>
