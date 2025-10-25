@@ -27,11 +27,12 @@ import { Badge } from "@/components/ui/badge";
 export const revalidate = 60;
 
 export default async function VacentClassroomsPage() {
-  const currentDateTime = DateTime.now().setZone("Asia/Singapore").set({
-    day: 14,
-    hour: 12,
-    minute: 30,
-  });
+  const currentDateTime = DateTime.now().setZone("Asia/Singapore");
+  // const currentDateTime = DateTime.now().setZone("Asia/Singapore").set({
+  //   day: 14,
+  //   hour: 12,
+  //   minute: 30,
+  // });
   const acadWeek = getAcadWeek(currentDateTime);
 
   const currentDay = currentDateTime.weekday - 1;
