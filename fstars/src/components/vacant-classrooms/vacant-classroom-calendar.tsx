@@ -9,7 +9,7 @@ import { ArrowDownRightIcon } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 
 export type VacantClassroomEvent = {
-  for: { code: string; name: string };
+  for: { code: string; name: string; index: string };
   from: string;
   to: string;
   fromTime: { hour: number; minute: number };
@@ -70,7 +70,12 @@ export function VacantClassroomCalendar({
                 {event.for.code} {event.for.name}
               </h3>
               <div className="text-sm">Wk {event.weeks.join(", ")}</div>
-              <div className="text-xs text-neutral-500">{timeStr}</div>
+              <div className="flex flex-row justify-between items-center">
+                <div className="text-xs text-muted-foreground">{timeStr}</div>
+                <div className="text-xs text-muted-foreground">
+                  {event.for.index}
+                </div>
+              </div>
             </PopoverContent>
           </Popover>
         );
