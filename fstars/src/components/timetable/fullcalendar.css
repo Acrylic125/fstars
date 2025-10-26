@@ -67,3 +67,18 @@
 .fc-event:has(.fc-error) {
   border: 4px solid;
 }
+
+.fc .fc-timegrid-now-indicator-arrow {
+  /* position: absolute;
+  z-index: 4;
+  left: 0;
+  right: 0;
+  margin-top: -5px;
+  border-style: solid; */
+  /* border-color: #f2cb05; */
+  /* border-width: 10px 0 0; */
+  @apply border-rose-500 dark:border-rose-300 border-[5px] absolute left-0 rounded-r-sm;
+}
+.fc .fc-timegrid-now-indicator-line {
+  @apply border-rose-500 dark:border-rose-300 border-[2px] absolute -mt-[2px];
+}
