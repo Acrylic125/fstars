@@ -1,10 +1,11 @@
 import { MainNavbar } from "@/components/nav/main-navbar";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { db } from "@/db";
 import {
   courseIndexClassesTable,
   courseIndexTable,
   coursesTable,
+  venuesTable,
 } from "@/db/schema";
 import {
   and,
@@ -46,8 +47,21 @@ async function TableLoader({
     await db
       .selectDistinctOn([courseIndexClassesTable.venue], {
         venue: courseIndexClassesTable.venue,
+        info: {
+          area: venuesTable.area,
+          capacity: venuesTable.capacity,
+          location: venuesTable.location,
+          bookableByStaff: venuesTable.bookableByStaff,
+          bookableByStudentOrganizations:
+            venuesTable.bookableByStudentOrganizations,
+          remarks: venuesTable.remarks,
+        },
       })
       .from(courseIndexClassesTable)
+      .leftJoin(
+        venuesTable,
+        eq(courseIndexClassesTable.venue, venuesTable.venue)
+      )
       .where(and(not(inArray(courseIndexClassesTable.venue, ignoreVenues)))),
     (async () => {
       if (!acadWeek) {
@@ -149,6 +163,8 @@ async function TableLoader({
     timingMap.set(nextTimeSlot.venue, formatTime(hours, minutes));
   }
 
+  console.log(allVenues);
+
   return (
     <VacantTable
       data={allVenues.map((venue) => {
@@ -170,6 +186,10 @@ async function TableLoader({
           venue: venue.venue,
           status: status,
           freeUntil: freeUntil,
+          classEndTime: 0,
+          area: venue.info?.area ?? "",
+          location: venue.info?.location ?? "",
+          remarks: venue.info?.remarks ?? "",
         };
       })}
     />
@@ -214,6 +234,7 @@ export default async function VacentClassroomsPage() {
             </div>
           </div>
         </div>
+        <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </main>
   );

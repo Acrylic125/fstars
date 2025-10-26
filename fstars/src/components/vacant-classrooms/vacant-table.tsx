@@ -69,6 +69,10 @@ export type Venues = {
   venue: string;
   status: "vacant" | "in use";
   freeUntil: string;
+  classEndTime: number;
+  area: string;
+  location: string;
+  remarks: string | null;
 };
 
 export const columns: ColumnDef<Venues>[] = [
@@ -109,9 +113,36 @@ export const columns: ColumnDef<Venues>[] = [
       </div>
     ),
   },
+  {
+    accessorKey: "area",
+    header: ({ column }) => (
+      <div className="flex items-center gap-2">
+        Area
+        <SortButton column={column} />
+      </div>
+    ),
+  },
+  {
+    accessorKey: "location",
+    header: ({ column }) => (
+      <div className="flex items-center gap-2">
+        Location
+        <SortButton column={column} />
+      </div>
+    ),
+  },
+  // {
+  //   accessorKey: "remarks",
+  //   header: ({ column }) => (
+  //     <div className="flex items-center gap-2">
+  //       Remarks
+  //       <SortButton column={column} />
+  //     </div>
+  //   ),
+  // },
 ];
 
-const colSpans = [3, 2, 3];
+const colSpans = [1, 1, 1, 1, 2];
 
 export function VacantTable({ data }: { data: Venues[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -144,7 +175,7 @@ export function VacantTable({ data }: { data: Venues[] }) {
           }}
         />
       </div>
-      <div className="overflow-hidden rounded-md border">
+      <div className="min-w-6xl rounded-md border">
         <Table className="table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
