@@ -195,7 +195,7 @@ export default function Home() {
   return (
     <main>
       <MainNavbar />
-      <ScrollArea className="relative w-full flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] overflow-x-auto">
+      <ScrollArea className="relative w-full flex flex-col h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] overflow-x-auto">
         <div className="flex flex-col items-center max-w-ui mx-auto px-12 md:px-20 gap-12 md:gap-16 lg:gap-20">
           <header className="relative w-full h-[420px] md:h-[560px] lg:h-[720px] flex flex-col items-center justify-center">
             <div className="absolute top-0 w-full h-full flex flex-col">

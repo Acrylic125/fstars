@@ -188,7 +188,7 @@ export default async function VacentClassroomsPage() {
   return (
     <main className="flex flex-col w-full">
       <MainNavbar />
-      <ScrollArea className="relative w-full flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] overflow-x-auto">
+      <ScrollArea className="relative w-full flex flex-col h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] overflow-x-auto">
         <div className="w-full flex flex-col items-center">
           <div className="w-full flex flex-col items-center max-w-ui mx-auto px-4 py-8 md:px-8 gap-4">
             <div className="w-full flex flex-col gap-1">

@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <main>
       <MainNavbar />
-      <ScrollArea className="relative w-full flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] overflow-x-auto">
+      <ScrollArea className="relative w-full flex flex-col h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] overflow-x-auto">
         <div className="flex flex-col max-w-ui mx-auto px-4 py-8 md:px-8 gap-4">
           <TimetableListHeader />
 
