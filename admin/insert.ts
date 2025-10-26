@@ -4,6 +4,7 @@ import {
   Days,
   ProgramSourceSchema,
   ProgramSchema,
+  VenueListSchema,
 } from "./schema";
 import { db } from "./db";
 import {
@@ -12,6 +13,7 @@ import {
   courseIndexTable,
   coursesTable,
   programsTable,
+  venuesTable,
 } from "./db/schema";
 import path from "path";
 import fs from "fs";
@@ -28,6 +30,14 @@ async function getMetadata(dir: string) {
 async function getScrapedResults(dir: string) {
   const resultsPath = path.resolve(dir, "./out/classes.json");
   const all = ClassesSchema.parse(
+    JSON.parse(fs.readFileSync(resultsPath, "utf8"))
+  );
+  return all;
+}
+
+async function getScrapedFacilities(dir: string) {
+  const resultsPath = path.resolve(dir, "./out/venues.json");
+  const all = VenueListSchema.parse(
     JSON.parse(fs.readFileSync(resultsPath, "utf8"))
   );
   return all;
@@ -221,12 +231,21 @@ async function doInsertIndexSources(ay: string, semester: string) {
   console.log("Index sources inserted");
 }
 
+async function doInsertVenues() {
+  const all = await getScrapedFacilities(__dirname);
+  for (const { batch, end } of batchIteration(1000, all.length)) {
+    await db.insert(venuesTable).values(all.slice(batch, end));
+  }
+  console.log("Venues inserted");
+}
+
 (async () => {
   const ay = "25/26";
   const sem = "1";
   // await doProgramsInsert();
-  await doCoursesInsert(ay, sem);
-  await doCoursesIndexInsert(ay, sem);
-  await doIndexClassesInsert(ay, sem);
-  await doInsertIndexSources(ay, sem);
+  // await doCoursesInsert(ay, sem);
+  // await doCoursesIndexInsert(ay, sem);
+  // await doIndexClassesInsert(ay, sem);
+  // await doInsertIndexSources(ay, sem);
+  // await doInsertVenues();
 })();

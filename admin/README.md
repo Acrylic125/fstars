@@ -27,3 +27,8 @@ Additionally, make sure to create an `out` folder in this directory.
 **Note:** 
 - Please be respectful of NTU's dinosaur tech, don't remove any throttling.
 - You can find the compiled classes in `./out/classes.json`.
+
+## Misc
+Other links:
+- [Undergaduate Class Schedule](https://wish.wis.ntu.edu.sg/webexe/owa/aus_schedule.main)
+- [Facilities](https://wis.ntu.edu.sg/pls/webexe88/FBSDOCU.FBSLOCATN)

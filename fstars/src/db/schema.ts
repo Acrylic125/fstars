@@ -107,3 +107,14 @@ export const courseIndexClassesTable = pgTable("course_index_classes", {
   remarks: varchar({ length: 128 }).notNull(),
   weeks: integer().array().notNull(),
 });
+
+export const venuesTable = pgTable("venues", {
+  id: serial().notNull().primaryKey(),
+  venue: varchar({ length: 128 }).notNull(),
+  area: varchar({ length: 128 }).notNull(),
+  capacity: integer().notNull(),
+  location: varchar({ length: 128 }).notNull(),
+  bookableByStaff: boolean().notNull().default(false),
+  bookableByStudentOrganizations: boolean().notNull().default(false),
+  remarks: varchar({ length: 128 }),
+});
