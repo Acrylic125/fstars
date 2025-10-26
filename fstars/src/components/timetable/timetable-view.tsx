@@ -157,8 +157,8 @@ export function TimetableView({ id }: { id: string }) {
 
         const event: FCEvent & ExtendedProps = {
           title: c.course.code,
-          start: getEventDate(c.day + 1, c.from.hour, c.from.minute),
-          end: getEventDate(c.day + 1, c.to.hour, c.to.minute),
+          start: getEventDate(c.day, c.from.hour, c.from.minute),
+          end: getEventDate(c.day, c.to.hour, c.to.minute),
           timeStr: `${formatTime(c.from.hour, c.from.minute)} - ${formatTime(c.to.hour, c.to.minute)}`,
           backgroundColor: color.backgroundColor,
           borderColor: color.backgroundColor,

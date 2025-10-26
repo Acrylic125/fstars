@@ -11,7 +11,7 @@ import { useViewport } from "../use-viewport";
 import { useMemo } from "react";
 
 export type VacantClassroomEvent = {
-  for: { code: string; name: string; index: string };
+  for: { code: string; name: string; indexes: string[] };
   from: string;
   to: string;
   fromTime: { hour: number; minute: number };
@@ -87,9 +87,9 @@ export function VacantClassroomCalendar({
               <div className="text-sm">Wk {event.weeks.join(", ")}</div>
               <div className="flex flex-row justify-between items-center">
                 <div className="text-xs text-muted-foreground">{timeStr}</div>
-                <div className="text-xs text-muted-foreground">
-                  {event.for.index}
-                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {event.for.indexes.join(", ")}
               </div>
             </PopoverContent>
           </Popover>

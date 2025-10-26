@@ -20,7 +20,7 @@ function getEventDate(
 ) {
   // Create a new DateTime in the same timezone as nowDateTime
   let eventDate = nowDateTime.set({
-    weekday: (dayOffset + 1) as WeekdayNumbers,
+    weekday: dayOffset === 0 ? 7 : (dayOffset as WeekdayNumbers),
     hour: Math.floor(timeInMinutes / 60),
     minute: timeInMinutes % 60,
     second: 0,
@@ -72,8 +72,9 @@ export default async function VacentClassroomPage(props: {
     }
 
     const key =
-      `${event.for.code} ${event.for.name} ${event.for.index} ${event.day}-${from.hour}:${from.minute}-${to.hour}:${to.minute}` as const;
+      `${event.for.code} ${event.for.name} ${event.day}-${from.hour}:${from.minute}-${to.hour}:${to.minute}` as const;
     if (mappings.has(key)) {
+      mappings.get(key)?.for.indexes.push(event.for.index);
       continue;
     }
     const fromISO = from.toISO();
@@ -91,7 +92,7 @@ export default async function VacentClassroomPage(props: {
       for: {
         code: event.for.code,
         name: event.for.name,
-        index: event.for.index,
+        indexes: [event.for.index],
       },
     });
   }

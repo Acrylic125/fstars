@@ -6,7 +6,7 @@ export const TimeSchema = z.object({
   minute: z.number().min(0).max(59),
 });
 
-export const Days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] as const;
+export const Days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
 export const DaySchema = z.enum(Days);
 export const TypeSchema = z.string(); // z.enum(["LAB", "LEC", "TUT", "LEC/STUDIO", "SEM"]);
 
