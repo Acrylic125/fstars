@@ -16,10 +16,11 @@ import { DateTime, WeekdayNumbers } from "luxon";
 function getEventDate(
   dayOffset: number,
   timeInMinutes: number,
-  nowDateTime: DateTime
+  startOfWeek: DateTime
 ) {
   // Create a new DateTime in the same timezone as nowDateTime
-  let eventDate = nowDateTime.set({
+  // Note: Add 7 days cus luxon uses monday as the first day of the week.
+  let eventDate = startOfWeek.plus({ days: 7 }).set({
     weekday: dayOffset === 0 ? 7 : (dayOffset as WeekdayNumbers),
     hour: Math.floor(timeInMinutes / 60),
     minute: timeInMinutes % 60,
@@ -59,17 +60,11 @@ export default async function VacentClassroomPage(props: {
 
   // Get current week's Monday in Singapore timezone
   const nowDateTime = DateTime.now().setZone("Asia/Singapore");
-  const startOfWeek = nowDateTime.startOf("week");
+  const startOfWeek = nowDateTime.startOf("week", { useLocaleWeeks: true });
 
   for (const event of events) {
     let from = getEventDate(event.day, event.from, startOfWeek);
     let to = getEventDate(event.day, event.to, startOfWeek);
-    if (nowDateTime.weekday === 7) {
-      from = from.plus({ days: 7 });
-    }
-    if (nowDateTime.weekday === 7) {
-      to = to.plus({ days: 7 });
-    }
 
     const key =
       `${event.for.code} ${event.for.name} ${event.day}-${from.hour}:${from.minute}-${to.hour}:${to.minute}` as const;
@@ -98,8 +93,8 @@ export default async function VacentClassroomPage(props: {
   }
 
   const eventsWithDates = Array.from(mappings.values());
-  const startDate = nowDateTime.toFormat("yyyy-MM-dd");
-  const endDate = nowDateTime.plus({ days: 7 }).toFormat("yyyy-MM-dd");
+  const startDate = startOfWeek.toFormat("yyyy-MM-dd");
+  const endDate = startOfWeek.plus({ days: 7 }).toFormat("yyyy-MM-dd");
 
   return (
     <main className="flex flex-col w-full">
