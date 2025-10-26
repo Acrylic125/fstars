@@ -19,7 +19,7 @@ function getEventDate(
   nowDateTime: DateTime
 ) {
   // Create a new DateTime in the same timezone as nowDateTime
-  const eventDate = nowDateTime.set({
+  let eventDate = nowDateTime.set({
     weekday: (dayOffset + 1) as WeekdayNumbers,
     hour: Math.floor(timeInMinutes / 60),
     minute: timeInMinutes % 60,
@@ -62,11 +62,15 @@ export default async function VacentClassroomPage(props: {
   const startOfWeek = nowDateTime.startOf("week");
 
   for (const event of events) {
-    const from = getEventDate(event.day, event.from, startOfWeek);
-    const to = getEventDate(event.day, event.to, startOfWeek);
-    if (event.day === 1 && from.hour >= 14 && from.minute >= 30) {
-      console.log(event);
+    let from = getEventDate(event.day, event.from, startOfWeek);
+    let to = getEventDate(event.day, event.to, startOfWeek);
+    if (nowDateTime.weekday === 7) {
+      from = from.plus({ days: 7 });
     }
+    if (nowDateTime.weekday === 7) {
+      to = to.plus({ days: 7 });
+    }
+
     const key =
       `${event.for.code} ${event.for.name} ${event.for.index} ${event.day}-${from.hour}:${from.minute}-${to.hour}:${to.minute}` as const;
     if (mappings.has(key)) {
@@ -93,6 +97,8 @@ export default async function VacentClassroomPage(props: {
   }
 
   const eventsWithDates = Array.from(mappings.values());
+  const startDate = nowDateTime.toFormat("yyyy-MM-dd");
+  const endDate = nowDateTime.plus({ days: 7 }).toFormat("yyyy-MM-dd");
 
   return (
     <main className="flex flex-col w-full">
@@ -101,7 +107,11 @@ export default async function VacentClassroomPage(props: {
         <ScrollArea className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)]">
           <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
             <h1 className="text-2xl font-bold">{venue}</h1>
-            <VacantClassroomCalendar events={eventsWithDates} />
+            <VacantClassroomCalendar
+              events={eventsWithDates}
+              startDate={startDate}
+              endDate={endDate}
+            />
           </div>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>

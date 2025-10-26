@@ -19,8 +19,12 @@ export type VacantClassroomEvent = {
 
 export function VacantClassroomCalendar({
   events,
+  startDate,
+  endDate,
 }: {
   events: VacantClassroomEvent[];
+  startDate: string;
+  endDate: string;
 }) {
   return (
     <FullCalendar
@@ -29,6 +33,10 @@ export function VacantClassroomCalendar({
       headerToolbar={false}
       expandRows={true}
       timeZone="Asia/Singapore"
+      validRange={{
+        start: startDate,
+        end: endDate,
+      }}
       events={[
         ...events.map((event) => ({
           title: `${event.for.code}: ${event.for.name}`,
