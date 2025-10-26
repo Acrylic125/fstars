@@ -13,9 +13,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { isIntersectingDate } from "@/generator/utils";
-import { cn, formatTime } from "@/lib/utils";
+import { clamp, cn, formatTime } from "@/lib/utils";
 import { AlertTriangleIcon, ArrowDownRightIcon } from "lucide-react";
 import { useTimetableViewWeekSelector } from "./timetable-view-week-selector";
+import { useViewport } from "../use-viewport";
 
 type FCEvent = {
   title: string;
@@ -245,6 +246,11 @@ export function TimetableView({ id }: { id: string }) {
     colorMap,
   ]);
 
+  const { height } = useViewport();
+  const calendarHeight = useMemo(() => {
+    return clamp(height - 240, 960, 1920);
+  }, [height]);
+
   return (
     <FullCalendar
       plugins={[timeGridPlugin]}
@@ -351,7 +357,9 @@ export function TimetableView({ id }: { id: string }) {
       allDaySlot={false}
       nowIndicator={false}
       now={undefined}
-      height="100%"
+      contentHeight={calendarHeight}
+      height={calendarHeight}
+      // height="100%"
       // contentHeight="auto"
       // height="auto"
       slotMinTime="08:00:00"

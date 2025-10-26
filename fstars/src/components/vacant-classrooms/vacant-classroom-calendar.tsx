@@ -4,9 +4,11 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import "../timetable/fullcalendar.css";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { cn } from "@/lib/utils";
+import { clamp, cn } from "@/lib/utils";
 import { ArrowDownRightIcon } from "lucide-react";
 import { formatTime } from "@/lib/utils";
+import { useViewport } from "../use-viewport";
+import { useMemo } from "react";
 
 export type VacantClassroomEvent = {
   for: { code: string; name: string; index: string };
@@ -26,6 +28,11 @@ export function VacantClassroomCalendar({
   startDate: string;
   endDate: string;
 }) {
+  const { height } = useViewport();
+  const calendarHeight = useMemo(() => {
+    return clamp(height - 240, 960, 1920);
+  }, [height]);
+
   return (
     <FullCalendar
       plugins={[timeGridPlugin]}
@@ -89,8 +96,12 @@ export function VacantClassroomCalendar({
         );
       }}
       allDaySlot={false}
-      nowIndicator={true}
-      height="100%"
+      nowIndicator
+      // height="auto"
+      // contentHeight="100%"
+      // height="100%"
+      contentHeight={calendarHeight}
+      height={calendarHeight}
       slotMinTime="08:00:00"
       slotMaxTime="23:59:00"
       dayHeaderFormat={{ weekday: "short" }}

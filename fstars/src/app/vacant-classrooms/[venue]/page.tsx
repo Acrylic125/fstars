@@ -105,7 +105,8 @@ export default async function VacentClassroomPage(props: {
       <MainNavbar />
       <div className="flex flex-col items-center">
         <ScrollArea className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)]">
-          <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
+          {/* <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 pb-20 gap-4"> */}
+          <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 pb-20 gap-4">
             <h1 className="text-2xl font-bold">{venue}</h1>
             <VacantClassroomCalendar
               events={eventsWithDates}

@@ -17,7 +17,8 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
       <div className="flex flex-col items-center">
         <div className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] lg:h-fit">
           <ScrollArea className="relative w-full flex flex-col h-1/2 lg:h-[calc(100vh-4rem)] overflow-x-auto">
-            <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
+            {/* <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4"> */}
+            <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
               <TimetableHeader id={id} />
               <TimetableView id={id} />
               <div className="w-full h-20 md:h-24 lg:h-28" />
