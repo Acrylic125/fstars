@@ -32,3 +32,6 @@ Additionally, make sure to create an `out` folder in this directory.
 Other links:
 - [Undergaduate Class Schedule](https://wish.wis.ntu.edu.sg/webexe/owa/aus_schedule.main)
 - [Facilities](https://wis.ntu.edu.sg/pls/webexe88/FBSDOCU.FBSLOCATN)
+- [Mapsindoors Categories](https://api.mapsindoors.com/ntuprod/api/categories)
+- [Mapsindoors Academic Facilities](https://api.mapsindoors.com/ntuprod/api/locations?venue=NTU&categories=AcademicFacilities&take=1000&skip=0&orderBy=relevance&extendedLocations=true&lr=en-US)
+- [Mapsindoors Labs](https://api.mapsindoors.com/ntuprod/api/locations?venue=NTU&categories=LabsStudioWorkshops&take=1000&skip=0&orderBy=relevance&extendedLocations=true&lr=en-US)
