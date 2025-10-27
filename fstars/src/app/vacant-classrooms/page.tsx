@@ -159,11 +159,17 @@ async function TableLoader({
       )
     );
 
-  const timingMap = new Map<string, string>();
+  const timingMap = new Map<
+    string,
+    {
+      hour: number;
+      minute: number;
+    }
+  >();
   for (const nextTimeSlot of nextTimeSlots) {
     const hours = Math.floor(nextTimeSlot.time / 60);
     const minutes = nextTimeSlot.time % 60;
-    timingMap.set(nextTimeSlot.venue, formatTime(hours, minutes));
+    timingMap.set(nextTimeSlot.venue, { hour: hours, minute: minutes });
   }
 
   return (
@@ -171,9 +177,19 @@ async function TableLoader({
       data={allVenues.map((venue) => {
         const classroomsInUse = classroomInUseMap.get(venue.venue);
         const status = !!classroomsInUse ? "in use" : "vacant";
-        let freeUntil = "";
+        let freeUntil:
+          | {
+              hour: number;
+              minute: number;
+            }
+          | null
+          | "eod" = null;
+        let currentClassEndTime: {
+          hour: number;
+          minute: number;
+        } | null = null;
         if (status === "vacant") {
-          freeUntil = timingMap.get(venue.venue) ?? "No more class";
+          freeUntil = timingMap.get(venue.venue) ?? "eod";
         } else if (classroomsInUse) {
           const usedTill = classroomsInUse.reduce((acc, classroom) => {
             return Math.max(
@@ -181,13 +197,16 @@ async function TableLoader({
               classroom.timeToHour * 60 + classroom.timeToMinute
             );
           }, 0);
-          freeUntil = `Used until ${formatTime(Math.floor(usedTill / 60), usedTill % 60)}`;
+          currentClassEndTime = {
+            hour: Math.floor(usedTill / 60),
+            minute: usedTill % 60,
+          };
         }
         return {
           venue: venue.venue,
           status: status,
           freeUntil: freeUntil,
-          classEndTime: 0,
+          classEndTime: currentClassEndTime,
           area: venue.info?.area ?? "",
           location: venue.info?.location ?? "",
           remarks: venue.info?.remarks ?? "",
