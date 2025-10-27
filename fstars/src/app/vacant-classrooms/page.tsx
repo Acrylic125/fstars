@@ -20,7 +20,10 @@ import {
 } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { formatTime } from "@/lib/utils";
-import { VacantTable } from "@/components/vacant-classrooms/vacant-table";
+import {
+  VacantTable,
+  VacantTableHeader,
+} from "@/components/vacant-classrooms/vacant-table";
 import { getAcadWeek } from "@/lib/acad";
 import { Badge } from "@/components/ui/badge";
 import { Suspense } from "react";
@@ -222,7 +225,8 @@ export default async function VacentClassroomsPage() {
                 )}
               </div>
             </div>
-            <div className="w-full">
+            <div className="w-full flex flex-col gap-4">
+              <VacantTableHeader />
               <Suspense fallback={<Skeleton className="w-full aspect-video" />}>
                 <TableLoader
                   currentDateTime={currentDateTime}
