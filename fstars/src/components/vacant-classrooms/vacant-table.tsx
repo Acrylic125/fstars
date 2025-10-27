@@ -5,12 +5,8 @@ import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
 import {
   Column,
   ColumnDef,
-  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  SortingState,
   useReactTable,
 } from "@tanstack/react-table";
 import {
@@ -342,34 +338,10 @@ export function VacantTable({ data }: { data: Venues[] }) {
           // 1. EOD
           // 2. Based on freeUntil hour * 60 + minute
           // 3. Null
-          // if (a.freeUntil && b.freeUntil) {
-          //   // If both are eod, return 0
-          //   if (a.freeUntil === "eod" && b.freeUntil === "eod") {
-          //     return 0;
-          //   }
-          //   // If a is eod, return -1
-          //   if (a.freeUntil === "eod") {
-          //     return -1 * sortMultiplier;
-          //   }
-          //   // If b is eod, return 1
-          //   if (b.freeUntil === "eod") {
-          //     return sortMultiplier;
-          //   }
-          //   return (
-          //     (a.freeUntil.hour * 60 +
-          //       a.freeUntil.minute -
-          //       (b.freeUntil.hour * 60 + b.freeUntil.minute)) *
-          //     sortMultiplier
-          //   );
-          // }
-          // Handle nulls first
-          // return 0;
           if (a.freeUntil && b.freeUntil) {
-            // If both are "eod"
             if (a.freeUntil === "eod" && b.freeUntil === "eod") {
               return 0;
             }
-            // "eod" handling
             if (a.freeUntil === "eod") {
               return 1 * sortMultiplier;
             }
