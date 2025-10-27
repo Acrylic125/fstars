@@ -45,7 +45,6 @@ async function loadCourseSources(
     const formData = createFormData(source);
     const url = new URL(SOURCE_BASE_URL);
     url.search = new URLSearchParams(formData).toString();
-    console.log(`Fetching ${url.toString()}`);
     const response = await fetch(url, {
       method: "POST",
     });

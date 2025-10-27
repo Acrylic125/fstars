@@ -38,7 +38,7 @@ async function TableLoader({
     week: number;
   } | null;
 }) {
-  const currentDay = currentDateTime.weekday - 1;
+  const currentDay = currentDateTime.weekday;
   const currentHour = currentDateTime.hour;
   const currentMinute = currentDateTime.minute;
   const ignoreVenues = ["ONLINE", ""];
@@ -162,8 +162,6 @@ async function TableLoader({
     const minutes = nextTimeSlot.time % 60;
     timingMap.set(nextTimeSlot.venue, formatTime(hours, minutes));
   }
-
-  console.log(allVenues);
 
   return (
     <VacantTable
