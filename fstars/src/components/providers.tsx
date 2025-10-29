@@ -67,7 +67,9 @@ export function Providers({
   );
   useEffect(() => {
     posthog.init(env.NEXT_PUBLIC_POSTHOG_KEY, {
-      api_host: env.NEXT_PUBLIC_POSTHOG_HOST,
+      // api_host: env.NEXT_PUBLIC_POSTHOG_HOST,
+      api_host: "/relay-AQvm",
+      ui_host: "https://us.posthog.com",
       person_profiles: "always", // or 'always' to create profiles for anonymous users as well
       defaults: "2025-05-24",
     });
