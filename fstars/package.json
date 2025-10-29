@@ -44,6 +44,7 @@
     "next": "15.3.5",
     "nuqs": "^2.7.2",
     "postgres": "^3.4.7",
+    "posthog-js": "^1.281.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
