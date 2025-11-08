@@ -155,11 +155,17 @@ export function getAcadWeek(date: DateTime<boolean>) {
   const day = date.day;
   const month = date.month;
   const year = date.year;
-  const rawDate = [year, month, day];
 
   for (const [key, value] of Object.entries(acadYearWeeks)) {
     for (const week of value.weeks) {
-      if (rawDate >= week.start && rawDate <= week.end) {
+      if (
+        year >= week.start[0] &&
+        month >= week.start[1] &&
+        day >= week.start[2] &&
+        year <= week.end[0] &&
+        month <= week.end[1] &&
+        day <= week.end[2]
+      ) {
         return {
           acadYear: key,
           week: week.week,
