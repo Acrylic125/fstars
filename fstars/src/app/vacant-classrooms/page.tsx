@@ -5,6 +5,7 @@ import {
   courseIndexClassesTable,
   courseIndexTable,
   coursesTable,
+  locationsTable,
   venuesTable,
 } from "@/db/schema";
 import {
@@ -16,6 +17,7 @@ import {
   inArray,
   lte,
   not,
+  or,
   sql,
 } from "drizzle-orm";
 import { DateTime } from "luxon";
@@ -30,6 +32,20 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const dynamic = "force-dynamic";
+
+function translateBuilding(building: string) {
+  switch (building) {
+    case "NMS":
+      return "North Spine";
+    case "SMS":
+      return "South Spine";
+    case "TheArc":
+      return "The Arc";
+    case "THE_HIVE":
+      return "The Hive";
+  }
+  return building;
+}
 
 async function TableLoader({
   currentDateTime,
@@ -51,19 +67,29 @@ async function TableLoader({
       .selectDistinctOn([courseIndexClassesTable.venue], {
         venue: courseIndexClassesTable.venue,
         info: {
-          area: venuesTable.area,
-          capacity: venuesTable.capacity,
-          location: venuesTable.location,
-          bookableByStaff: venuesTable.bookableByStaff,
-          bookableByStudentOrganizations:
-            venuesTable.bookableByStudentOrganizations,
-          remarks: venuesTable.remarks,
+          area: locationsTable.building,
+          location: locationsTable.mapIndoorsRoomId,
+          // remarks: locationsTable.building,
         },
+        // info: {
+        //   area: venuesTable.area,
+        //   capacity: venuesTable.capacity,
+        //   location: venuesTable.location,
+        //   bookableByStaff: venuesTable.bookableByStaff,
+        //   bookableByStudentOrganizations:
+        //     venuesTable.bookableByStudentOrganizations,
+        //   remarks: venuesTable.remarks,
+        // },
       })
       .from(courseIndexClassesTable)
       .leftJoin(
-        venuesTable,
-        eq(courseIndexClassesTable.venue, venuesTable.venue)
+        locationsTable,
+        or(
+          eq(locationsTable.name, courseIndexClassesTable.venue),
+          sql`${courseIndexClassesTable.venue} = ANY(${locationsTable.altNames})`
+        )
+        // venuesTable,
+        // eq(courseIndexClassesTable.venue, venuesTable.venue)
       )
       .where(and(not(inArray(courseIndexClassesTable.venue, ignoreVenues)))),
     (async () => {
@@ -207,9 +233,9 @@ async function TableLoader({
           status: status,
           freeUntil: freeUntil,
           classEndTime: currentClassEndTime,
-          area: venue.info?.area ?? "",
+          area: translateBuilding(venue.info?.area ?? ""),
           location: venue.info?.location ?? "",
-          remarks: venue.info?.remarks ?? "",
+          // remarks: venue.info?.remarks ?? "",
         };
       })}
     />

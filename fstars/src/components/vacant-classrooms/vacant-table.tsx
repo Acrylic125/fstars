@@ -178,7 +178,6 @@ export type Venues = {
   } | null;
   area: string;
   location: string;
-  remarks: string | null;
 };
 
 export const columns: ColumnDef<Venues>[] = [
