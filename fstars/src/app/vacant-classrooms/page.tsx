@@ -5,6 +5,7 @@ import {
   courseIndexClassesTable,
   courseIndexTable,
   coursesTable,
+  locationAltNamesTable,
   locationsTable,
   venuesTable,
 } from "@/db/schema";
@@ -13,6 +14,7 @@ import {
   arrayContains,
   asc,
   eq,
+  exists,
   gte,
   inArray,
   lte,
@@ -63,35 +65,40 @@ async function TableLoader({
   const ignoreVenues = ["ONLINE", ""];
 
   const [allVenues, classroomsInUseNow] = await Promise.all([
-    await db
-      .selectDistinctOn([courseIndexClassesTable.venue], {
-        venue: courseIndexClassesTable.venue,
-        info: {
+    (async () => {
+      const venuesRows = await db
+        .selectDistinctOn([courseIndexClassesTable.venue], {
+          venue: courseIndexClassesTable.venue,
+        })
+        .from(courseIndexClassesTable)
+        .where(and(not(inArray(courseIndexClassesTable.venue, ignoreVenues))));
+
+      const venues = venuesRows.map((venue) => venue.venue);
+      const locationsRows = await db
+        .select({
+          venue: locationAltNamesTable.altName,
           area: locationsTable.building,
           location: locationsTable.mapIndoorsRoomId,
-          // remarks: locationsTable.building,
-        },
-        // info: {
-        //   area: venuesTable.area,
-        //   capacity: venuesTable.capacity,
-        //   location: venuesTable.location,
-        //   bookableByStaff: venuesTable.bookableByStaff,
-        //   bookableByStudentOrganizations:
-        //     venuesTable.bookableByStudentOrganizations,
-        //   remarks: venuesTable.remarks,
-        // },
-      })
-      .from(courseIndexClassesTable)
-      .leftJoin(
-        locationsTable,
-        or(
-          eq(locationsTable.name, courseIndexClassesTable.venue),
-          sql`${courseIndexClassesTable.venue} = ANY(${locationsTable.altNames})`
+        })
+        .from(locationAltNamesTable)
+        .innerJoin(
+          locationsTable,
+          eq(locationAltNamesTable.locationId, locationsTable.id)
         )
-        // venuesTable,
-        // eq(courseIndexClassesTable.venue, venuesTable.venue)
-      )
-      .where(and(not(inArray(courseIndexClassesTable.venue, ignoreVenues)))),
+        .where(inArray(locationAltNamesTable.altName, venues));
+
+      const locationsMap = new Map<string, (typeof locationsRows)[number]>();
+      for (const location of locationsRows) {
+        const key = location.venue;
+        locationsMap.set(key, location);
+      }
+      return venues.map((venue) => {
+        return {
+          venue: venue,
+          location: locationsMap.get(venue),
+        };
+      });
+    })(),
     (async () => {
       if (!acadWeek) {
         return [];
@@ -233,8 +240,8 @@ async function TableLoader({
           status: status,
           freeUntil: freeUntil,
           classEndTime: currentClassEndTime,
-          area: translateBuilding(venue.info?.area ?? ""),
-          location: venue.info?.location ?? "",
+          area: translateBuilding(venue.location?.area ?? ""),
+          location: venue.location?.location ?? "",
           // remarks: venue.info?.remarks ?? "",
         };
       })}
