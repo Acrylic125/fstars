@@ -6,6 +6,8 @@ import {
   courseIndexSourcesTable,
   courseIndexTable,
   coursesTable,
+  locationAltNamesTable,
+  locationsTable,
   programsTable,
 } from "@/db/schema";
 import {
@@ -245,7 +247,34 @@ export const appRouter = createTRPCRouter({
             eq(coursesTable.semester, input.acadYear.semesterCode)
           )
         );
-      return courseClasses;
+
+      const venues = courseClasses.map((courseClass) => courseClass.venue);
+
+      const locationsRows = await db
+        .select({
+          venue: locationAltNamesTable.altName,
+          area: locationsTable.building,
+          location: locationsTable.mapIndoorsRoomId,
+          mapIndoorsId: locationsTable.mapIndoorsId,
+        })
+        .from(locationAltNamesTable)
+        .innerJoin(
+          locationsTable,
+          eq(locationAltNamesTable.locationId, locationsTable.id)
+        )
+        .where(inArray(locationAltNamesTable.altName, venues));
+
+      const locationsMap = new Map<string, (typeof locationsRows)[number]>();
+      for (const location of locationsRows) {
+        const key = location.venue;
+        locationsMap.set(key, location);
+      }
+      return courseClasses.map((courseClass) => {
+        return {
+          ...courseClass,
+          location: locationsMap.get(courseClass.venue),
+        };
+      });
     }),
   getCourseClasses: publicProcedure
     .input(

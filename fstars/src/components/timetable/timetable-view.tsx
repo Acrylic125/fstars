@@ -14,7 +14,11 @@ import {
 } from "@/components/ui/popover";
 import { isIntersectingDate } from "@/generator/utils";
 import { clamp, cn, formatTime } from "@/lib/utils";
-import { AlertTriangleIcon, ArrowDownRightIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ArrowDownRightIcon,
+  Navigation,
+} from "lucide-react";
 import { useTimetableViewWeekSelector } from "./timetable-view-week-selector";
 import { useViewport } from "../use-viewport";
 
@@ -37,6 +41,12 @@ type ExtendedProps = {
     type: string;
     venue: string;
     weeks: number[];
+    location?: {
+      venue: string;
+      area: string | null;
+      location: string | null;
+      mapIndoorsId: string;
+    };
   }[];
   isError: boolean;
 };
@@ -143,6 +153,7 @@ export function TimetableView({ id }: { id: string }) {
           type: c.type,
           venue: c.venue,
           weeks: c.weeks,
+          location: c.location,
         };
         if (
           !entry.weeks.some((week) => {
@@ -179,6 +190,7 @@ export function TimetableView({ id }: { id: string }) {
         type: c.type,
         venue: c.venue,
         weeks: c.weeks,
+        location: c.location,
       };
       if (
         !entry.weeks.some((week) => {
@@ -326,6 +338,21 @@ export function TimetableView({ id }: { id: string }) {
               </h3>
               <div className="text-sm">
                 {event.entries.map((entry, i) => {
+                  if (entry.location) {
+                    return (
+                      <div className="text-sm text-foreground" key={i}>
+                        {entry.type} @{" "}
+                        <a
+                          href={`https://maps.ntu.edu.sg/#/ntu/d386ffa80e4e46f286d17f08/poi/details/${entry.location.mapIndoorsId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span className="underline">{entry.venue}</span>
+                        </a>
+                        , Wk {entry.weeks.join(", ")}
+                      </div>
+                    );
+                  }
                   return (
                     <div className="text-sm text-foreground" key={i}>
                       {entry.type} @ {entry.venue}, Wk {entry.weeks.join(", ")}
