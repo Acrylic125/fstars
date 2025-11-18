@@ -8,10 +8,17 @@ import {
   courseIndexClassesTable,
   courseIndexTable,
   coursesTable,
+  locationAltNamesTable,
+  locationsTable,
 } from "@/db/schema";
 import { db } from "@/db";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { DateTime, WeekdayNumbers } from "luxon";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { translateBuilding } from "@/lib/acad";
+import { Button } from "@/components/ui/button";
+import { MapIcon, Navigation, Navigation2 } from "lucide-react";
 
 function getEventDate(
   dayOffset: number,
@@ -28,6 +35,66 @@ function getEventDate(
     millisecond: 0,
   });
   return eventDate;
+}
+
+async function ClassroomHeaderLoader(props: { venue: string }) {
+  const locationsRows = await db
+    .select({
+      venue: locationAltNamesTable.altName,
+      name: locationsTable.name,
+      floorName: locationsTable.floorName,
+      area: locationsTable.building,
+      location: locationsTable.mapIndoorsRoomId,
+    })
+    .from(locationAltNamesTable)
+    .innerJoin(
+      locationsTable,
+      eq(locationAltNamesTable.locationId, locationsTable.id)
+    )
+    .where(eq(locationAltNamesTable.altName, props.venue))
+    .limit(1);
+
+  if (locationsRows.length === 0) {
+    return (
+      <div className="h-16 flex flex-col gap-1">
+        <h1 className="text-2xl font-bold">{props.venue}</h1>
+        <p className="text-base text-muted-foreground">{props.venue}</p>
+      </div>
+    );
+  }
+
+  const location = locationsRows[0];
+
+  const components = [props.venue];
+  if (location.area && location.area !== "") {
+    components.push(` @ ${translateBuilding(location.area)}`);
+  }
+  if (location.floorName && location.floorName !== "") {
+    components.push(`, Floor ${location.floorName}`);
+  }
+  return (
+    <div className="h-16 flex flex-row gap-4 items-center">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold">{location.name}</h1>
+        <p className="text-base text-muted-foreground">{components.join("")}</p>
+      </div>
+      <div className="flex flex-row gap-2 items-center">
+        <Button
+          variant="outline"
+          className="flex flex-row gap-2 items-center"
+          asChild
+        >
+          <a
+            href={`https://maps.ntu.edu.sg/#/ntu/d386ffa80e4e46f286d17f08/poi/details/${location.location}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            NTU Map <MapIcon className="size-4" />
+          </a>
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export default async function VacentClassroomPage(props: {
@@ -103,7 +170,9 @@ export default async function VacentClassroomPage(props: {
         <ScrollArea className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)]">
           {/* <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 pb-20 gap-4"> */}
           <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 pb-20 gap-4">
-            <h1 className="text-2xl font-bold">{venue}</h1>
+            <Suspense fallback={<Skeleton className="w-full h-48" />}>
+              <ClassroomHeaderLoader venue={venue} />
+            </Suspense>
             <VacantClassroomCalendar
               events={eventsWithDates}
               startDate={startDate}

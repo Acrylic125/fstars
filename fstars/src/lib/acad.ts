@@ -185,3 +185,17 @@ export function getAcadWeek(date: DateTime<boolean>) {
   }
   return null;
 }
+
+export function translateBuilding(building: string) {
+  switch (building) {
+    case "NMS":
+      return "North Spine";
+    case "SMS":
+      return "South Spine";
+    case "TheArc":
+      return "The Arc";
+    case "THE_HIVE":
+      return "The Hive";
+  }
+  return building;
+}

@@ -28,26 +28,12 @@ import {
   VacantTable,
   VacantTableHeader,
 } from "@/components/vacant-classrooms/vacant-table";
-import { getAcadWeek } from "@/lib/acad";
+import { getAcadWeek, translateBuilding } from "@/lib/acad";
 import { Badge } from "@/components/ui/badge";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const dynamic = "force-dynamic";
-
-function translateBuilding(building: string) {
-  switch (building) {
-    case "NMS":
-      return "North Spine";
-    case "SMS":
-      return "South Spine";
-    case "TheArc":
-      return "The Arc";
-    case "THE_HIVE":
-      return "The Hive";
-  }
-  return building;
-}
 
 async function TableLoader({
   currentDateTime,
