@@ -18,7 +18,12 @@ import {
   EditIcon,
   TrashIcon,
 } from "lucide-react";
-import { ColorScheme, getColorMapForCourses, sortCourseCodes } from "./utils";
+import {
+  ColorScheme,
+  getColorMapForCourses,
+  serializeCourseCodes,
+  sortCourseCodes,
+} from "./utils";
 import { SelectIndexCombobox } from "./select-index-combobox";
 import { type AppRouter } from "@/server/router";
 import { inferRouterOutputs } from "@trpc/server";
@@ -348,14 +353,16 @@ export function TimetableCoursePlansHeader({ id }: { id: string }) {
                 "success"
               );
               const appUrl = window.location.origin;
-              navigator.clipboard.writeText(
-                `${appUrl}/preview?c=${Array.from(
-                  selectedPlan.courses.entries()
+              const queryString = serializeCourseCodes(
+                Array.from(selectedPlan.courses.entries()).map(
+                  ([courseCode, course]) => ({
+                    courseCode,
+                    index: course.index,
+                  })
                 )
-                  .map(
-                    ([courseCode, course]) => `${courseCode}:${course.index}`
-                  )
-                  .join(",")}`
+              );
+              navigator.clipboard.writeText(
+                `${appUrl}/preview?c=${queryString}`
               );
             }}
           >

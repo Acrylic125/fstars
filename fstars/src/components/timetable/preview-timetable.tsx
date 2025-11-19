@@ -10,7 +10,13 @@ import {
 } from "nuqs";
 import { Config } from "@/lib/config";
 import { TimetableView } from "./timetable-view";
-import { ColorScheme, getColorMapForCourses, sortCourseCodes } from "./utils";
+import {
+  ColorScheme,
+  getColorMapForCourses,
+  serializeCourseCodes,
+  sortCourseCodes,
+  useQueryParamCourses,
+} from "./utils";
 import { trpc } from "@/server/client";
 import { inferRouterOutputs } from "@trpc/server";
 import { AppRouter } from "@/server/router";
@@ -46,47 +52,6 @@ import { cn } from "@/lib/utils";
 import { Indicator, useIndicator } from "../ui/indicator";
 
 type Course = inferRouterOutputs<AppRouter>["findCourses"][number];
-
-export function useQueryParamCourses() {
-  const [courseCodes, setCourseCodes] = useQueryState(
-    "c",
-    parseAsArrayOf(parseAsString).withDefault([])
-  );
-
-  const courseCodesMap = useMemo(() => {
-    return courseCodes
-      .map((c) => {
-        const split = c.split(":");
-        if (split.length !== 2) {
-          return null;
-        }
-        const [courseCode, index] = split;
-        return {
-          courseCode,
-          index,
-        };
-      })
-      .filter((c): c is NonNullable<typeof c> => c !== null);
-  }, [courseCodes]);
-
-  const setter = useCallback(
-    (
-      courseCodes:
-        | typeof courseCodesMap
-        | ((prev: typeof courseCodesMap) => typeof courseCodesMap)
-    ) => {
-      if (typeof courseCodes === "function") {
-        setCourseCodes(
-          courseCodes(courseCodesMap).map((c) => `${c.courseCode}:${c.index}`)
-        );
-      } else {
-        setCourseCodes(courseCodes.map((c) => `${c.courseCode}:${c.index}`));
-      }
-    },
-    [setCourseCodes, courseCodesMap]
-  );
-  return [courseCodesMap, setter] as const;
-}
 
 export function useQueryParamsAcadYear() {
   const [acadYear] = useQueryState(
@@ -388,25 +353,6 @@ export function TimetableCoursesRow({
               </div>
             </div>
             <SelectIndexCombobox courseCode={courseCode} acadYear={acadYear} />
-            {/* {timetableStore ? (
-              <SelectIndexCombobox
-                courseCode={courseCode}
-                timetableId={id}
-                planId={planId}
-                acadYear={acadYear}
-              />
-            ) : (
-              <SelectIndexCombobox
-                courseCode={courseCode}
-                timetableId={id}
-                planId={planId}
-                acadYear={{
-                  yearCode: "",
-                  semesterCode: "",
-                }}
-                disabled
-              />
-            )} */}
           </div>
           <div className="text-muted-foreground hidden lg:block">
             <ChevronDownIcon className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
@@ -467,7 +413,7 @@ export function TimetableCoursesHeader() {
               );
               const appUrl = window.location.origin;
               navigator.clipboard.writeText(
-                `${appUrl}/preview?c=${courseCodes.map((c) => `${c.courseCode}:${c.index}`).join(",")}`
+                `${appUrl}/preview?c=${serializeCourseCodes(courseCodes)}`
               );
             }}
           >

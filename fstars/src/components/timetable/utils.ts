@@ -1,4 +1,6 @@
+import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 import { CourseCode } from "./timetable-store";
+import { useCallback, useMemo } from "react";
 
 export type ColorScheme =
   | "default"
@@ -123,4 +125,54 @@ export function asPriorityNumber(priority: Priority) {
     default:
       return 0 as const;
   }
+}
+
+export function useQueryParamCourses() {
+  const [courseCodes, setCourseCodes] = useQueryState(
+    "c",
+    parseAsArrayOf(parseAsString).withDefault([])
+  );
+
+  const courseCodesMap = useMemo(() => {
+    return courseCodes
+      .map((c) => {
+        const split = c.split(":");
+        if (split.length !== 2) {
+          return null;
+        }
+        const [courseCode, index] = split;
+        return {
+          courseCode,
+          index,
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null);
+  }, [courseCodes]);
+
+  const setter = useCallback(
+    (
+      courseCodes:
+        | typeof courseCodesMap
+        | ((prev: typeof courseCodesMap) => typeof courseCodesMap)
+    ) => {
+      if (typeof courseCodes === "function") {
+        setCourseCodes(
+          courseCodes(courseCodesMap).map((c) => `${c.courseCode}:${c.index}`)
+        );
+      } else {
+        setCourseCodes(courseCodes.map((c) => `${c.courseCode}:${c.index}`));
+      }
+    },
+    [setCourseCodes, courseCodesMap]
+  );
+  return [courseCodesMap, setter] as const;
+}
+
+export function serializeCourseCodes(
+  courseCodes: {
+    courseCode: string;
+    index: string;
+  }[]
+) {
+  return courseCodes.map((c) => `${c.courseCode}:${c.index}`).join(",");
 }
