@@ -6,7 +6,7 @@ import "./fullcalendar.css";
 import { useTimetableStore } from "./timetable-store";
 import { useShallow } from "zustand/react/shallow";
 import { trpc } from "@/server/client";
-import { colorByIndex, ColorScheme, getColorMapForCourses } from "./utils";
+import { ColorScheme, getColorMapForCourses } from "./utils";
 import {
   Popover,
   PopoverContent,
@@ -14,13 +14,10 @@ import {
 } from "@/components/ui/popover";
 import { isIntersectingDate } from "@/generator/utils";
 import { clamp, cn, formatTime } from "@/lib/utils";
-import {
-  AlertTriangleIcon,
-  ArrowDownRightIcon,
-  Navigation,
-} from "lucide-react";
+import { AlertTriangleIcon, ArrowDownRightIcon } from "lucide-react";
 import { useTimetableViewWeekSelector } from "./timetable-view-week-selector";
 import { useViewport } from "../use-viewport";
+import { AcadYear } from "@/lib/types";
 
 type FCEvent = {
   title: string;
@@ -60,8 +57,7 @@ function getEventDate(dayOffset: number, hour: number, minute: number) {
   return date;
 }
 
-export function TimetableView({ id }: { id: string }) {
-  const colorScheme: ColorScheme = "default";
+export function TimetableSelfView({ id }: { id: string }) {
   const timetableStore = useTimetableStore(
     useShallow((state) => {
       const timetable = state.timetables.get(id);
@@ -88,39 +84,60 @@ export function TimetableView({ id }: { id: string }) {
       })
     );
   }, [timetableStore?.courses]);
-  const selectedCourseClasses = trpc.getCourseIndexClasses.useQuery(
-    {
-      courses: courseCodes ?? [],
-      acadYear: timetableStore?.acadYear ?? {
-        yearCode: "",
-        semesterCode: "",
-      },
-    },
-    {
-      enabled: !!courseCodes && !!timetableStore?.acadYear,
-    }
+
+  if (!timetableStore) {
+    return (
+      <div className="w-full h-full flex flex-col lg:items-center lg:justify-center border border-border rounded-md p-4 lg:p-8">
+        <h2 className="text-lg font-bold">Timetable not found {"):"}</h2>
+        <p className="text-sm text-muted-foreground max-w-sm lg:text-center">
+          Timetables are{" "}
+          <span className="text-primary">stored on your browser</span>, you must
+          access this page from the same device, on the same browser.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <TimetableView
+      courseCodes={courseCodes}
+      acadYear={timetableStore.acadYear}
+    />
   );
+}
+
+export function TimetableView({
+  courseCodes,
+  acadYear,
+}: {
+  courseCodes: { courseCode: string; index: string }[];
+  acadYear: AcadYear;
+}) {
+  const colorScheme: ColorScheme = "default";
   const { selectedWeeksBitMask } = useTimetableViewWeekSelector(
     useShallow((state) => ({
       selectedWeeksBitMask: state.selectedWeeksBitMask,
     }))
   );
 
-  const colorMap = useMemo(() => {
-    if (!timetableStore?.courses) {
-      return new Map();
+  const selectedCourseClasses = trpc.getCourseIndexClasses.useQuery(
+    {
+      courses: courseCodes ?? [],
+      acadYear: acadYear,
+    },
+    {
+      enabled: !!courseCodes,
     }
+  );
+
+  const colorMap = useMemo(() => {
     return getColorMapForCourses(
       courseCodes.map((c) => c.courseCode),
       colorScheme
     );
-  }, [timetableStore?.courses, courseCodes, colorScheme]);
+  }, [courseCodes, colorScheme]);
 
   const events = useMemo(() => {
-    if (!timetableStore?.courses) {
-      return [];
-    }
-
     if (!selectedCourseClasses.data) {
       return [];
     }
@@ -139,15 +156,6 @@ export function TimetableView({ id }: { id: string }) {
           console.error("Color not found for course", c.course.code);
           continue;
         }
-
-        // const i = courseCodes.findIndex(
-        //   (cc) => cc.courseCode === c.course.code
-        // );
-
-        // const color = colorByIndex(i, {
-        //   max: courseCodes.length,
-        //   scheme: colorScheme,
-        // });
 
         const entry = {
           type: c.type,
@@ -250,13 +258,7 @@ export function TimetableView({ id }: { id: string }) {
       }
     }
     return Array.from(aggregatedEventMap.values());
-  }, [
-    timetableStore?.courses,
-    selectedCourseClasses.data,
-    courseCodes,
-    selectedWeeksBitMask,
-    colorMap,
-  ]);
+  }, [selectedCourseClasses.data, courseCodes, selectedWeeksBitMask, colorMap]);
 
   const { height } = useViewport();
   const calendarHeight = useMemo(() => {

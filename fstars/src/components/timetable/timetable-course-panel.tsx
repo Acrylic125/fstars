@@ -39,6 +39,7 @@ import {
 import { nanoid } from "nanoid";
 import { useTimetableGeneratorStore } from "./timetable-generator-store";
 import Link from "next/link";
+import { Config } from "@/lib/config";
 
 export function TimetableHeader({ id }: { id: string }) {
   const timetable = useTimetableStore(
@@ -74,6 +75,10 @@ export function TimetableHeader({ id }: { id: string }) {
     downloadObjectAsJSONFile(json, filename);
     controls.showIndicator(`Exported ${filename} to downloads!`, "success");
   }, [timetable, id]);
+
+  if (!timetable) {
+    return null;
+  }
 
   return (
     <div className="w-full flex flex-row gap-2 justify-between items-center">
@@ -338,9 +343,19 @@ export function TimetableCoursePlansHeader({ id }: { id: string }) {
               if (!selectedPlan) {
                 return;
               }
-              controls.showIndicator("Copied to clipboard!", "success");
+              controls.showIndicator(
+                "Shareable Link Copied to clipboard!",
+                "success"
+              );
+              const appUrl = window.location.origin;
               navigator.clipboard.writeText(
-                serializePlanCourses(selectedPlan.courses)
+                `${appUrl}/preview?c=${Array.from(
+                  selectedPlan.courses.entries()
+                )
+                  .map(
+                    ([courseCode, course]) => `${courseCode}:${course.index}`
+                  )
+                  .join(",")}`
               );
             }}
           >
