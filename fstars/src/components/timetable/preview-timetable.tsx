@@ -1,13 +1,6 @@
 "use client";
 import { useCallback, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import {
-  createParser,
-  parseAsArrayOf,
-  parseAsString,
-  useQueryState,
-  useQueryStates,
-} from "nuqs";
+import { parseAsString, useQueryState } from "nuqs";
 import { Config } from "@/lib/config";
 import { TimetableView } from "./timetable-view";
 import {

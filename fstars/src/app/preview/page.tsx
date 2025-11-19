@@ -11,6 +11,7 @@ import {
   TimetableCoursesSharedPanel,
   TimetableSharedView,
 } from "@/components/timetable/preview-timetable";
+import { Suspense } from "react";
 
 export default async function Home(props: { params: Promise<{}> }) {
   return (
@@ -19,10 +20,10 @@ export default async function Home(props: { params: Promise<{}> }) {
       <div className="flex flex-col items-center">
         <div className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] lg:h-fit">
           <ScrollArea className="relative w-full flex flex-col h-1/2 lg:h-[calc(100svh-4rem)] overflow-x-auto">
-            {/* <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4"> */}
             <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
-              {/* <TimetableHeader id={id} /> */}
-              <TimetableSharedView />
+              <Suspense>
+                <TimetableSharedView />
+              </Suspense>
               <div className="w-full h-20 md:h-24 lg:h-28" />
             </div>
             <ScrollBar orientation="horizontal" />
@@ -30,7 +31,9 @@ export default async function Home(props: { params: Promise<{}> }) {
           </ScrollArea>
           <ScrollArea className="w-full lg:w-xl relative group flex flex-col h-1/2 lg:h-[calc(100svh-4rem)] border-t border-border lg:border-0">
             <div className="flex flex-col gap-2 md:gap-4 items-center p-2 lg:py-8 lg:pl-4 lg:pr-8">
-              <TimetableCoursesSharedPanel />
+              <Suspense>
+                <TimetableCoursesSharedPanel />
+              </Suspense>
             </div>
           </ScrollArea>
         </div>
