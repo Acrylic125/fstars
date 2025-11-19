@@ -26,6 +26,8 @@ import { AlertCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Program } from "@/lib/types";
 import { Config } from "@/lib/config";
+import { useQueryParamCourses } from "./utils";
+import { trpc } from "@/server/client";
 
 const formSchema = z.object({
   programs: z
@@ -76,7 +78,9 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
       };
     })
   );
+  const [courseCodes] = useQueryParamCourses();
 
+  const trpcUtils = trpc.useUtils();
   const createTimetableMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
       const id = nanoid(16);
@@ -87,15 +91,35 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
         name: "Default Plan",
         courses: new Map(),
       };
+      const acadYear = {
+        yearCode: Config.currentAcademicYear.yearCode,
+        semesterCode: "1",
+      } as const;
+      if (courseCodes.length > 0) {
+        const excludedCourseIndexes =
+          await trpcUtils.getProgramExcludedCourseIndexesMany.fetch({
+            courseCodes: courseCodes.map((c) => c.courseCode),
+            programs: data.programs,
+            acadYear,
+          });
+        for (const courseCode of courseCodes) {
+          const excludedIndexes = excludedCourseIndexes[courseCode.courseCode];
+          const ignoreIndexes =
+            excludedIndexes.length > 0
+              ? new Set(excludedIndexes)
+              : new Set<string>();
+          defaultPlan.courses.set(courseCode.courseCode, {
+            index: courseCode.index,
+            ignoreIndexes,
+          });
+        }
+      }
 
       const timetable: Timetable = {
         id,
         name: data.name,
         programs: data.programs,
-        acadYear: {
-          yearCode: Config.currentAcademicYear.yearCode,
-          semesterCode: "1",
-        },
+        acadYear,
         plans: new Map([[defaultPlanId, defaultPlan]]),
         selectedGeneratorId: "default",
         selectedPlanId: defaultPlanId,

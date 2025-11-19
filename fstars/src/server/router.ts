@@ -190,6 +190,138 @@ export const appRouter = createTRPCRouter({
 
       return Array.from(excludeIndexes);
     }),
+  getProgramExcludedCourseIndexesMany: publicProcedure
+    .input(
+      z.object({
+        courseCodes: z.array(z.string()).max(10),
+        programs: z.array(ProgramSchema),
+        acadYear: AcadYearSchema,
+      })
+    )
+    .query(async ({ input }) => {
+      const allCourseIndexes = await db
+        .select({
+          id: courseIndexTable.id,
+          index: courseIndexTable.index,
+          source: {
+            code: programsTable.code,
+            subCode: programsTable.subCode,
+            year: programsTable.year,
+            type: programsTable.type,
+          },
+          courseCode: coursesTable.code,
+        })
+        .from(courseIndexTable)
+        .innerJoin(coursesTable, eq(coursesTable.id, courseIndexTable.courseId))
+        .innerJoin(
+          courseIndexSourcesTable,
+          eq(courseIndexSourcesTable.indexId, courseIndexTable.id)
+        )
+        .innerJoin(
+          programsTable,
+          eq(programsTable.id, courseIndexSourcesTable.source)
+        )
+        .where(
+          and(
+            inArray(coursesTable.code, input.courseCodes),
+            eq(coursesTable.ay, input.acadYear.yearCode),
+            eq(coursesTable.semester, input.acadYear.semesterCode)
+          )
+        );
+
+      const courseIndexMap = new Map<string, typeof allCourseIndexes>();
+      for (const courseIndex of allCourseIndexes) {
+        const cur = courseIndexMap.get(courseIndex.courseCode);
+        if (!cur) {
+          courseIndexMap.set(courseIndex.courseCode, [courseIndex]);
+        } else {
+          cur.push(courseIndex);
+        }
+      }
+
+      const result: Record<string, string[]> = {};
+      for (const courseCode of input.courseCodes) {
+        const courseIndexes = courseIndexMap.get(courseCode);
+        if (!courseIndexes) {
+          result[courseCode] = [];
+          continue;
+        }
+        const indexAndSources: Map<
+          string,
+          (typeof courseIndexes)[number]["source"][]
+        > = new Map();
+        for (const courseIndex of courseIndexes) {
+          const cur = indexAndSources.get(courseIndex.index);
+          if (!cur) {
+            indexAndSources.set(courseIndex.index, [courseIndex.source]);
+          } else {
+            cur.push(courseIndex.source);
+          }
+        }
+
+        const allIndexes = new Set<string>();
+        const programIndexes = new Set<string>();
+        const gloadIndexes = new Set<string>();
+
+        for (const courseIndex of courseIndexes) {
+          const cur = indexAndSources.get(courseIndex.index);
+          allIndexes.add(courseIndex.index);
+          // let isSourcedFromInputPrograms = false;
+          if (cur && cur.length >= 1) {
+            for (const source of cur) {
+              for (const program of input.programs) {
+                if (source.year !== null && source.year !== program.year) {
+                  continue;
+                }
+                // console.log(source.code, program.code);
+                if (source.code !== "GLOAD") {
+                  if (source.code !== program.code) {
+                    continue;
+                  }
+                  if (source.subCode !== (program.subCode ?? null)) {
+                    continue;
+                  }
+                  if (source.type !== program.type) {
+                    continue;
+                  }
+                  programIndexes.add(courseIndex.index);
+                } else {
+                  if (source.type !== program.type) {
+                    continue;
+                  }
+                  gloadIndexes.add(courseIndex.index);
+                }
+
+                // Break out early if programIndexes and gloadIndexes have this index.
+                if (
+                  programIndexes.has(courseIndex.index) &&
+                  gloadIndexes.has(courseIndex.index)
+                ) {
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        const excludeIndexes = new Set<string>();
+        for (const index of allIndexes) {
+          if (programIndexes.size > 0) {
+            if (!programIndexes.has(index)) {
+              excludeIndexes.add(index);
+            }
+          } else {
+            if (!gloadIndexes.has(index)) {
+              excludeIndexes.add(index);
+            }
+          }
+        }
+
+        result[courseCode] = Array.from(excludeIndexes);
+      }
+
+      return result;
+    }),
   getCourseIndexClasses: publicProcedure
     .input(
       z.object({

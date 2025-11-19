@@ -224,6 +224,13 @@ export const useTimetableStore = create<TimetableStore>()(
             };
             return {};
           }
+          if (timetable.plans.size >= Config.limits.plans) {
+            res = {
+              type: "error",
+              error: `Plan limit reached (${timetable.plans.size} / ${Config.limits.plans})`,
+            };
+            return {};
+          }
           res = {
             type: "success",
             timetableId: timetable.id,

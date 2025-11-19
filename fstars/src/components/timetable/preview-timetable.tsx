@@ -50,6 +50,13 @@ import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Skeleton } from "../ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Indicator, useIndicator } from "../ui/indicator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import Link from "next/link";
 
 type Course = inferRouterOutputs<AppRouter>["findCourses"][number];
 
@@ -402,6 +409,23 @@ export function TimetableCoursesHeader() {
     <div className="w-full h-fit flex flex-row items-center justify-between gap-2 px-4">
       <h2 className="text-base font-semibold">Select Courses</h2>
       <div className="flex flex-row gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="outline">
+              Import
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem asChild>
+              <Link href={`/new?c=${serializeCourseCodes(courseCodes)}`}>
+                <div className="flex flex-col justify-center pr-8">
+                  <p>Import to New Timetable</p>
+                </div>
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <div className="relative">
           <Indicator controls={controls} />
           <Button
