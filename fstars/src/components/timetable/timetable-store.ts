@@ -145,7 +145,10 @@ type TimetableStore = {
       courseCode: CourseCode;
       index: CourseIndex;
     }[],
-    override?: boolean
+    options?: {
+      overrideAll?: boolean;
+      defaultIgnoreMappings: { [courseCode: CourseCode]: CourseIndex[] };
+    }
   ) =>
     | {
         type: "success";
@@ -422,7 +425,7 @@ export const useTimetableStore = create<TimetableStore>()(
           courseCode: CourseCode;
           index: CourseIndex;
         }[],
-        override: boolean = true
+        options
       ) => {
         let res: ReturnType<TimetableStore["selectCourseIndexes"]> = {
           type: "error",
@@ -447,13 +450,17 @@ export const useTimetableStore = create<TimetableStore>()(
             return {};
           }
 
-          const updatedCourses = override ? new Map() : new Map(plan.courses);
+          const updatedCourses = options?.overrideAll
+            ? new Map()
+            : new Map(plan.courses);
           courseIndexSelections.forEach(({ courseCode, index }) => {
             const course = plan.courses.get(courseCode);
             if (!course) {
+              const defaultIgnoreIndexes =
+                options?.defaultIgnoreMappings?.[courseCode] ?? [];
               updatedCourses.set(courseCode, {
                 index,
-                ignoreIndexes: new Set(),
+                ignoreIndexes: new Set(defaultIgnoreIndexes),
               });
               return;
             }

@@ -176,3 +176,31 @@ export function serializeCourseCodes(
 ) {
   return courseCodes.map((c) => `${c.courseCode}:${c.index}`).join(",");
 }
+
+export function parseCourseCodesFromUrl(url: URL) {
+  const searchParams = url.searchParams;
+  const courseCodes = searchParams.get("c");
+  if (!courseCodes) {
+    return [];
+  }
+  return courseCodes
+    .split(",")
+    .map((c) => {
+      const split = c.split(":");
+      if (split.length === 0) {
+        return null;
+      }
+      if (split.length === 1) {
+        return {
+          courseCode: split[0],
+          index: "",
+        };
+      }
+      const [courseCode, index] = split;
+      return {
+        courseCode,
+        index,
+      };
+    })
+    .filter((c): c is NonNullable<typeof c> => c !== null);
+}

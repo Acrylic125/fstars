@@ -1,6 +1,7 @@
 "use client";
 import { create } from "zustand";
 import {
+  PlanId,
   Timetable,
   TimetableId,
   TimetablePlanRef,
@@ -49,6 +50,7 @@ import { Textarea } from "../ui/textarea";
 import { ScrollArea } from "../ui/scroll-area";
 import { deserializePlanCourses } from "./timetable-importer-utils";
 import { trpc } from "@/server/client";
+import { parseCourseCodesFromUrl, serializeCourseCodes } from "./utils";
 
 export type TimetableModalAction =
   | {
@@ -83,15 +85,10 @@ export type TimetableModalAction =
     }
   | {
       type: "import-plan";
-      options:
-        | {
-            type: "current" | "copy";
-            planRef: TimetablePlanRef;
-          }
-        | {
-            type: "new";
-            timetableId: TimetableId;
-          };
+      options: {
+        planRef: PlanId;
+        timetableId: TimetableId;
+      };
     };
 
 type ExtractOptions<T extends TimetableModalAction["type"]> = Extract<
@@ -636,31 +633,21 @@ export function ImportPlanDialog({
   options: ExtractOptions<"import-plan">;
   close: () => void;
 }) {
+  const [importTarget, setImportTarget] = useState<"new" | "append">("new");
   const timetableStore = useTimetableStore(
     useShallow((state) => {
-      let timetable: Timetable | null = null;
-
-      let planRefName = "";
-      if (options?.type === "current" || options?.type === "copy") {
-        timetable = state.timetables.get(options.planRef.timetableId) ?? null;
-        if (!timetable) {
-          return null;
-        }
-        const plan = timetable.plans.get(options.planRef.planId);
-        if (plan) {
-          planRefName = plan.name;
-        }
-      } else if (options?.type === "new") {
-        timetable = state.timetables.get(options.timetableId) ?? null;
-      }
+      const timetable = state.timetables.get(options.timetableId) ?? null;
 
       if (!timetable) {
         return null;
       }
 
+      const plan = timetable.plans.get(options.planRef) ?? null;
+
       return {
+        timetable,
         acadYear: timetable.acadYear,
-        planRefName,
+        planRefName: plan?.name ?? "",
         selectCourseIndexes: state.selectCourseIndexes,
         createPlanCopy: state.createPlanCopy,
         createPlan: state.createPlan,
@@ -672,7 +659,12 @@ export function ImportPlanDialog({
 
   const [rawImport, setRawImport] = useState("");
   const importCourses = useMemo(() => {
-    return deserializePlanCourses(rawImport);
+    try {
+      const result = parseCourseCodesFromUrl(new URL(rawImport));
+      return result;
+    } catch (error) {
+      return [];
+    }
   }, [rawImport]);
 
   // We will use RQ to do state management despite the action being synchronous.
@@ -720,13 +712,20 @@ export function ImportPlanDialog({
 
       const importCourseSelections = courses.map((course) => ({
         courseCode: course.courseCode,
-        index: course.index ?? "",
+        index: course.index,
       }));
 
-      const courseIndexPairs = await utils.client.getCourseIndexPairs.query({
-        courses: importCourseSelections,
-        acadYear: timetableStore.acadYear,
-      });
+      const [courseIndexPairs, excludeIndexes] = await Promise.all([
+        utils.client.getCourseIndexPairs.query({
+          courses: importCourseSelections,
+          acadYear: timetableStore.acadYear,
+        }),
+        utils.client.getProgramExcludedCourseIndexesMany.query({
+          courseCodes: importCourseSelections.map((c) => c.courseCode),
+          programs: timetableStore.timetable.programs,
+          acadYear: timetableStore.acadYear,
+        }),
+      ]);
 
       const courseIndexPairsMap = new Map(
         courseIndexPairs.map((pair) => [pair.course.code, pair.index])
@@ -736,7 +735,7 @@ export function ImportPlanDialog({
       for (let i = 0; i < courses.length; i++) {
         const course = courses[i];
         const index = course.index;
-        if (index === null) {
+        if (index === "") {
           continue;
         }
 
@@ -757,34 +756,17 @@ export function ImportPlanDialog({
         } as const;
       }
 
-      if (options.type === "current") {
-        const res = timetableStore.selectCourseIndexes(
-          options.planRef,
-          importCourseSelections,
-          false
-        );
-        if (res.type === "error") {
-          return {
-            type: "error",
-            message: res.error,
-            indices: [],
-          } as const;
-        }
-      } else if (options.type === "copy") {
-        const newPlan = timetableStore.createPlanCopy(options.planRef);
-        if (newPlan.type === "error") {
-          return {
-            type: "error",
-            message: newPlan.error,
-            indices: [],
-          } as const;
-        }
+      if (importTarget === "append") {
         const res = timetableStore.selectCourseIndexes(
           {
-            timetableId: options.planRef.timetableId,
-            planId: newPlan.planId,
+            timetableId: options.timetableId,
+            planId: options.planRef,
           },
-          importCourseSelections
+          importCourseSelections,
+          {
+            overrideAll: false,
+            defaultIgnoreMappings: excludeIndexes,
+          }
         );
         if (res.type === "error") {
           return {
@@ -793,7 +775,7 @@ export function ImportPlanDialog({
             indices: [],
           } as const;
         }
-      } else if (options.type === "new") {
+      } else if (importTarget === "new") {
         const newPlan = timetableStore.createPlan(
           {
             timetableId: options.timetableId,
@@ -812,7 +794,11 @@ export function ImportPlanDialog({
             timetableId: options.timetableId,
             planId: newPlan.planId,
           },
-          importCourseSelections
+          importCourseSelections,
+          {
+            overrideAll: true,
+            defaultIgnoreMappings: excludeIndexes,
+          }
         );
         if (res.type === "error") {
           return {
@@ -835,103 +821,120 @@ export function ImportPlanDialog({
       <DialogHeader>
         <DialogTitle>Import Plan</DialogTitle>
         <DialogDescription>
-          {options?.type === "current" && (
-            <span>
-              Import a <span className="text-primary">shared plan</span> to
-              current plan,{" "}
-              {timetableStore?.planRefName ? (
-                <span className="text-primary">
-                  {timetableStore.planRefName}
-                </span>
-              ) : (
-                <span className="text-red-600 dark:text-red-400">
-                  Unknown Plan
-                </span>
-              )}{" "}
-            </span>
-          )}
-          {options?.type === "copy" && (
-            <span>
-              Import a <span className="text-primary">shared plan</span> to copy
-              of plan,{" "}
-              {timetableStore?.planRefName ? (
-                <span className="text-primary">
-                  {timetableStore.planRefName}
-                </span>
-              ) : (
-                <span className="text-red-600 dark:text-red-400">
-                  Unknown Plan
-                </span>
-              )}{" "}
-              (Copy)
-            </span>
-          )}
-          {options?.type === "new" && (
-            <span>
-              Import a <span className="text-primary">shared plan</span> to a
-              new plan
-            </span>
-          )}
+          <span>
+            Import a <span className="text-primary">shared plan link</span>.
+          </span>
         </DialogDescription>
       </DialogHeader>
-      <div className="flex flex-row items-center gap-4">
-        <Textarea
-          className="resize-none h-52"
-          value={rawImport}
-          onChange={(e) => setRawImport(e.target.value)}
-          placeholder={`Import a shared plan. E.g.
-CC0001: 10011
-CC0007: 10012
-CC0008: ?`}
-        />
-        <Button
-          variant="outline"
-          className="opacity-100 disabled:opacity-100"
-          size="icon"
-          disabled
-        >
-          <ArrowRightLeftIcon className="w-4 h-4" />
-        </Button>
-        <ScrollArea className="w-full h-52 border-border border rounded-md">
-          <div className="flex flex-col gap-2 p-2">
-            {importCourses.map((course, index) => {
-              const err = importPlanMutation.data?.indices?.[index];
-              const isErrored =
-                err !== null &&
-                err?.courseCode === course.courseCode &&
-                err?.index === course.index;
-              return (
-                <div key={index} className="flex flex-row items-center">
-                  <p className="text-foreground truncate text-sm break-words flex-1">
-                    {course.courseCode}
-                  </p>
-                  <Input
-                    value={course.index ?? "Not Selected"}
-                    disabled
-                    className={cn("flex-1", {
-                      "text-red-600 dark:text-red-400 border-red-600 dark:border-red-400 opacity-50 disabled:opacity-100":
-                        isErrored,
-                    })}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setRawImport(
-                        rawImport
-                          .split("\n")
-                          .filter((_, i) => i !== index)
-                          .join("\n")
-                      );
-                    }}
-                  >
-                    <XIcon className="w-4 h-4" />
-                  </Button>
-                </div>
-              );
-            })}
+      <div className="flex flex-col gap-4">
+        <div className="w-full flex flex-row items-center gap-4">
+          <Textarea
+            className="resize-none h-52"
+            value={rawImport}
+            onChange={(e) => setRawImport(e.target.value)}
+            placeholder={`Import a shared plan. E.g.
+
+https://fstars.benapps.dev/preview?c=SC2008:10399,SC2001:10128`}
+          />
+          <Button
+            variant="outline"
+            className="opacity-100 disabled:opacity-100"
+            size="icon"
+            disabled
+          >
+            <ArrowRightLeftIcon className="w-4 h-4" />
+          </Button>
+          <ScrollArea className="w-full h-52 border-border border rounded-md">
+            <div className="flex flex-col gap-2 p-2">
+              {importCourses.map((course, index) => {
+                const err = importPlanMutation.data?.indices?.[index];
+                const isErrored =
+                  err !== null &&
+                  err?.courseCode === course.courseCode &&
+                  err?.index === course.index;
+                return (
+                  <div key={index} className="flex flex-row items-center">
+                    <p className="text-foreground truncate text-sm break-words flex-1">
+                      {course.courseCode}
+                    </p>
+                    <Input
+                      value={course.index ?? "Not Selected"}
+                      disabled
+                      className={cn("flex-1", {
+                        "text-red-600 dark:text-red-400 border-red-600 dark:border-red-400 opacity-50 disabled:opacity-100":
+                          isErrored,
+                      })}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        try {
+                          const url = new URL(rawImport);
+                          url.search = `c=${serializeCourseCodes(
+                            importCourses
+                              .map((c) => ({
+                                courseCode: c.courseCode,
+                                index: c.index ?? "",
+                              }))
+                              .filter((c) => c.courseCode !== course.courseCode)
+                          )}`;
+
+                          setRawImport(url.toString());
+                        } catch (error) {}
+                      }}
+                    >
+                      <XIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span>Where should we import the courses to?</span>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              className={cn(
+                "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full w-full",
+                {
+                  "border-primary dark:border-primary": importTarget === "new",
+                }
+              )}
+              onClick={(e) => {
+                e.preventDefault();
+                setImportTarget("new");
+              }}
+            >
+              <h3 className="font-medium">New Plan</h3>
+              <p className="text-left text-muted-foreground wrap-break-word whitespace-normal">
+                Import the courses to a new plan.
+              </p>
+            </Button>
+            <Button
+              variant="outline"
+              className={cn(
+                "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full w-full text-left",
+                {
+                  "border-primary dark:border-primary":
+                    importTarget === "append",
+                }
+              )}
+              onClick={(e) => {
+                e.preventDefault();
+                setImportTarget("append");
+              }}
+            >
+              <h3 className="font-medium">Add / Set to Current Plan</h3>
+              <p className="text-left text-muted-foreground wrap-break-word whitespace-normal">
+                Will override the selected indexes in the current plan.
+              </p>
+            </Button>
           </div>
-        </ScrollArea>
+        </div>
       </div>
       {importPlanMutation.isSuccess &&
         importPlanMutation.data?.type === "error" && (

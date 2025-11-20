@@ -272,72 +272,25 @@ export function TimetableCoursePlansHeader({ id }: { id: string }) {
     <div className="w-full h-fit flex flex-row items-center justify-between gap-2 px-4 pb-4">
       <h2 className="text-base font-semibold">1. Select Courses</h2>
       <div className="flex flex-row gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" disabled={!selectedPlan} variant="outline">
-              Import
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem
-              onClick={() => {
-                if (!selectedPlan) {
-                  return;
-                }
-                modalStore.setAction({
-                  type: "import-plan",
-                  options: {
-                    type: "current",
-                    planRef: {
-                      timetableId: id,
-                      planId: selectedPlan.id,
-                    },
-                  },
-                });
-              }}
-            >
-              <div className="flex flex-col justify-center pr-8">
-                <p>Import to Current Plan</p>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                modalStore.setAction({
-                  type: "import-plan",
-                  options: {
-                    type: "new",
-                    timetableId: id,
-                  },
-                });
-              }}
-            >
-              <div className="flex flex-col justify-center pr-8">
-                <p>Import to New Plan</p>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                if (!selectedPlan) {
-                  return;
-                }
-                modalStore.setAction({
-                  type: "import-plan",
-                  options: {
-                    type: "copy",
-                    planRef: {
-                      timetableId: id,
-                      planId: selectedPlan.id,
-                    },
-                  },
-                });
-              }}
-            >
-              <div className="flex flex-col justify-center pr-8">
-                <p>Import to Copy of Current Plan</p>
-              </div>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          size="sm"
+          disabled={!selectedPlan}
+          variant="outline"
+          onClick={() => {
+            if (!selectedPlan) {
+              return;
+            }
+            modalStore.setAction({
+              type: "import-plan",
+              options: {
+                timetableId: id,
+                planRef: selectedPlan.id,
+              },
+            });
+          }}
+        >
+          Import
+        </Button>
 
         <div className="relative">
           <Indicator controls={controls} />
