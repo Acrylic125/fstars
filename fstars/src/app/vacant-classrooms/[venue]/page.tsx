@@ -18,7 +18,12 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { translateBuilding } from "@/lib/acad";
 import { Button } from "@/components/ui/button";
-import { MapIcon, Navigation, Navigation2 } from "lucide-react";
+import {
+  ExternalLinkIcon,
+  MapIcon,
+  Navigation,
+  Navigation2,
+} from "lucide-react";
 
 function getEventDate(
   dayOffset: number,
@@ -73,7 +78,7 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
     components.push(`, Floor ${location.floorName}`);
   }
   return (
-    <div className="h-16 flex flex-row gap-4 items-center">
+    <div className="w-full flex flex-col xl:flex-row justify-between gap-4 xl:items-center">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold">{location.name}</h1>
         <p className="text-base text-muted-foreground">{components.join("")}</p>
@@ -89,7 +94,7 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            NTU Map <MapIcon className="size-4" />
+            NTU Map <ExternalLinkIcon className="size-4" />
           </a>
         </Button>
       </div>

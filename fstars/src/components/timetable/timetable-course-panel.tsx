@@ -15,6 +15,7 @@ import {
 import {
   ChevronDownIcon,
   ChevronUpIcon,
+  DownloadIcon,
   EditIcon,
   TrashIcon,
 } from "lucide-react";
@@ -89,43 +90,44 @@ export function TimetableHeader({ id }: { id: string }) {
     <div className="w-full flex flex-row gap-2 justify-between items-center">
       <div className="w-full flex flex-row items-center gap-4">
         <div className="flex flex-col">
-          {timetable !== null ? (
-            <>
-              <p className="text-sm text-muted-foreground h-6">
-                {/* {timetable.program.name} - AY */}
-                AY{
-                  timetable.acadYear.yearCode
-                } Semester {timetable.acadYear.semesterCode}
-              </p>
-              <div className="flex flex-row items-center">
-                <h1 className="text-2xl font-semibold h-12">
-                  {timetable.name}
-                </h1>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="h-6 py-1 w-1/4">
-                <Skeleton className="h-full w-full rounded-md" />
-              </div>
-              <div className="h-12 py-2 w-1/2">
-                <Skeleton className="h-full w-full rounded-md" />
-              </div>
-            </>
-          )}
+          <p className="text-sm text-muted-foreground h-6">
+            {/* {timetable.program.name} - AY */}
+            AY{
+              timetable.acadYear.yearCode
+            } Semester {timetable.acadYear.semesterCode}
+          </p>
+          <div className="flex flex-row items-center">
+            <h1 className="text-2xl font-semibold">{timetable.name}</h1>
+          </div>
+          <div className="flex xl:hidden flex-row gap-2 pt-4">
+            <Button variant="outline" asChild>
+              <Link href={`/timetable/${id}/edit`}>
+                <EditIcon className="w-4 h-4" />
+                Edit
+              </Link>
+            </Button>
+            <div className="relative flex flex-row gap-2">
+              <Indicator controls={controls} className="w-48 z-10" />
+              <Button variant="outline" onClick={exportTimetableFile}>
+                <DownloadIcon className="w-4 h-4" />
+                Backup
+              </Button>
+            </div>
+          </div>
         </div>
-        <Button variant="outline" size="icon" asChild>
+      </div>
+      <div className="hidden xl:flex flex-row gap-2">
+        <Button variant="outline" asChild>
           <Link href={`/timetable/${id}/edit`}>
             <EditIcon className="w-4 h-4" />
+            Edit
           </Link>
         </Button>
-      </div>
-
-      <div className="flex flex-row gap-2">
         <div className="relative flex flex-row gap-2">
           <Indicator controls={controls} className="w-48 z-10" />
-          <Button variant="default" onClick={exportTimetableFile}>
-            Export
+          <Button variant="outline" onClick={exportTimetableFile}>
+            <DownloadIcon className="w-4 h-4" />
+            Backup
           </Button>
         </div>
       </div>
