@@ -4,6 +4,7 @@ import { GeneticGenerator } from "../../generator/genetic-generator";
 import { type TimetableGenerator } from "./timetable-generator-store";
 
 // Web Worker for generating timetables
+console.log("T10");
 addEventListener(
   "message",
   (

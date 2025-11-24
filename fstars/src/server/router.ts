@@ -626,7 +626,11 @@ export const appRouter = createTRPCRouter({
           .select()
           .from(coursesTable)
           .where(
-            sql`${coursesTable.searchText} @@ to_tsquery('english', ${searchTerms})`
+            and(
+              sql`${coursesTable.searchText} @@ to_tsquery('english', ${searchTerms})`,
+              eq(coursesTable.ay, input.acadYear.yearCode),
+              eq(coursesTable.semester, input.acadYear.semesterCode)
+            )
           )
           .limit(20);
         return courses;

@@ -3,7 +3,8 @@ export const Config = {
   currentAcademicYear: {
     yearCode: "25/26",
     year: 2025,
-    semester: 1,
+    semester: 2,
+    // semester: 1,
   },
   limits: {
     timetables: 10,
