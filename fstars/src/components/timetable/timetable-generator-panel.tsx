@@ -382,9 +382,6 @@ function GenerateTimetableSection({
             const worker = new Worker(
               new URL("./generate-timetable-worker.ts", import.meta.url)
             );
-            console.log(
-              new URL("./generate-timetable-worker.ts", import.meta.url)
-            );
             worker.onmessage = (
               event: MessageEvent<GeneratedTimetableWithScore[]>
             ) => {
@@ -401,13 +398,11 @@ function GenerateTimetableSection({
                 );
               }
             };
-            console.log("Post");
             worker.postMessage({
               factors: timetableGeneratorStore.factors,
               courses: response,
               seed: timetableGeneratorStore.seed,
             });
-            console.log("Posted");
           } catch (error) {
             reject(error);
           }
