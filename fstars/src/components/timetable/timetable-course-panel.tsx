@@ -244,13 +244,16 @@ export function TimetableCoursesRow({
 
 export function TimetableCoursePlansHeader({ id }: { id: string }) {
   const controls = useIndicator();
-  const selectedPlan = useTimetableStore(
+  const timetableStore = useTimetableStore(
     useShallow((state) => {
       const timetable = state.timetables.get(id);
       if (!timetable) {
         return null;
       }
-      return timetable.plans.get(timetable.selectedPlanId);
+      return {
+        acadYear: timetable.acadYear,
+        selectedPlan: timetable.plans.get(timetable.selectedPlanId),
+      };
     })
   );
   const modalStore = useTimetableModalStore(
@@ -267,17 +270,17 @@ export function TimetableCoursePlansHeader({ id }: { id: string }) {
       <div className="flex flex-row gap-2">
         <Button
           size="sm"
-          disabled={!selectedPlan}
+          disabled={!timetableStore?.selectedPlan}
           variant="outline"
           onClick={() => {
-            if (!selectedPlan) {
+            if (!timetableStore?.selectedPlan) {
               return;
             }
             modalStore.setAction({
               type: "import-plan",
               options: {
                 timetableId: id,
-                planRef: selectedPlan.id,
+                planRef: timetableStore.selectedPlan.id as PlanId,
               },
             });
           }}
@@ -289,9 +292,9 @@ export function TimetableCoursePlansHeader({ id }: { id: string }) {
           <Indicator controls={controls} />
           <Button
             size="sm"
-            disabled={!selectedPlan}
+            disabled={!timetableStore?.selectedPlan}
             onClick={() => {
-              if (!selectedPlan) {
+              if (!timetableStore?.selectedPlan) {
                 return;
               }
               controls.showIndicator(
@@ -300,7 +303,7 @@ export function TimetableCoursePlansHeader({ id }: { id: string }) {
               );
               const appUrl = window.location.origin;
               const queryString = serializeCourseCodes(
-                Array.from(selectedPlan.courses.entries()).map(
+                Array.from(timetableStore.selectedPlan.courses.entries()).map(
                   ([courseCode, course]) => ({
                     courseCode,
                     index: course.index,
@@ -308,7 +311,7 @@ export function TimetableCoursePlansHeader({ id }: { id: string }) {
                 )
               );
               navigator.clipboard.writeText(
-                `${appUrl}/preview?c=${queryString}`
+                `${appUrl}/preview?ay=${timetableStore.acadYear.yearCode}&s=${timetableStore.acadYear.semesterCode}&c=${queryString}`
               );
             }}
           >

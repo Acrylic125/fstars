@@ -55,11 +55,11 @@ type Course = inferRouterOutputs<AppRouter>["findCourses"][number];
 
 export function useQueryParamsAcadYear() {
   const [acadYear] = useQueryState(
-    "acadYear",
+    "ay",
     parseAsString.withDefault(Config.currentAcademicYear.yearCode)
   );
   const [semesterCode] = useQueryState(
-    "sem",
+    "s",
     parseAsString.withDefault(`${Config.currentAcademicYear.semester}`)
   );
   return { acadYear, semesterCode };
@@ -397,6 +397,7 @@ export function TimetableCoursesRow({
 export function TimetableCoursesHeader() {
   const controls = useIndicator();
   const [courseCodes] = useQueryParamCourses();
+  const { acadYear, semesterCode } = useQueryParamsAcadYear();
 
   return (
     <div className="w-full h-fit flex flex-row items-center justify-between gap-2 px-4">
@@ -430,7 +431,7 @@ export function TimetableCoursesHeader() {
               );
               const appUrl = window.location.origin;
               navigator.clipboard.writeText(
-                `${appUrl}/preview?c=${serializeCourseCodes(courseCodes)}`
+                `${appUrl}/preview?ay=${acadYear}&s=${semesterCode}&c=${serializeCourseCodes(courseCodes)}`
               );
             }}
           >
