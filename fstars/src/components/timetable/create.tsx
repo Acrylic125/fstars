@@ -93,7 +93,7 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
       };
       const acadYear = {
         yearCode: Config.currentAcademicYear.yearCode,
-        semesterCode: "1",
+        semesterCode: `${Config.currentAcademicYear.semester}`,
       } as const;
       if (courseCodes.length > 0) {
         const excludedCourseIndexes =

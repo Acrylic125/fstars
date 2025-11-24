@@ -1,7 +1,6 @@
 "use client";
 import { useShallow } from "zustand/react/shallow";
 import { PlanId, useTimetableStore } from "./timetable-store";
-import { Skeleton } from "../ui/skeleton";
 import { useCallback, useMemo } from "react";
 import { SelectPlanCombobox } from "./select-plan-combobox";
 import { SelectCourseCombobox } from "./select-course-combobox";
@@ -30,14 +29,7 @@ import { type AppRouter } from "@/server/router";
 import { inferRouterOutputs } from "@trpc/server";
 import { AcadYear } from "@/lib/types";
 import { Indicator, useIndicator } from "../ui/indicator";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
 import { useTimetableModalStore } from "./timetable-modal";
-import { serializePlanCourses } from "./timetable-importer-utils";
 import {
   downloadObjectAsJSONFile,
   exportTimetable,
@@ -45,7 +37,6 @@ import {
 import { nanoid } from "nanoid";
 import { useTimetableGeneratorStore } from "./timetable-generator-store";
 import Link from "next/link";
-import { Config } from "@/lib/config";
 
 export function TimetableHeader({ id }: { id: string }) {
   const timetable = useTimetableStore(
