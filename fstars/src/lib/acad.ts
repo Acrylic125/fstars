@@ -6,6 +6,8 @@ const acadYearWeeks: {
   [key: string]: {
     ay: `${number}/${number}`;
     semester: "1" | "2";
+    start: RawDayDate;
+    end: RawDayDate;
     weeks: {
       week: number;
       start: RawDayDate;
@@ -16,6 +18,8 @@ const acadYearWeeks: {
   "24/25 S1": {
     ay: "24/25",
     semester: "1",
+    start: [2024, 8, 11],
+    end: [2024, 12, 31],
     weeks: [
       {
         week: 1,
@@ -92,6 +96,8 @@ const acadYearWeeks: {
   "25/26 S1": {
     ay: "25/26",
     semester: "1",
+    start: [2025, 7, 1],
+    end: [2025, 12, 31],
     weeks: [
       {
         week: 1,
@@ -168,6 +174,8 @@ const acadYearWeeks: {
   "25/26 S2": {
     ay: "25/26",
     semester: "2",
+    start: [2026, 1, 2],
+    end: [2026, 5, 31],
     weeks: [
       {
         week: 1,
@@ -249,6 +257,17 @@ export function getAcadWeek(date: DateTime<boolean>) {
   const year = date.year;
 
   for (const [key, value] of Object.entries(acadYearWeeks)) {
+    // Check which academic year this date is in
+    const first = value.start;
+    const end = value.end;
+
+    const isLaterThanStart =
+      year >= first[0] && month >= first[1] && day >= first[2];
+    const isEarlierThanEnd = year <= end[0] && month <= end[1] && day <= end[2];
+    if (!(isLaterThanStart && isEarlierThanEnd)) {
+      continue;
+    }
+
     for (const week of value.weeks) {
       if (
         year >= week.start[0] &&
@@ -259,13 +278,22 @@ export function getAcadWeek(date: DateTime<boolean>) {
         day <= week.end[2]
       ) {
         return {
-          acadYear: key,
+          acadYearKey: key,
           week: week.week,
-          ay: value.ay,
-          semester: value.semester,
+          acadSem: {
+            ay: value.ay,
+            semester: value.semester,
+          },
         };
       }
     }
+    return {
+      acadYearKey: key,
+      acadSem: {
+        ay: value.ay,
+        semester: value.semester,
+      },
+    };
   }
   return null;
 }

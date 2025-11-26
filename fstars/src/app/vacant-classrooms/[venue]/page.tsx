@@ -12,7 +12,7 @@ import {
   locationsTable,
 } from "@/db/schema";
 import { db } from "@/db";
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { DateTime, WeekdayNumbers } from "luxon";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +24,7 @@ import {
   Navigation,
   Navigation2,
 } from "lucide-react";
+import { Config } from "@/lib/config";
 
 function getEventDate(
   dayOffset: number,
@@ -104,8 +105,13 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
 
 export default async function VacentClassroomPage(props: {
   params: Promise<{ venue: string }>;
+  searchParams: Promise<{ ay?: string; sem?: string }>;
 }) {
   const { venue: _venue } = await props.params;
+  const {
+    ay = Config.currentAcademicYear.ay,
+    sem = `${Config.currentAcademicYear.semester}`,
+  } = await props.searchParams;
   const venue = decodeURIComponent(_venue);
 
   const events = await db
@@ -126,7 +132,13 @@ export default async function VacentClassroomPage(props: {
       eq(courseIndexClassesTable.indexId, courseIndexTable.id)
     )
     .innerJoin(coursesTable, eq(courseIndexTable.courseId, coursesTable.id))
-    .where(eq(courseIndexClassesTable.venue, venue));
+    .where(
+      and(
+        eq(courseIndexClassesTable.venue, venue),
+        eq(coursesTable.ay, ay),
+        eq(coursesTable.semester, sem)
+      )
+    );
 
   const mappings = new Map<string, VacantClassroomEvent>();
 

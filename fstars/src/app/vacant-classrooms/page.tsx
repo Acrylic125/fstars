@@ -28,7 +28,6 @@ import { getAcadWeek, translateBuilding } from "@/lib/acad";
 import { Badge } from "@/components/ui/badge";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Config } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -38,9 +37,11 @@ async function TableLoader({
 }: {
   currentDateTime: DateTime;
   acadWeek: {
-    ay: string;
-    semester: string;
-    week: number;
+    acadSem: {
+      ay: string;
+      semester: string;
+    };
+    week?: number;
   } | null;
 }) {
   const currentDay = currentDateTime.weekday;
@@ -84,7 +85,7 @@ async function TableLoader({
       });
     })(),
     (async () => {
-      if (!acadWeek) {
+      if (acadWeek === null || acadWeek.week === undefined) {
         return [];
       }
       let classroomsInUseNow = await db
@@ -113,8 +114,8 @@ async function TableLoader({
             not(inArray(courseIndexClassesTable.venue, ignoreVenues)),
             // Within the current acad year and semester
             and(
-              eq(coursesTable.ay, acadWeek.ay),
-              eq(coursesTable.semester, acadWeek.semester)
+              eq(coursesTable.ay, acadWeek.acadSem.ay),
+              eq(coursesTable.semester, acadWeek.acadSem.semester)
             ),
             // Current day and time
             eq(courseIndexClassesTable.day, currentDay),
@@ -154,32 +155,46 @@ async function TableLoader({
   // );
 
   // Get next time slot for each classroom
-  const nextTimeSlots = await db
-    .select({
-      venue: courseIndexClassesTable.venue,
-      // Get closest time slot after current time
-      time: sql<number>`MIN(${courseIndexClassesTable.timeFromHour} * 60 + ${courseIndexClassesTable.timeFromMinute})`,
-    })
-    .from(courseIndexClassesTable)
-    .where(
-      and(
-        inArray(
-          courseIndexClassesTable.venue,
-          allVenues.map((venue) => venue.venue)
-        ),
-        eq(courseIndexClassesTable.day, currentDay),
-        gte(
-          sql`${courseIndexClassesTable.timeFromHour} * 60 + ${courseIndexClassesTable.timeFromMinute}`,
-          sql`${currentHour} * 60 + ${currentMinute}`
-        )
-      )
-    )
-    .groupBy(courseIndexClassesTable.venue)
-    .orderBy(
-      asc(
-        sql`MIN(${courseIndexClassesTable.timeFromHour} * 60 + ${courseIndexClassesTable.timeFromMinute})`
-      )
-    );
+  const nextTimeSlots =
+    acadWeek !== null && acadWeek.week !== undefined
+      ? await db
+          .select({
+            venue: courseIndexClassesTable.venue,
+            // Get closest time slot after current time
+            time: sql<number>`MIN(${courseIndexClassesTable.timeFromHour} * 60 + ${courseIndexClassesTable.timeFromMinute})`,
+          })
+          .from(courseIndexClassesTable)
+          .innerJoin(
+            courseIndexTable,
+            eq(courseIndexClassesTable.indexId, courseIndexTable.id)
+          )
+          .innerJoin(
+            coursesTable,
+            eq(courseIndexTable.courseId, coursesTable.id)
+          )
+          .where(
+            and(
+              eq(coursesTable.ay, acadWeek.acadSem.ay),
+              eq(coursesTable.semester, acadWeek.acadSem.semester),
+              arrayContains(courseIndexClassesTable.weeks, [acadWeek.week]),
+              inArray(
+                courseIndexClassesTable.venue,
+                allVenues.map((venue) => venue.venue)
+              ),
+              eq(courseIndexClassesTable.day, currentDay),
+              gte(
+                sql`${courseIndexClassesTable.timeFromHour} * 60 + ${courseIndexClassesTable.timeFromMinute}`,
+                sql`${currentHour} * 60 + ${currentMinute}`
+              )
+            )
+          )
+          .groupBy(courseIndexClassesTable.venue)
+          .orderBy(
+            asc(
+              sql`MIN(${courseIndexClassesTable.timeFromHour} * 60 + ${courseIndexClassesTable.timeFromMinute})`
+            )
+          )
+      : [];
 
   const timingMap = new Map<
     string,
@@ -242,7 +257,7 @@ export default async function VacentClassroomsPage() {
   const currentDateTime = DateTime.now().setZone("Asia/Singapore");
   // const currentDateTime = DateTime.now().setZone("Asia/Singapore").set({
   //   day: 14,
-  //   month: 4,
+  //   month: 1,
   //   year: 2026,
   //   hour: 12,
   //   minute: 30,
@@ -258,13 +273,15 @@ export default async function VacentClassroomsPage() {
             <div className="w-full flex flex-col gap-1">
               <h1 className="w-full text-2xl font-bold">
                 Vacant Classrooms{" "}
-                {acadWeek ? `- ${acadWeek.ay} S${acadWeek.semester}` : ""}
+                {acadWeek
+                  ? `- ${acadWeek.acadSem.ay} S${acadWeek.acadSem.semester}`
+                  : ""}
               </h1>
               <div className="w-full flex flex-row items-center gap-2">
                 <p className="text-muted-foreground">
                   As of {currentDateTime.toFormat("dd MMMM yyyy HH:mm:ss")}
                 </p>
-                {acadWeek ? (
+                {acadWeek?.week !== undefined ? (
                   <Badge>Wk {acadWeek.week}</Badge>
                 ) : (
                   <Badge variant="secondary">Free Week</Badge>
