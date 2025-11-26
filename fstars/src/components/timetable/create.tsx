@@ -68,7 +68,7 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       programs: [],
-      name: `My AY${Config.currentAcademicYear.yearCode} Semester ${Config.currentAcademicYear.semester} Timetable`,
+      name: `My AY${Config.currentAcademicYear.ay} Semester ${Config.currentAcademicYear.semester} Timetable`,
     },
   });
   const timetableStore = useTimetableStore(
@@ -92,7 +92,7 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
         courses: new Map(),
       };
       const acadYear = {
-        yearCode: Config.currentAcademicYear.yearCode,
+        yearCode: Config.currentAcademicYear.ay,
         semesterCode: `${Config.currentAcademicYear.semester}`,
       } as const;
       if (courseCodes.length > 0) {
@@ -140,7 +140,7 @@ export function CreateTimetable({ programs }: { programs: Program[] }) {
   return (
     <div className="flex flex-col w-full max-w-5xl px-12 py-8 md:px-20 md:py-12 gap-6 md:gap-8">
       <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
-        Create Timetable - AY{Config.currentAcademicYear.yearCode} Semester{" "}
+        Create Timetable - AY{Config.currentAcademicYear.ay} Semester{" "}
         {Config.currentAcademicYear.semester}
       </h1>
 

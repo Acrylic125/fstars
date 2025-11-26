@@ -4,6 +4,8 @@ export type RawDayDate = [number, number, number];
 
 const acadYearWeeks: {
   [key: string]: {
+    ay: `${number}/${number}`;
+    semester: "1" | "2";
     weeks: {
       week: number;
       start: RawDayDate;
@@ -12,6 +14,8 @@ const acadYearWeeks: {
   };
 } = {
   "24/25 S1": {
+    ay: "24/25",
+    semester: "1",
     weeks: [
       {
         week: 1,
@@ -86,6 +90,8 @@ const acadYearWeeks: {
     ],
   },
   "25/26 S1": {
+    ay: "25/26",
+    semester: "1",
     weeks: [
       {
         week: 1,
@@ -159,6 +165,82 @@ const acadYearWeeks: {
       },
     ],
   },
+  "25/26 S2": {
+    ay: "25/26",
+    semester: "2",
+    weeks: [
+      {
+        week: 1,
+        start: [2026, 1, 11],
+        end: [2026, 1, 17],
+      },
+      {
+        week: 2,
+        start: [2026, 1, 18],
+        end: [2026, 1, 24],
+      },
+      {
+        week: 3,
+        start: [2026, 1, 25],
+        end: [2026, 1, 31],
+      },
+      {
+        week: 4,
+        start: [2026, 2, 1],
+        end: [2026, 2, 7],
+      },
+      {
+        week: 5,
+        start: [2026, 2, 8],
+        end: [2026, 2, 14],
+      },
+      {
+        week: 6,
+        start: [2026, 2, 15],
+        end: [2026, 2, 21],
+      },
+      {
+        week: 7,
+        start: [2026, 2, 22],
+        end: [2026, 2, 28],
+      },
+      {
+        week: 8,
+        start: [2026, 3, 8],
+        end: [2026, 3, 14],
+      },
+      {
+        week: 9,
+        start: [2026, 3, 15],
+        end: [2026, 3, 21],
+      },
+      {
+        week: 10,
+        start: [2026, 3, 22],
+        end: [2026, 3, 28],
+      },
+      {
+        week: 11,
+        start: [2026, 3, 29],
+        end: [2026, 4, 4],
+      },
+      {
+        week: 12,
+        start: [2026, 4, 5],
+        end: [2026, 4, 11],
+      },
+      {
+        week: 13,
+        start: [2026, 4, 12],
+        end: [2026, 4, 18],
+      },
+      {
+        week: 14,
+        start: [2026, 4, 19],
+        end: [2026, 4, 25],
+      },
+    ],
+  },
 };
 
 export function getAcadWeek(date: DateTime<boolean>) {
@@ -179,6 +261,8 @@ export function getAcadWeek(date: DateTime<boolean>) {
         return {
           acadYear: key,
           week: week.week,
+          ay: value.ay,
+          semester: value.semester,
         };
       }
     }

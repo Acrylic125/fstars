@@ -56,7 +56,7 @@ type Course = inferRouterOutputs<AppRouter>["findCourses"][number];
 export function useQueryParamsAcadYear() {
   const [acadYear] = useQueryState(
     "ay",
-    parseAsString.withDefault(Config.currentAcademicYear.yearCode)
+    parseAsString.withDefault(Config.currentAcademicYear.ay)
   );
   const [semesterCode] = useQueryState(
     "s",

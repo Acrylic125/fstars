@@ -7,23 +7,19 @@ import {
   coursesTable,
   locationAltNamesTable,
   locationsTable,
-  venuesTable,
 } from "@/db/schema";
 import {
   and,
   arrayContains,
   asc,
   eq,
-  exists,
   gte,
   inArray,
   lte,
   not,
-  or,
   sql,
 } from "drizzle-orm";
 import { DateTime } from "luxon";
-import { formatTime } from "@/lib/utils";
 import {
   VacantTable,
   VacantTableHeader,
@@ -32,6 +28,7 @@ import { getAcadWeek, translateBuilding } from "@/lib/acad";
 import { Badge } from "@/components/ui/badge";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Config } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +38,8 @@ async function TableLoader({
 }: {
   currentDateTime: DateTime;
   acadWeek: {
-    acadYear: string;
+    ay: string;
+    semester: string;
     week: number;
   } | null;
 }) {
@@ -113,6 +111,11 @@ async function TableLoader({
         .where(
           and(
             not(inArray(courseIndexClassesTable.venue, ignoreVenues)),
+            // Within the current acad year and semester
+            and(
+              eq(coursesTable.ay, acadWeek.ay),
+              eq(coursesTable.semester, acadWeek.semester)
+            ),
             // Current day and time
             eq(courseIndexClassesTable.day, currentDay),
             // Current week must be in the weeks of the class
@@ -239,6 +242,8 @@ export default async function VacentClassroomsPage() {
   const currentDateTime = DateTime.now().setZone("Asia/Singapore");
   // const currentDateTime = DateTime.now().setZone("Asia/Singapore").set({
   //   day: 14,
+  //   month: 4,
+  //   year: 2026,
   //   hour: 12,
   //   minute: 30,
   // });
@@ -251,7 +256,10 @@ export default async function VacentClassroomsPage() {
         <div className="w-full flex flex-col items-center">
           <div className="w-full flex flex-col items-center max-w-ui mx-auto px-4 py-8 md:px-8 gap-4">
             <div className="w-full flex flex-col gap-1">
-              <h1 className="w-full text-2xl font-bold">Vacant Classrooms</h1>
+              <h1 className="w-full text-2xl font-bold">
+                Vacant Classrooms{" "}
+                {acadWeek ? `- ${acadWeek.ay} S${acadWeek.semester}` : ""}
+              </h1>
               <div className="w-full flex flex-row items-center gap-2">
                 <p className="text-muted-foreground">
                   As of {currentDateTime.toFormat("dd MMMM yyyy HH:mm:ss")}
