@@ -12,6 +12,7 @@ export type TimeAsArray = [Hour, Minute];
 export type IndexClass = {
   startTime: TimeAsArray;
   endTime: TimeAsArray;
+  type: string;
   day: number;
   weeks: number[];
 };

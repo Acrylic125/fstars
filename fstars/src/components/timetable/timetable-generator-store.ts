@@ -90,6 +90,9 @@ export const TimetableGeneratorSchema = z.object({
         distribution: z.enum(["Even", "Skewed"]),
         priority: z.number().min(0).max(3),
       }),
+      skippableClassTypes: z.object({
+        types: z.array(z.string()),
+      }),
       matchWithPlan: z.object({
         matchWith: z.array(
           z.object({
@@ -143,6 +146,9 @@ export const TimetableGeneratorSchema = z.object({
       classDistribution: {
         distribution: "Even",
         priority: asPriorityNumber("None"),
+      },
+      skippableClassTypes: {
+        types: [],
       },
       matchWithPlan: {
         matchWith: [],
@@ -285,6 +291,9 @@ function defaultGenerator(
       classDistribution: {
         distribution: "Even",
         priority: asPriorityNumber("None"),
+      },
+      skippableClassTypes: {
+        types: [],
       },
       matchWithPlan: {
         matchWith: [],

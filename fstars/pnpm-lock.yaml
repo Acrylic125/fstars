@@ -11,6 +11,9 @@ importers:
       '@fullcalendar/core':
         specifier: ^6.1.18
         version: 6.1.18
+      '@fullcalendar/interaction':
+        specifier: ^6.1.19
+        version: 6.1.19(@fullcalendar/core@6.1.18)
       '@fullcalendar/react':
         specifier: ^6.1.18
         version: 6.1.18(@fullcalendar/core@6.1.18)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -563,6 +566,11 @@ packages:
     resolution: {integrity: sha512-s452Zle1SdMEzZDw+pDczm8m3JLIZzS9ANMThXTnqeqJewW1gqNFYas18aHypJSgF9Fh9rDJjTSUw04BpXB/Mg==}
     peerDependencies:
       '@fullcalendar/core': ~6.1.18
+
+  '@fullcalendar/interaction@6.1.19':
+    resolution: {integrity: sha512-GOciy79xe8JMVp+1evAU3ytdwN/7tv35t5i1vFkifiuWcQMLC/JnLg/RA2s4sYmQwoYhTw/p4GLcP0gO5B3X5w==}
+    peerDependencies:
+      '@fullcalendar/core': ~6.1.19
 
   '@fullcalendar/react@6.1.18':
     resolution: {integrity: sha512-Jwvb+T+/1yGZKe+UYXn0id022HJm0Fq2X/PGFvVh/QRYAI/6xPMRvJrwercBkToxf6LjqYXrDO+/NhRN6IDlmg==}
@@ -2707,6 +2715,10 @@ snapshots:
       preact: 10.12.1
 
   '@fullcalendar/daygrid@6.1.18(@fullcalendar/core@6.1.18)':
+    dependencies:
+      '@fullcalendar/core': 6.1.18
+
+  '@fullcalendar/interaction@6.1.19(@fullcalendar/core@6.1.18)':
     dependencies:
       '@fullcalendar/core': 6.1.18
 

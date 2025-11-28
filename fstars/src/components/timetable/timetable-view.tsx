@@ -18,6 +18,7 @@ import { AlertTriangleIcon, ArrowDownRightIcon } from "lucide-react";
 import { useTimetableViewWeekSelector } from "./timetable-view-week-selector";
 import { useViewport } from "../use-viewport";
 import { AcadYear } from "@/lib/types";
+import interactionPlugin, { Draggable } from "@fullcalendar/interaction";
 
 type FCEvent = {
   title: string;
@@ -271,6 +272,7 @@ export function TimetableView({
       initialView="timeGridWeek"
       headerToolbar={false}
       expandRows={true}
+      dragScroll={true}
       events={events}
       eventContent={(arg) => {
         // TODO: Annoying type casting.

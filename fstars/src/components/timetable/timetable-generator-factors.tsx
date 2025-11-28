@@ -11,7 +11,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Collapsible, CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { CollapsibleContent } from "../ui/collapsible";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
@@ -27,6 +27,8 @@ import SkewedDistributionIcon from "../icons/skewed-distribution";
 import { Alert, AlertTitle } from "../ui/alert";
 import { isBeforeOrEqual } from "@/generator/utils";
 import { asPriority, asPriorityNumber, Priority } from "./utils";
+import { Checkbox } from "../ui/checkbox";
+import { Label } from "../ui/label";
 
 const priorityOptions: {
   value: Priority;
@@ -662,6 +664,119 @@ export function ClassDistributionView({
                 />
               </div>
             </div>
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+export function SkippableClassTypesView({
+  generatorId,
+}: {
+  generatorId: TimetableGeneratorId;
+}) {
+  const generatorStore = useTimetableGeneratorStore(
+    useShallow((state) => {
+      const generator = state.generators.get(generatorId);
+      if (!generator) return null;
+      return {
+        changeGeneratorField: state.changeGeneratorField,
+        skippableClassTypes: generator.factors.skippableClassTypes,
+      };
+    })
+  );
+  const changeSelection = useCallback(
+    (value: TimetableGenerator["factors"]["skippableClassTypes"]) => {
+      generatorStore?.changeGeneratorField(
+        generatorId,
+        "skippableClassTypes",
+        value
+      );
+    },
+    [generatorStore, generatorId]
+  );
+  // TODO: Hardcoded, simpler. Will probably cache this in the future. Rerun SELECT DISTINCT type FROM course_index_classes;
+  const classTypes = useMemo(() => {
+    // ["TUT", "LAB", "SEM", "LEC/STUDIO", "PRJ", "DES"];
+    return [
+      {
+        type: "TUT",
+        label: "Tutorial",
+      },
+      {
+        type: "LAB",
+        label: "Lab",
+      },
+      {
+        type: "SEM",
+        label: "Seminar",
+      },
+      {
+        type: "LEC/STUDIO",
+        label: "Lecture/Studio",
+      },
+      {
+        type: "PRJ",
+        label: "Project",
+      },
+      {
+        type: "DES",
+        label: "Design",
+      },
+    ];
+  }, []);
+
+  return (
+    <Collapsible className="group/collapsible w-full">
+      <CollapsibleTrigger asChild>
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Start after and end before"
+          className="h-12 w-full flex flex-row justify-between items-center px-4 hover:bg-neutral-100 focus-visible:bg-neutral-100 dark:hover:bg-neutral-800 dark:focus-visible:bg-neutral-800 outline-0 ring-0 cursor-pointer [&_svg]:pointer-events-none select-none"
+        >
+          <p className="text-sm">Skippable Class Types</p>
+          <div className="text-muted-foreground hidden lg:block">
+            <ChevronDownIcon className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
+            <ChevronUpIcon className="w-4 h-4 group-data-[state=closed]/collapsible:hidden" />
+          </div>
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        {generatorStore?.skippableClassTypes && (
+          <div className="flex flex-col px-4 py-2">
+            <p className="text-muted-foreground text-sm pb-2">
+              Checked means skippable
+            </p>
+            {classTypes.map((type) => (
+              <label
+                key={type.type}
+                className="flex flex-row gap-2 items-center py-2 w-full text-sm"
+              >
+                <Checkbox
+                  checked={generatorStore.skippableClassTypes.types.includes(
+                    type.type
+                  )}
+                  onCheckedChange={(checked) => {
+                    changeSelection({
+                      ...generatorStore.skippableClassTypes,
+                      types: checked
+                        ? [
+                            ...generatorStore.skippableClassTypes.types,
+                            type.type,
+                          ]
+                        : generatorStore.skippableClassTypes.types.filter(
+                            (t) => t !== type.type
+                          ),
+                    });
+                  }}
+                />
+                <span className="w-full h-full">
+                  {type.label} ({type.type})
+                </span>
+              </label>
+            ))}
           </div>
         )}
       </CollapsibleContent>

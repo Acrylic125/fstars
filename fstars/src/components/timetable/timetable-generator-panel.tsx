@@ -38,6 +38,7 @@ import {
   ConsecutiveClassesFactorView,
   DayDurationFactorView,
   GapsBetweenClassesFactorView,
+  SkippableClassTypesView,
   StartAfterTimeView,
 } from "./timetable-generator-factors";
 
@@ -587,6 +588,9 @@ export function TimetableGeneratorPanel({
               generatorId={generatorStore.selectedGeneratorId}
             />
             <ClassDistributionView
+              generatorId={generatorStore.selectedGeneratorId}
+            />
+            <SkippableClassTypesView
               generatorId={generatorStore.selectedGeneratorId}
             />
             <GenerateTimetableSection timetableId={timetableId} />
