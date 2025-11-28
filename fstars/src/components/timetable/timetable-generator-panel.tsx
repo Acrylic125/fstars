@@ -359,6 +359,7 @@ function GenerateTimetableSection({
         courseCodes,
         acadYear: timetableStore.acadYear,
       });
+      console.log(response);
 
       // Filter down ignore indexes.
       for (const courseClasses of Object.values(response)) {

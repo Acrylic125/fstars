@@ -751,7 +751,8 @@ export function ImportPlanDialog({
       if (erroredEntries.some((entry) => entry)) {
         return {
           type: "error",
-          message: "There are invalid course/indexes in the import.",
+          message:
+            "There are invalid course/indexes in the import. Is this the right academic year?",
           indices: erroredEntries,
         } as const;
       }

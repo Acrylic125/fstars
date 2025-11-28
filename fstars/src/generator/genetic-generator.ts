@@ -100,7 +100,6 @@ export class GeneticGenerator {
       for (let day = 0; day < daysInAWeek; day++) {
         weekClasses[day] = [];
       }
-
       for (const [courseCode, selectedIndex] of Object.entries(
         timetable.courseIndexSelection
       )) {
@@ -135,6 +134,37 @@ export class GeneticGenerator {
       let totalMinutes = 0;
       let daysWithClasses = 0;
       const weekTimes = new Array<number>(daysInAWeek).fill(0);
+      for (let day = 0; day < daysInAWeek; day++) {
+        const dayClasses = weekClasses[day];
+        // Sort the classes by start time.
+        dayClasses.sort((a, b) => {
+          return (
+            toMinutesFromTimeAsArray(a.startTime) -
+            toMinutesFromTimeAsArray(b.startTime)
+          );
+        });
+
+        // Detect collisions.
+        let lastTimeSlot: IndexClassWithCourseAndIndex | null = null;
+        for (const cls of dayClasses) {
+          if (lastTimeSlot) {
+            const lastEndTimeInMin = toMinutesFromTimeAsArray(
+              lastTimeSlot.endTime
+            );
+            if (lastEndTimeInMin > toMinutesFromTimeAsArray(cls.startTime)) {
+              return -1;
+            }
+          }
+          lastTimeSlot = cls;
+        }
+
+        // Now we exclude the classes that are skippable.
+        weekClasses[day] = dayClasses.filter((cls) => {
+          return !this.factors.skippableClassTypes.types.includes(cls.type);
+        });
+      }
+
+      // console.log(this.factors.skippableClassTypes.types, weekClasses);
 
       for (let day = 0; day < daysInAWeek; day++) {
         const dayClasses = weekClasses[day];
@@ -143,12 +173,12 @@ export class GeneticGenerator {
         if (!isDayFree) {
           daysWithClasses++;
 
-          dayClasses.sort((a, b) => {
-            return (
-              toMinutesFromTimeAsArray(a.startTime) -
-              toMinutesFromTimeAsArray(b.startTime)
-            );
-          });
+          // dayClasses.sort((a, b) => {
+          //   return (
+          //     toMinutesFromTimeAsArray(a.startTime) -
+          //     toMinutesFromTimeAsArray(b.startTime)
+          //   );
+          // });
 
           const firstClassStartTime = toMinutesFromTimeAsArray(
             dayClasses[0].startTime
@@ -267,7 +297,10 @@ export class GeneticGenerator {
               //   console.log(
               //     `Collision detected between ${lastTimeSlot.courseCode} ${lastTimeSlot.index} and ${cls.courseCode} ${cls.index}, Week ${week}, Day ${day}, Time ${lastTimeSlot.startTime} - ${lastTimeSlot.endTime} and ${cls.startTime} - ${cls.endTime}`
               //   );
-              return -1;
+              throw new Error(
+                "Collision detected but should have been caught earlier"
+              );
+              // return -1;
             }
 
             const gapBetweenClasses = startTimeInMin - lastEndTimeInMin;

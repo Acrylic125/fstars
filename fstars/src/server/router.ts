@@ -66,13 +66,17 @@ export const appRouter = createTRPCRouter({
         .from(courseIndexTable)
         .innerJoin(coursesTable, eq(coursesTable.id, courseIndexTable.courseId))
         .where(
-          or(
-            ...input.courses.map((c) =>
-              and(
-                eq(coursesTable.code, c.courseCode),
-                eq(courseIndexTable.index, c.index)
+          and(
+            or(
+              ...input.courses.map((c) =>
+                and(
+                  eq(coursesTable.code, c.courseCode),
+                  eq(courseIndexTable.index, c.index)
+                )
               )
-            )
+            ),
+            eq(coursesTable.ay, input.acadYear.yearCode),
+            eq(coursesTable.semester, input.acadYear.semesterCode)
           )
         );
       return courseIndexes;
@@ -273,7 +277,6 @@ export const appRouter = createTRPCRouter({
                 if (source.year !== null && source.year !== program.year) {
                   continue;
                 }
-                // console.log(source.code, program.code);
                 if (source.code !== "GLOAD") {
                   if (source.code !== program.code) {
                     continue;
@@ -427,6 +430,7 @@ export const appRouter = createTRPCRouter({
           },
           weeks: courseIndexClassesTable.weeks,
           day: courseIndexClassesTable.day,
+          type: courseIndexClassesTable.type,
           from: {
             hour: courseIndexClassesTable.timeFromHour,
             minute: courseIndexClassesTable.timeFromMinute,
@@ -481,6 +485,7 @@ export const appRouter = createTRPCRouter({
                 endTime: toTimeAsArray(courseClass.to),
                 day: courseClass.day,
                 weeks: courseClass.weeks,
+                type: courseClass.type,
               },
             ]);
           } else {
@@ -489,6 +494,7 @@ export const appRouter = createTRPCRouter({
               endTime: toTimeAsArray(courseClass.to),
               day: courseClass.day,
               weeks: courseClass.weeks,
+              type: courseClass.type,
             });
           }
         }
