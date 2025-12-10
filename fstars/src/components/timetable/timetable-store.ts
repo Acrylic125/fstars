@@ -194,6 +194,7 @@ const RawSchema = z.object({
 
 const storage: PersistStorage<TimetableStore> = {
   getItem: (name) => {
+    if (localStorage === undefined) return null;
     const str = localStorage.getItem(name);
     if (!str) return null;
     const raw = superjson.parse(str);

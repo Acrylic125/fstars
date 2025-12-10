@@ -462,7 +462,7 @@ function GenerateTimetableSection({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem
+          {/* <DropdownMenuItem
             onClick={() => {
               generateTimetableRes.mutate(undefined);
             }}
@@ -473,7 +473,7 @@ function GenerateTimetableSection({
                 Requires you to manually apply.
               </p>
             </div>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
           <DropdownMenuItem
             disabled={!timetableStore?.selectedPlan}
             onClick={() => {

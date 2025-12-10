@@ -226,6 +226,8 @@ const RawSchema = z.object({
 
 const storage: PersistStorage<TimetableGeneratorStore> = {
   getItem: (name) => {
+    console.log(localStorage);
+    if (localStorage === undefined) return null;
     const str = localStorage.getItem(name);
     if (!str) return null;
     const raw = superjson.parse(str);
