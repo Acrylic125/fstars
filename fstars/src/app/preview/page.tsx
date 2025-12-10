@@ -1,10 +1,5 @@
 import { MainNavbar } from "@/components/nav/main-navbar";
-import {
-  TimetableCoursesPanel,
-  TimetableHeader,
-} from "@/components/timetable/timetable-course-panel";
 import { TimetableModal } from "@/components/timetable/timetable-modal";
-import { TimetableGeneratorPanel } from "@/components/timetable/timetable-generator-panel";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { TimetableViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
 import {
@@ -20,6 +15,9 @@ export default async function Home(props: { params: Promise<{}> }) {
       <div className="flex flex-col items-center">
         <div className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] lg:h-fit">
           <ScrollArea className="relative w-full flex flex-col h-1/2 lg:h-[calc(100svh-4rem)] overflow-x-auto">
+            <div className="pl-4 pr-2 md:pl-8 md:pr-4 py-1 text-xs md:text-sm bg-sky-100 dark:bg-sky-800">
+              You are on a shared timetable. To use it, import it.
+            </div>
             <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
               <Suspense>
                 <TimetableSharedView />

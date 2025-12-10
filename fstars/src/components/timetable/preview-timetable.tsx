@@ -417,6 +417,14 @@ export function TimetableCoursesHeader() {
                 </div>
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <div className="flex flex-col justify-center pr-8 max-w-xs">
+                <p className="text-muted-foreground text-sm">
+                  Alternatively, copy this link, go to an existing timetable,
+                  and import it with the link.
+                </p>
+              </div>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
