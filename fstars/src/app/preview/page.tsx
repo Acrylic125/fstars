@@ -35,7 +35,9 @@ export default function Home(props: { params: Promise<{}> }) {
               You are on a shared timetable. To use it, import it.
             </div>
             <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
-              <TimetableSharedView />
+              <Suspense>
+                <TimetableSharedView />
+              </Suspense>
               <div className="w-full h-20 md:h-24 lg:h-28" />
             </div>
             <ScrollBar orientation="horizontal" />
@@ -67,7 +69,9 @@ export default function Home(props: { params: Promise<{}> }) {
             )}
           >
             <div className="flex flex-col gap-2 md:gap-4 items-center p-2 pb-32 lg:py-8 lg:pl-4 lg:pr-8">
-              <TimetableCoursesSharedPanel />
+              <Suspense>
+                <TimetableCoursesSharedPanel />
+              </Suspense>
             </div>
           </ScrollArea>
         </div>

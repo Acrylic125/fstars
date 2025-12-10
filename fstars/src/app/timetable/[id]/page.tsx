@@ -9,7 +9,7 @@ import { TimetableModal } from "@/components/timetable/timetable-modal";
 import { TimetableGeneratorPanel } from "@/components/timetable/timetable-generator-panel";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { TimetableViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
-import { use, useState } from "react";
+import { Suspense, use, useState } from "react";
 import {
   ChevronDown,
   ChevronLeft,
@@ -38,7 +38,9 @@ export default function Home(props: { params: Promise<{ id: string }> }) {
             {/* <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4"> */}
             <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
               <TimetableHeader id={id} />
-              <TimetableSelfView id={id} />
+              <Suspense>
+                <TimetableSelfView id={id} />
+              </Suspense>
               <div className="w-full h-20 md:h-24 lg:h-28" />
             </div>
             <ScrollBar orientation="horizontal" />
@@ -70,8 +72,10 @@ export default function Home(props: { params: Promise<{ id: string }> }) {
             )}
           >
             <div className="flex flex-col gap-2 md:gap-4 items-center p-2 pb-32 lg:py-8 lg:pl-4 lg:pr-8">
-              <TimetableCoursesPanel id={id} />
-              <TimetableGeneratorPanel timetableId={id} />
+              <Suspense>
+                <TimetableCoursesPanel id={id} />
+                <TimetableGeneratorPanel timetableId={id} />
+              </Suspense>
             </div>
           </ScrollArea>
         </div>
