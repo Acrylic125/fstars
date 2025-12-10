@@ -206,6 +206,7 @@ export function NewPlanDialog({
           <div className="flex flex-row gap-2">
             <Button
               variant="outline"
+              type="button"
               onClick={close}
               disabled={createPlanMutation.isPending}
             >
@@ -305,6 +306,7 @@ export function RenamePlanDialog({
           <div className="flex flex-row gap-2">
             <Button
               variant="outline"
+              type="button"
               onClick={close}
               disabled={createPlanMutation.isPending}
             >
@@ -540,6 +542,7 @@ export function RenameGeneratorDialog({
           <div className="flex flex-row gap-2">
             <Button
               variant="outline"
+              type="button"
               onClick={close}
               disabled={renameGeneratorMutation.isPending}
             >
@@ -606,6 +609,7 @@ export function DeleteGeneratorConfirmationDialog({
       <div className="flex flex-row gap-2">
         <Button
           variant="outline"
+          type="button"
           onClick={close}
           disabled={deleteGeneratorMutation.isPending}
         >
@@ -613,6 +617,7 @@ export function DeleteGeneratorConfirmationDialog({
         </Button>
         <Button
           variant="destructive"
+          type="button"
           onClick={() => deleteGeneratorMutation.mutate()}
           disabled={
             deleteGeneratorMutation.isPending ||
@@ -899,6 +904,7 @@ https://fstars.benapps.dev/preview?c=SC2008:10399,SC2001:10128`}
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
+              type="button"
               className={cn(
                 "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full w-full",
                 {
@@ -917,6 +923,7 @@ https://fstars.benapps.dev/preview?c=SC2008:10399,SC2001:10128`}
             </Button>
             <Button
               variant="outline"
+              type="button"
               className={cn(
                 "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full w-full text-left",
                 {
