@@ -525,27 +525,6 @@ export function TimetableCoursesSharedPanel() {
   return (
     <div className="w-full border border-border bg-card rounded-lg pt-4 pb-0 flex flex-col">
       <TimetableCoursesHeader />
-      {/* <div className="flex flex-row gap-2 px-4">
-        {timetableStore && timetableStore.selectedPlanId ? (
-          <SelectCourseCombobox
-            programs={timetableStore.programs}
-            acadYear={timetableStore.acadYear}
-            timetableId={id}
-            selectedPlanId={timetableStore.selectedPlanId}
-          />
-        ) : (
-          <SelectCourseCombobox
-            programs={[]}
-            acadYear={{
-              yearCode: "",
-              semesterCode: "",
-            }}
-            timetableId={id}
-            selectedPlanId={""}
-            disabled
-          />
-        )}
-      </div> */}
       <div className="flex flex-col w-full py-2 items-center">{ele}</div>
     </div>
   );
