@@ -28,7 +28,6 @@ export function VacantClassroomCalendar({
   events: VacantClassroomEvent[];
   startDate: string;
   endDate: string;
-  selectedWeeksBitMask: number;
 }) {
   const { height } = useViewport();
   const calendarHeight = useMemo(() => {
