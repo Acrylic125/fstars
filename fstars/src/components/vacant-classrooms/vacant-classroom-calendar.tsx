@@ -8,7 +8,8 @@ import { clamp, cn } from "@/lib/utils";
 import { ArrowDownRightIcon } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 import { useViewport } from "../use-viewport";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { DateTime } from "luxon";
 
 export type VacantClassroomEvent = {
   for: { code: string; name: string; indexes: string[] };
@@ -27,11 +28,24 @@ export function VacantClassroomCalendar({
   events: VacantClassroomEvent[];
   startDate: string;
   endDate: string;
+  selectedWeeksBitMask: number;
 }) {
   const { height } = useViewport();
   const calendarHeight = useMemo(() => {
     return clamp(height - 240, 960, 1920);
   }, [height]);
+
+  const [now, setNow] = useState<string>(
+    () => DateTime.now().setZone("Asia/Singapore").toISO()!
+  );
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const currentDateTime = DateTime.now().setZone("Asia/Singapore");
+      setNow(currentDateTime.toISO()!);
+    }, 60_000);
+    return () => clearTimeout(timeout);
+  }, [now]);
 
   return (
     <FullCalendar
@@ -102,8 +116,10 @@ export function VacantClassroomCalendar({
       // height="100%"
       contentHeight={calendarHeight}
       height={calendarHeight}
+      // slotMinTime="03:00:00"
       slotMinTime="08:00:00"
       slotMaxTime="23:59:00"
+      now={now}
       dayHeaderFormat={{ weekday: "short" }}
       slotLabelFormat={{ hour: "numeric", minute: "2-digit", hour12: false }}
       eventTimeFormat={{ hour: "numeric", minute: "2-digit", hour12: false }}

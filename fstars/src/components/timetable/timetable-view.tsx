@@ -122,11 +122,6 @@ export function TimetableView({
   selectedWeeksBitMask: number;
 }) {
   const colorScheme: ColorScheme = "default";
-  // const { selectedWeeksBitMask } = useTimetableViewWeekSelector(
-  //   useShallow((state) => ({
-  //     selectedWeeksBitMask: state.selectedWeeksBitMask,
-  //   }))
-  // );
 
   const selectedCourseClasses = trpc.getCourseIndexClasses.useQuery(
     {
