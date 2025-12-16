@@ -312,7 +312,7 @@ export function translateBuilding(building: string) {
   return building;
 }
 
-export function getCurrentAcadWeek() {
+export function getNow() {
   const currentDateTime = DateTime.now().setZone("Asia/Singapore");
   // const currentDateTime = DateTime.now().setZone("Asia/Singapore").set({
   //   day: 12,
@@ -321,9 +321,6 @@ export function getCurrentAcadWeek() {
   //   hour: 12,
   //   minute: 30,
   // });
-  const acadWeek = getAcadWeek(currentDateTime);
-  return {
-    acadWeek,
-    currentDateTime,
-  };
+
+  return currentDateTime;
 }
