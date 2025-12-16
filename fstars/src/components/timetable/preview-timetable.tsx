@@ -50,6 +50,8 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import Link from "next/link";
+import { usePreviewViewWeekSelector } from "./timetable-view-week-selector";
+import { useShallow } from "zustand/react/shallow";
 
 type Course = inferRouterOutputs<AppRouter>["findCourses"][number];
 
@@ -68,11 +70,16 @@ export function useQueryParamsAcadYear() {
 export function TimetableSharedView() {
   const { acadYear, semesterCode } = useQueryParamsAcadYear();
   const [courseCodes] = useQueryParamCourses();
-
+  const { selectedWeeksBitMask } = usePreviewViewWeekSelector(
+    useShallow((state) => ({
+      selectedWeeksBitMask: state.selectedWeeksBitMask,
+    }))
+  );
   return (
     <TimetableView
       courseCodes={courseCodes}
       acadYear={{ yearCode: acadYear, semesterCode: semesterCode }}
+      selectedWeeksBitMask={selectedWeeksBitMask}
     />
   );
 }

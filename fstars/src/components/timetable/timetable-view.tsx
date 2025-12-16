@@ -15,10 +15,9 @@ import {
 import { isIntersectingDate } from "@/generator/utils";
 import { clamp, cn, formatTime } from "@/lib/utils";
 import { AlertTriangleIcon, ArrowDownRightIcon } from "lucide-react";
-import { useTimetableViewWeekSelector } from "./timetable-view-week-selector";
 import { useViewport } from "../use-viewport";
 import { AcadYear } from "@/lib/types";
-import interactionPlugin, { Draggable } from "@fullcalendar/interaction";
+import { useTimetableViewWeekSelector } from "./timetable-view-week-selector";
 
 type FCEvent = {
   title: string;
@@ -59,6 +58,11 @@ function getEventDate(dayOffset: number, hour: number, minute: number) {
 }
 
 export function TimetableSelfView({ id }: { id: string }) {
+  const { selectedWeeksBitMask } = useTimetableViewWeekSelector(
+    useShallow((state) => ({
+      selectedWeeksBitMask: state.selectedWeeksBitMask,
+    }))
+  );
   const timetableStore = useTimetableStore(
     useShallow((state) => {
       const timetable = state.timetables.get(id);
@@ -103,6 +107,7 @@ export function TimetableSelfView({ id }: { id: string }) {
     <TimetableView
       courseCodes={courseCodes}
       acadYear={timetableStore.acadYear}
+      selectedWeeksBitMask={selectedWeeksBitMask}
     />
   );
 }
@@ -110,16 +115,18 @@ export function TimetableSelfView({ id }: { id: string }) {
 export function TimetableView({
   courseCodes,
   acadYear,
+  selectedWeeksBitMask,
 }: {
   courseCodes: { courseCode: string; index: string }[];
   acadYear: AcadYear;
+  selectedWeeksBitMask: number;
 }) {
   const colorScheme: ColorScheme = "default";
-  const { selectedWeeksBitMask } = useTimetableViewWeekSelector(
-    useShallow((state) => ({
-      selectedWeeksBitMask: state.selectedWeeksBitMask,
-    }))
-  );
+  // const { selectedWeeksBitMask } = useTimetableViewWeekSelector(
+  //   useShallow((state) => ({
+  //     selectedWeeksBitMask: state.selectedWeeksBitMask,
+  //   }))
+  // );
 
   const selectedCourseClasses = trpc.getCourseIndexClasses.useQuery(
     {

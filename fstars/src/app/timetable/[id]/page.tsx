@@ -8,7 +8,7 @@ import {
 import { TimetableModal } from "@/components/timetable/timetable-modal";
 import { TimetableGeneratorPanel } from "@/components/timetable/timetable-generator-panel";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { TimetableViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
+import { CalendarViewWeekSelectorView } from "@/components/calendar-view-week-selector";
 import { Suspense, use, useState } from "react";
 import {
   ChevronDown,
@@ -18,6 +18,24 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTimetableViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
+import { useShallow } from "zustand/react/shallow";
+
+function TimetableViewWeekSelector() {
+  const weekSelector = useTimetableViewWeekSelector(
+    useShallow((state) => ({
+      setSelectedBitMask: state.setSelectedBitMask,
+      selectedWeeksBitMask: state.selectedWeeksBitMask,
+    }))
+  );
+
+  return (
+    <CalendarViewWeekSelectorView
+      className="absolute bottom-4 md:bottom-8 lg:bottom-12 left-1/2 -translate-x-1/2"
+      weekSelector={weekSelector}
+    />
+  );
+}
 
 export default function Home(props: { params: Promise<{ id: string }> }) {
   // export default function Home(props: { params: { id: string } }) {
@@ -60,7 +78,7 @@ export default function Home(props: { params: Promise<{ id: string }> }) {
                 {isSidebarClosed ? <ChevronUp /> : <ChevronDown />}
               </Button>
             </div>
-            <TimetableViewWeekSelector className="absolute bottom-4 md:bottom-8 lg:bottom-12 left-1/2 -translate-x-1/2" />
+            <TimetableViewWeekSelector />
           </ScrollArea>
           <ScrollArea
             className={cn(

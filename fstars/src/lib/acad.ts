@@ -311,3 +311,19 @@ export function translateBuilding(building: string) {
   }
   return building;
 }
+
+export function getCurrentAcadWeek() {
+  // const currentDateTime = DateTime.now().setZone("Asia/Singapore");
+  const currentDateTime = DateTime.now().setZone("Asia/Singapore").set({
+    day: 12,
+    month: 4,
+    year: 2026,
+    hour: 12,
+    minute: 30,
+  });
+  const acadWeek = getAcadWeek(currentDateTime);
+  return {
+    acadWeek,
+    currentDateTime,
+  };
+}

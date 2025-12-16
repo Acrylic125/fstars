@@ -24,7 +24,7 @@ import {
   VacantTable,
   VacantTableHeader,
 } from "@/components/vacant-classrooms/vacant-table";
-import { getAcadWeek, translateBuilding } from "@/lib/acad";
+import { getAcadWeek, getCurrentAcadWeek, translateBuilding } from "@/lib/acad";
 import { Badge } from "@/components/ui/badge";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -254,15 +254,7 @@ async function TableLoader({
 }
 
 export default async function VacentClassroomsPage() {
-  const currentDateTime = DateTime.now().setZone("Asia/Singapore");
-  // const currentDateTime = DateTime.now().setZone("Asia/Singapore").set({
-  //   day: 14,
-  //   month: 1,
-  //   year: 2026,
-  //   hour: 12,
-  //   minute: 30,
-  // });
-  const acadWeek = getAcadWeek(currentDateTime);
+  const { acadWeek, currentDateTime } = getCurrentAcadWeek();
 
   return (
     <main className="flex flex-col w-full">

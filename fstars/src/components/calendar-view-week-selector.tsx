@@ -1,49 +1,58 @@
 "use client";
 
 import { create } from "zustand";
-import { Button } from "../ui/button";
+import { Button } from "./ui/button";
 import { Config } from "@/lib/config";
-import { useRef, useState } from "react";
-import { useShallow } from "zustand/react/shallow";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { ScrollArea, ScrollBar } from "../ui/scroll-area";
+import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 
-type TimetableViewWeekSelector = {
+export type CalendarViewWeekSelector = {
   selectedWeeksBitMask: number;
   setSelectedBitMask: (selectedBitMask: number) => void;
 };
 
-export const useTimetableViewWeekSelector = create<TimetableViewWeekSelector>(
-  (set, get) => ({
-    selectedWeeksBitMask: 16383,
-    setSelectedBitMask: (selectedBitMask) => {
-      return set({
-        selectedWeeksBitMask: selectedBitMask,
-      });
-    },
-  })
-);
+export const ALL_WEEKS = (1 << Config.lastWeek) - 1;
 
-export function TimetableViewWeeksRow({
+export function CalendarViewWeeksRow({
   maxWeeks,
+  weekSelector,
   className,
 }: {
   maxWeeks: number;
+  weekSelector: CalendarViewWeekSelector;
   className?: string;
 }) {
   const lastSelectedWeek = useRef(0);
-  const { selectedWeeksBitMask, setSelectedBitMask } =
-    useTimetableViewWeekSelector(
-      useShallow((state) => ({
-        selectedWeeksBitMask: state.selectedWeeksBitMask,
-        setSelectedBitMask: state.setSelectedBitMask,
-      }))
-    );
+  const { selectedWeeksBitMask, setSelectedBitMask } = weekSelector;
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const haveInitialized = useRef(false);
+  useEffect(() => {
+    if (!parentRef.current) {
+      return;
+    }
+    if (haveInitialized.current) {
+      return;
+    }
+    haveInitialized.current = true;
+    const parent = parentRef.current;
+    const children = parent.children;
+
+    for (let i = 0; i < children.length; i++) {
+      // Check if i is selected.
+      if ((selectedWeeksBitMask & (1 << i)) > 0) {
+        // Scroll to the child.
+        children[i].scrollIntoView({ behavior: "instant" });
+        break;
+      }
+    }
+  }, [selectedWeeksBitMask, haveInitialized.current]);
 
   return (
     <ScrollArea className={className}>
       <div className="flex flex-row items-center pointer-events-auto">
-        <div className="flex flex-row items-center">
+        <div className="flex flex-row items-center" ref={parentRef}>
           {new Array(maxWeeks).fill(0).map((_, i) => {
             const isSelected = (selectedWeeksBitMask & (1 << i)) > 0;
             const isPreviousSelected =
@@ -114,11 +123,16 @@ export function TimetableViewWeeksRow({
   );
 }
 
-export function TimetableViewWeekSelector({
+export function CalendarViewWeekSelectorView({
   className,
+  weekSelector,
 }: {
+  weekSelector: CalendarViewWeekSelector;
   className?: string;
 }) {
+  const selectAll = useCallback(() => {
+    weekSelector.setSelectedBitMask(ALL_WEEKS);
+  }, [weekSelector]);
   return (
     <div
       className={cn(
@@ -132,14 +146,15 @@ export function TimetableViewWeekSelector({
       </p>
       <div className="mx-2 md:mx-4 w-[1px] h-full bg-border" />
       <div className="flex flex-row items-center pointer-events-auto">
-        <TimetableViewWeeksRow
+        <CalendarViewWeeksRow
           maxWeeks={Config.lastWeek}
+          weekSelector={weekSelector}
           className="w-full max-w-24 md:max-w-40 lg:max-w-72 xl:max-w-none"
         />
       </div>
       <div className="mx-2 md:mx-4 w-[1px] h-full bg-border" />
       <div className="flex flex-row items-center pointer-events-auto">
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={selectAll}>
           All
         </Button>
       </div>

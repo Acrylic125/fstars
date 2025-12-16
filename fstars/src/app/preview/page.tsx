@@ -2,7 +2,11 @@
 import { MainNavbar } from "@/components/nav/main-navbar";
 import { TimetableModal } from "@/components/timetable/timetable-modal";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { TimetableViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
+import {
+  ALL_WEEKS,
+  CalendarViewWeekSelector,
+  CalendarViewWeekSelectorView,
+} from "@/components/calendar-view-week-selector";
 import {
   TimetableCoursesSharedPanel,
   TimetableSharedView,
@@ -16,10 +20,22 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePreviewViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
+
+function TimetableViewWeekSelector() {
+  const weekSelector = usePreviewViewWeekSelector();
+  return (
+    <CalendarViewWeekSelectorView
+      className="absolute bottom-4 md:bottom-8 lg:bottom-12 left-1/2 -translate-x-1/2"
+      weekSelector={weekSelector}
+    />
+  );
+}
 
 // export default async function Home(props: { params: Promise<{}> }) {
 export default function Home(props: { params: Promise<{}> }) {
   const [sidebarClosed, setSidebarClosed] = useState(false);
+
   return (
     <main className="flex flex-col w-full">
       <MainNavbar />
@@ -41,7 +57,7 @@ export default function Home(props: { params: Promise<{}> }) {
               <div className="w-full h-20 md:h-24 lg:h-28" />
             </div>
             <ScrollBar orientation="horizontal" />
-            <TimetableViewWeekSelector className="absolute bottom-4 md:bottom-8 lg:bottom-12 left-1/2 -translate-x-1/2" />
+            <TimetableViewWeekSelector />
             <div className="absolute top-0 right-0 hidden lg:flex z-10">
               <Button
                 variant="secondary"
