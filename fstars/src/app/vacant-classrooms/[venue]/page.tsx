@@ -3,6 +3,7 @@ import { MainNavbar } from "@/components/nav/main-navbar";
 import {
   VacantClassroomCalendar,
   VacantClassroomEvent,
+  VacantClassroomViewWeekSelector,
 } from "@/components/vacant-classrooms/vacant-classroom-calendar";
 import {
   courseIndexClassesTable,
@@ -190,6 +191,7 @@ export default async function VacentClassroomPage(props: {
             <Suspense fallback={<Skeleton className="w-full h-48" />}>
               <ClassroomHeaderLoader venue={venue} />
             </Suspense>
+            <VacantClassroomViewWeekSelector />
             <VacantClassroomCalendar
               events={eventsWithDates}
               startDate={startDate}

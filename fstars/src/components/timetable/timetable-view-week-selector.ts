@@ -2,8 +2,8 @@ import { create } from "zustand";
 import {
   ALL_WEEKS,
   CalendarViewWeekSelector,
+  getInitialSelectedWeeksBitMask,
 } from "../calendar-view-week-selector";
-import { getAcadWeek, getNow } from "@/lib/acad";
 
 export const useTimetableViewWeekSelector = create<CalendarViewWeekSelector>(
   (set) => ({
@@ -15,15 +15,6 @@ export const useTimetableViewWeekSelector = create<CalendarViewWeekSelector>(
     },
   })
 );
-
-function getInitialSelectedWeeksBitMask() {
-  const currentDateTime = getNow();
-  const acadWeek = getAcadWeek(currentDateTime);
-  if (!acadWeek || !acadWeek.week) {
-    return ALL_WEEKS;
-  }
-  return 1 << (acadWeek.week - 1);
-}
 
 export const usePreviewViewWeekSelector = create<CalendarViewWeekSelector>(
   (set) => ({

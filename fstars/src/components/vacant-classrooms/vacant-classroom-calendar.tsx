@@ -9,7 +9,13 @@ import { ArrowDownRightIcon } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 import { useViewport } from "../use-viewport";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DateTime } from "luxon";
+import { getNow } from "@/lib/acad";
+import { useShallow } from "zustand/react/shallow";
+import { useVacantClassroomViewWeekSelector } from "./vacant-classroom-view-week-selector";
+import {
+  CalendarViewWeekSelectorView,
+  isWeekSelected,
+} from "../calendar-view-week-selector";
 
 export type VacantClassroomEvent = {
   for: { code: string; name: string; indexes: string[] };
@@ -19,6 +25,22 @@ export type VacantClassroomEvent = {
   toTime: { hour: number; minute: number };
   weeks: number[];
 };
+
+export function VacantClassroomViewWeekSelector() {
+  const weekSelector = useVacantClassroomViewWeekSelector(
+    useShallow((state) => ({
+      setSelectedBitMask: state.setSelectedBitMask,
+      selectedWeeksBitMask: state.selectedWeeksBitMask,
+    }))
+  );
+
+  return (
+    <CalendarViewWeekSelectorView
+      className="absolute bottom-4 md:bottom-8 lg:bottom-12 left-1/2 -translate-x-1/2"
+      weekSelector={weekSelector}
+    />
+  );
+}
 
 export function VacantClassroomCalendar({
   events,
@@ -33,18 +55,27 @@ export function VacantClassroomCalendar({
   const calendarHeight = useMemo(() => {
     return clamp(height - 240, 960, 1920);
   }, [height]);
-
-  const [now, setNow] = useState<string>(
-    () => DateTime.now().setZone("Asia/Singapore").toISO()!
+  const weekSelector = useVacantClassroomViewWeekSelector(
+    useShallow((state) => ({
+      selectedWeeksBitMask: state.selectedWeeksBitMask,
+    }))
   );
+  const [now, setNow] = useState<string>(() => getNow().toISO()!);
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      return event.weeks.some((week) =>
+        isWeekSelected(weekSelector.selectedWeeksBitMask, week)
+      );
+    });
+  }, [events, weekSelector.selectedWeeksBitMask]);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      const currentDateTime = DateTime.now().setZone("Asia/Singapore");
+    const interval = setInterval(() => {
+      const currentDateTime = getNow();
       setNow(currentDateTime.toISO()!);
     }, 60_000);
-    return () => clearTimeout(timeout);
-  }, [now]);
+    return () => clearInterval(interval);
+  }, [setNow]);
 
   return (
     <FullCalendar
@@ -58,7 +89,7 @@ export function VacantClassroomCalendar({
         end: endDate,
       }}
       events={[
-        ...events.map((event) => ({
+        ...filteredEvents.map((event) => ({
           title: `${event.for.code}: ${event.for.name}`,
           start: event.from,
           end: event.to,

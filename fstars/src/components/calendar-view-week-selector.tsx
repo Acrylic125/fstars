@@ -1,18 +1,31 @@
 "use client";
 
-import { create } from "zustand";
 import { Button } from "./ui/button";
 import { Config } from "@/lib/config";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
+import { getAcadWeek, getNow } from "@/lib/acad";
 
 export type CalendarViewWeekSelector = {
   selectedWeeksBitMask: number;
   setSelectedBitMask: (selectedBitMask: number) => void;
 };
 
+export function isWeekSelected(mask: number, week: number) {
+  return (mask & (1 << (week - 1))) > 0;
+}
+
 export const ALL_WEEKS = (1 << Config.lastWeek) - 1;
+
+export function getInitialSelectedWeeksBitMask() {
+  const currentDateTime = getNow();
+  const acadWeek = getAcadWeek(currentDateTime);
+  if (!acadWeek || !acadWeek.week) {
+    return ALL_WEEKS;
+  }
+  return 1 << (acadWeek.week - 1);
+}
 
 export function CalendarViewWeeksRow({
   maxWeeks,
@@ -41,7 +54,7 @@ export function CalendarViewWeeksRow({
 
     for (let i = 0; i < children.length; i++) {
       // Check if i is selected.
-      if ((selectedWeeksBitMask & (1 << i)) > 0) {
+      if (isWeekSelected(selectedWeeksBitMask, i + 1)) {
         // Scroll to the child.
         children[i].scrollIntoView({ behavior: "instant" });
         break;
@@ -54,12 +67,13 @@ export function CalendarViewWeeksRow({
       <div className="flex flex-row items-center pointer-events-auto">
         <div className="flex flex-row items-center" ref={parentRef}>
           {new Array(maxWeeks).fill(0).map((_, i) => {
-            const isSelected = (selectedWeeksBitMask & (1 << i)) > 0;
+            const week = i + 1;
+            const isSelected = isWeekSelected(selectedWeeksBitMask, week);
             const isPreviousSelected =
-              i > 0 && (selectedWeeksBitMask & (1 << (i - 1))) > 0;
+              i > 0 && isWeekSelected(selectedWeeksBitMask, week - 1);
             const isNextSelected =
               i < Config.lastWeek - 1 &&
-              (selectedWeeksBitMask & (1 << (i + 1))) > 0;
+              isWeekSelected(selectedWeeksBitMask, week + 1);
 
             let shouldFlattenLeft = i !== 0 && isPreviousSelected && isSelected;
             let shouldFlattenRight =
