@@ -278,7 +278,6 @@ export function TimetableView({
       eventContent={(arg) => {
         // TODO: Annoying type casting.
         const event = arg.event.extendedProps as ExtendedProps;
-        console.log(event);
 
         return (
           <Popover>

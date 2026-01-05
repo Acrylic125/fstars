@@ -269,6 +269,9 @@ export const columns: ColumnDef<Venues>[] = [
         <SortButton column={column} sortType="area" />
       </div>
     ),
+    cell: ({ row }) => {
+      return <div className="flex items-center gap-2">{row.original.area}</div>;
+    },
   },
   {
     accessorKey: "location",
@@ -441,7 +444,11 @@ export function VacantTable({ data }: { data: Venues[] }) {
                   }}
                 >
                   {row.getVisibleCells().map((cell, index) => (
-                    <TableCell key={cell.id} colSpan={colSpans[index]}>
+                    <TableCell
+                      key={cell.id}
+                      colSpan={colSpans[index]}
+                      className="text-wrap break-words whitespace-normal"
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
