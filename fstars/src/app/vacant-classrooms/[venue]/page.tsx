@@ -14,18 +14,13 @@ import {
   locationsTable,
 } from "@/db/schema";
 import { db } from "@/db";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { DateTime, WeekdayNumbers } from "luxon";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { translateBuilding } from "@/lib/acad";
 import { Button } from "@/components/ui/button";
-import {
-  ExternalLinkIcon,
-  MapIcon,
-  Navigation,
-  Navigation2,
-} from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import { Config } from "@/lib/config";
 
 function getEventDate(
@@ -69,9 +64,18 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
 
   if (locationsRows.length === 0) {
     return (
-      <div className="h-16 flex flex-col gap-1">
-        <h1 className="text-2xl font-bold">{props.venue}</h1>
-        <p className="text-base text-muted-foreground">{props.venue}</p>
+      <div className="w-full flex flex-col xl:flex-row justify-between gap-4 xl:items-center">
+        <div className="h-16 flex flex-col gap-1">
+          <h1 className="text-2xl font-bold">{props.venue}</h1>
+          <p className="text-base text-muted-foreground">{props.venue}</p>
+        </div>
+        <Button
+          variant="outline"
+          className="flex flex-row gap-2 items-center"
+          disabled
+        >
+          NTU Map <ExternalLinkIcon className="size-4" />
+        </Button>
       </div>
     );
   }
@@ -92,7 +96,7 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
         <p className="text-base text-muted-foreground">{components.join("")}</p>
       </div>
       <div className="flex flex-row gap-2 items-center">
-        {!!location.mazeMapIdentifier && (
+        {!!location.mazeMapIdentifier ? (
           <Button
             variant="outline"
             className="flex flex-row gap-2 items-center"
@@ -106,6 +110,14 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
             >
               NTU Map <ExternalLinkIcon className="size-4" />
             </a>
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            className="flex flex-row gap-2 items-center"
+            disabled
+          >
+            NTU Map <ExternalLinkIcon className="size-4" />
           </Button>
         )}
       </div>
