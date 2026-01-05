@@ -102,7 +102,6 @@ export function SelectIndexCombobox({
   const [open, setOpen] = useState(false);
   const findIndexesRes = trpc.findCourseIndexes.useQuery(
     {
-      phrase: "",
       courseCode,
       acadYear,
     },

@@ -551,7 +551,6 @@ export const appRouter = createTRPCRouter({
   findCourseIndexes: publicProcedure
     .input(
       z.object({
-        // phrase: z.string(),
         courseCode: z.string(),
         acadYear: AcadYearSchema,
       })
