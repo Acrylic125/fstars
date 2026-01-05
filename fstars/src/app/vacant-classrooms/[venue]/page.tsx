@@ -6,6 +6,7 @@ import {
   VacantClassroomViewWeekSelector,
 } from "@/components/vacant-classrooms/vacant-classroom-calendar";
 import {
+  campusTable,
   courseIndexClassesTable,
   courseIndexTable,
   coursesTable,
@@ -55,13 +56,14 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
       z: locationsTable.z,
       longitude: locationsTable.longitude,
       latitude: locationsTable.latitude,
-      campusId: locationsTable.campusId,
+      campusId: campusTable.mazeMapCampusId,
     })
     .from(locationAltNamesTable)
     .innerJoin(
       locationsTable,
       eq(locationAltNamesTable.locationId, locationsTable.id)
     )
+    .innerJoin(campusTable, eq(campusTable.id, locationsTable.campusId))
     .where(eq(locationAltNamesTable.altName, props.venue))
     .limit(1);
 
