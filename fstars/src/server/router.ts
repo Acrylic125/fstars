@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure, router } from "./trpc";
 import { db } from "@/db";
 import {
+  campusTable,
   courseIndexClassesTable,
   courseIndexSourcesTable,
   courseIndexTable,
@@ -385,23 +386,41 @@ export const appRouter = createTRPCRouter({
 
       const venues = courseClasses.map((courseClass) => courseClass.venue);
 
-      const locationsRows = await db
+      const _locationsRows = await db
         .select({
-          venue: locationAltNamesTable.altName,
+          altName: locationAltNamesTable.altName,
           area: locationsTable.building,
-          location: locationsTable.mapIndoorsRoomId,
-          mapIndoorsId: locationsTable.mapIndoorsId,
+          location: locationsTable.name,
+          longitude: locationsTable.longitude,
+          latitude: locationsTable.latitude,
+          z: locationsTable.z,
+          campusId: campusTable.mazeMapCampusId,
+          mazeMapIdentifier: locationsTable.mazeMapIdentifier,
         })
         .from(locationAltNamesTable)
         .innerJoin(
           locationsTable,
           eq(locationAltNamesTable.locationId, locationsTable.id)
         )
+        .innerJoin(campusTable, eq(campusTable.id, locationsTable.campusId))
         .where(inArray(locationAltNamesTable.altName, venues));
+      const locationsRows = _locationsRows.map((location) => {
+        if (!location.mazeMapIdentifier)
+          return {
+            ...location,
+            url: null,
+          };
+        return {
+          ...location,
+          // https://maps.ntu.edu.sg/?mazemap_share_url=https%3A%2F%2Fuse.mazemap.com%2F%3Futm_medium%3Dlongurl%23v%3D1%26config%3Dntu-sg%26zlevel%3D1%26center%3D103.681362%2C1.346618%26zoom%3D18%26sharepoitype%3Didentifier%26sharepoi%3DLT2A-01-01%26campusid%3D2123
+          url: `https://maps.ntu.edu.sg/?mazemap_share_url=https%3A%2F%2Fuse.mazemap.com%2F%3Futm_medium%3Dlongurl%23v%3D1%26config%3Dntu-sg%26zlevel%3D${location.z}%26center%3D${location.longitude}%2C${location.latitude}%26zoom%3D18%26sharepoitype%3Didentifier%26sharepoi%3D${encodeURIComponent(encodeURIComponent(location.mazeMapIdentifier))}%26campusid%3D${location.campusId}`,
+        };
+      });
 
       const locationsMap = new Map<string, (typeof locationsRows)[number]>();
       for (const location of locationsRows) {
-        const key = location.venue;
+        const key = location.altName;
+        if (!key) continue;
         locationsMap.set(key, location);
       }
       return courseClasses.map((courseClass) => {

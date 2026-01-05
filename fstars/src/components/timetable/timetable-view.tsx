@@ -39,10 +39,9 @@ type ExtendedProps = {
     venue: string;
     weeks: number[];
     location?: {
-      venue: string;
+      url: string | null;
       area: string | null;
       location: string | null;
-      mapIndoorsId: string;
     };
   }[];
   isError: boolean;
@@ -279,6 +278,7 @@ export function TimetableView({
       eventContent={(arg) => {
         // TODO: Annoying type casting.
         const event = arg.event.extendedProps as ExtendedProps;
+        console.log(event);
 
         return (
           <Popover>
@@ -349,7 +349,8 @@ export function TimetableView({
                       <div className="text-sm text-foreground" key={i}>
                         {entry.type} @{" "}
                         <a
-                          href={`https://maps.ntu.edu.sg/#/ntu/d386ffa80e4e46f286d17f08/poi/details/${entry.location.mapIndoorsId}`}
+                          href={entry.location.url ?? undefined}
+                          // href={`https://maps.ntu.edu.sg/#/ntu/d386ffa80e4e46f286d17f08/poi/details/${entry.location.mapIndoorsId}`}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
