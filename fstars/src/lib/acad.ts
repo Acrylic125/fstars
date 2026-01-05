@@ -1,4 +1,5 @@
 import { DateTime } from "luxon";
+import { AcadYear } from "./types";
 
 export type RawDayDate = [number, number, number];
 
@@ -250,6 +251,14 @@ const acadYearWeeks: {
     ],
   },
 };
+
+export function getAcadWeeks(acadYear: AcadYear) {
+  const acadYearKey = `${acadYear.yearCode} S${acadYear.semesterCode}`;
+  if (!acadYearWeeks[acadYearKey]) {
+    return [];
+  }
+  return acadYearWeeks[acadYearKey].weeks;
+}
 
 export function getAcadWeek(date: DateTime<boolean>) {
   const day = date.day;

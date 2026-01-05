@@ -27,3 +27,15 @@ export async function downloadObjectAsJSONFile(json: any, filename: string) {
   a.download = filename;
   a.click();
 }
+
+export async function downloadTextFile(
+  text: string,
+  filename: string,
+  mimeType = "text/plain"
+) {
+  const a = document.createElement("a");
+  const file = new Blob([text], { type: mimeType });
+  a.href = URL.createObjectURL(file);
+  a.download = filename;
+  a.click();
+}

@@ -12,6 +12,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  CalendarArrowDown,
   ChevronDownIcon,
   ChevronUpIcon,
   DownloadIcon,
@@ -37,9 +38,179 @@ import {
 import { nanoid } from "nanoid";
 import { useTimetableGeneratorStore } from "./timetable-generator-store";
 import Link from "next/link";
+import { getAcadWeeks } from "@/lib/acad";
+import { createEvents, type EventAttributes } from "ics";
+import { downloadTextFile } from "./timetable-export-utils";
+
+function ExportCalendarButton({ id }: { id: string }) {
+  const exportCalendarControls = useIndicator();
+
+  const timetableStore = useTimetableStore(
+    useShallow((state) => {
+      const timetable = state.timetables.get(id);
+      if (!timetable) {
+        return null;
+      }
+      const selectedPlan = timetable.plans.get(timetable.selectedPlanId);
+      if (!selectedPlan) {
+        return null;
+      }
+      return {
+        acadYear: timetable.acadYear,
+        courses: selectedPlan.courses ?? null,
+      };
+    })
+  );
+  const courseCodes = useMemo(() => {
+    if (!timetableStore?.courses) {
+      return [];
+    }
+    return Array.from(timetableStore.courses.entries()).map(
+      ([courseCode, index]) => ({
+        courseCode,
+        index: index.index,
+      })
+    );
+  }, [timetableStore?.courses]);
+  const selectedCourseClasses = trpc.getCourseIndexClasses.useQuery(
+    {
+      courses: courseCodes,
+      acadYear: timetableStore?.acadYear ?? {
+        yearCode: "",
+        semesterCode: "",
+      },
+    },
+    {
+      enabled: !!courseCodes,
+    }
+  );
+  const exportCalendarFile = useCallback(() => {
+    if (!timetableStore) {
+      return;
+    }
+
+    const timetableState = useTimetableStore.getState().timetables.get(id);
+    if (!timetableState) {
+      return;
+    }
+
+    const weeks = getAcadWeeks(timetableStore.acadYear);
+    if (
+      !selectedCourseClasses.data ||
+      selectedCourseClasses.data.length === 0
+    ) {
+      return;
+    }
+
+    const events: EventAttributes[] = [];
+
+    for (const courseClass of selectedCourseClasses.data) {
+      const {
+        course,
+        index,
+        venue,
+        remarks,
+        weeks: classWeeks,
+        day,
+        from,
+        to,
+        location,
+      } = courseClass;
+
+      if (!classWeeks || classWeeks.length === 0) {
+        continue;
+      }
+
+      for (const weekNumber of classWeeks) {
+        const acadWeek = weeks.find((w) => w.week === weekNumber);
+        if (!acadWeek) {
+          continue;
+        }
+
+        const [startYear, startMonth, startDay] = acadWeek.start;
+
+        const startDate = new Date(
+          startYear,
+          startMonth - 1,
+          startDay + day,
+          from.hour,
+          from.minute
+        );
+
+        const endDate = new Date(
+          startYear,
+          startMonth - 1,
+          startDay + day,
+          to.hour,
+          to.minute
+        );
+
+        const event: EventAttributes = {
+          start: [
+            startDate.getFullYear(),
+            startDate.getMonth() + 1,
+            startDate.getDate(),
+            startDate.getHours(),
+            startDate.getMinutes(),
+          ],
+          end: [
+            endDate.getFullYear(),
+            endDate.getMonth() + 1,
+            endDate.getDate(),
+            endDate.getHours(),
+            endDate.getMinutes(),
+          ],
+          title: `${course.code} ${course.name} (${index})`,
+          description: remarks ?? undefined,
+          location: location?.location ?? venue ?? undefined,
+          startInputType: "local",
+          endInputType: "local",
+          productId: "fstars-timetable",
+        };
+
+        events.push(event);
+      }
+    }
+
+    if (events.length === 0) {
+      return;
+    }
+
+    const { error, value } = createEvents(events);
+
+    if (error || !value) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to create ICS events", error);
+      exportCalendarControls.showIndicator(
+        "Failed to export calendar",
+        "error"
+      );
+      return;
+    }
+
+    const filename = `${timetableState.name ?? "timetable"}-${nanoid(8)}.ics`;
+
+    void downloadTextFile(value, filename, "text/calendar;charset=utf-8");
+
+    exportCalendarControls.showIndicator(
+      `Exported calendar to downloads!`,
+      "success"
+    );
+  }, [timetableStore, selectedCourseClasses, id, exportCalendarControls]);
+
+  return (
+    <div className="relative flex flex-row gap-2">
+      <Indicator controls={exportCalendarControls} className="w-48 z-10" />
+      <Button variant="outline" onClick={exportCalendarFile}>
+        <CalendarArrowDown className="w-4 h-4" />
+        Export Calendar
+      </Button>
+    </div>
+  );
+}
 
 export function TimetableHeader({ id }: { id: string }) {
-  const timetable = useTimetableStore(
+  const timetableStore = useTimetableStore(
     useShallow((state) => {
       const timetable = state.timetables.get(id);
       if (!timetable) {
@@ -52,10 +223,11 @@ export function TimetableHeader({ id }: { id: string }) {
       };
     })
   );
-  const controls = useIndicator();
+  const backupControls = useIndicator();
+  const exportCalendarControls = useIndicator();
 
   const exportTimetableFile = useCallback(() => {
-    if (!timetable) {
+    if (!timetableStore) {
       return;
     }
     const timetableState = useTimetableStore.getState().timetables.get(id);
@@ -68,12 +240,15 @@ export function TimetableHeader({ id }: { id: string }) {
       timetables: new Map([[id, timetableState]]),
       generators,
     });
-    const filename = `${timetable.name} ${nanoid(8)}.json`;
+    const filename = `${timetableStore.name} ${nanoid(8)}.json`;
     downloadObjectAsJSONFile(json, filename);
-    controls.showIndicator(`Exported ${filename} to downloads!`, "success");
-  }, [timetable, id]);
+    backupControls.showIndicator(
+      `Exported ${filename} to downloads!`,
+      "success"
+    );
+  }, [timetableStore, id]);
 
-  if (!timetable) {
+  if (!timetableStore) {
     return null;
   }
 
@@ -84,11 +259,11 @@ export function TimetableHeader({ id }: { id: string }) {
           <p className="text-sm text-muted-foreground h-6">
             {/* {timetable.program.name} - AY */}
             AY{
-              timetable.acadYear.yearCode
-            } Semester {timetable.acadYear.semesterCode}
+              timetableStore.acadYear.yearCode
+            } Semester {timetableStore.acadYear.semesterCode}
           </p>
           <div className="flex flex-row items-center">
-            <h1 className="text-2xl font-semibold">{timetable.name}</h1>
+            <h1 className="text-2xl font-semibold">{timetableStore.name}</h1>
           </div>
           <div className="flex xl:hidden flex-row gap-2 pt-4">
             <Button variant="outline" asChild>
@@ -98,12 +273,13 @@ export function TimetableHeader({ id }: { id: string }) {
               </Link>
             </Button>
             <div className="relative flex flex-row gap-2">
-              <Indicator controls={controls} className="w-48 z-10" />
+              <Indicator controls={backupControls} className="w-48 z-10" />
               <Button variant="outline" onClick={exportTimetableFile}>
                 <DownloadIcon className="w-4 h-4" />
                 Backup
               </Button>
             </div>
+            <ExportCalendarButton id={id} />
           </div>
         </div>
       </div>
@@ -115,12 +291,13 @@ export function TimetableHeader({ id }: { id: string }) {
           </Link>
         </Button>
         <div className="relative flex flex-row gap-2">
-          <Indicator controls={controls} className="w-48 z-10" />
+          <Indicator controls={backupControls} className="w-48 z-10" />
           <Button variant="outline" onClick={exportTimetableFile}>
             <DownloadIcon className="w-4 h-4" />
             Backup
           </Button>
         </div>
+        <ExportCalendarButton id={id} />
       </div>
     </div>
   );
