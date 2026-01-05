@@ -25,6 +25,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { stopPropagation } from "@/lib/events";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "use-debounce";
 
 const skeletons = Array.from({ length: 5 }, (_, i) => i);
 
@@ -60,7 +61,7 @@ export function SelectIndexCombobox({
   const [open, setOpen] = useState(false);
   const findIndexesRes = trpc.findCourseIndexes.useQuery(
     {
-      phrase: "",
+      // phrase: "",
       courseCode,
       acadYear,
     },
@@ -96,6 +97,27 @@ export function SelectIndexCombobox({
     return course.index;
   }, [timetableStore?.plan]);
 
+  const parentRef = useRef<HTMLDivElement>(null);
+  // const inputRef = useRef<HTMLInputElement>(null);
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch] = useDebounce(search, 300);
+
+  const filteredOptions = useMemo(() => {
+    if (parentRef.current) {
+      parentRef.current.scrollTo({
+        top: 0,
+        behavior: "instant",
+      });
+    }
+    if (debouncedSearch === "") {
+      return indexOptions;
+    }
+    return indexOptions.filter((option) =>
+      option.index.toLowerCase().includes(debouncedSearch.toLowerCase())
+    );
+  }, [debouncedSearch, indexOptions, parentRef]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -113,7 +135,11 @@ export function SelectIndexCombobox({
       {/* https://github.com/shadcn-ui/ui/issues/1690 */}
       <PopoverContent className="p-0 w-xs" onClick={stopPropagation}>
         <Command>
-          <CommandInput placeholder="Search index..." className="h-10" />
+          <CommandInput
+            placeholder="Search index..."
+            className="h-10"
+            onValueChange={setSearch}
+          />
           <ScrollArea>
             <CommandEmpty>
               {findIndexesRes.isError ? (
@@ -134,14 +160,14 @@ export function SelectIndexCombobox({
                 </div>
               )}
             </CommandEmpty>
-            <CommandGroup className="max-h-72 overflow-y-auto">
+            <CommandGroup className="max-h-72 overflow-y-auto" ref={parentRef}>
               {findIndexesRes.isLoading &&
                 skeletons.map((i) => (
                   <CommandItem key={i} className="animate-pulse">
                     <Skeleton className="h-6 w-full" />
                   </CommandItem>
                 ))}
-              {indexOptions.map((course, index) => (
+              {filteredOptions.map((course, index) => (
                 <CommandItem
                   key={course.id}
                   value={course.index}

@@ -550,32 +550,12 @@ export const appRouter = createTRPCRouter({
   findCourseIndexes: publicProcedure
     .input(
       z.object({
-        phrase: z.string(),
+        // phrase: z.string(),
         courseCode: z.string(),
         acadYear: AcadYearSchema,
       })
     )
     .query(async ({ input }) => {
-      if (input.phrase === "") {
-        const courseIndexes = await db
-          .select({
-            id: courseIndexTable.id,
-            index: courseIndexTable.index,
-          })
-          .from(courseIndexTable)
-          .innerJoin(
-            coursesTable,
-            eq(coursesTable.id, courseIndexTable.courseId)
-          )
-          .where(
-            and(
-              eq(coursesTable.code, input.courseCode),
-              eq(coursesTable.ay, input.acadYear.yearCode),
-              eq(coursesTable.semester, input.acadYear.semesterCode)
-            )
-          );
-        return courseIndexes;
-      }
       const courseIndexes = await db
         .select({
           id: courseIndexTable.id,
@@ -585,13 +565,65 @@ export const appRouter = createTRPCRouter({
         .innerJoin(coursesTable, eq(coursesTable.id, courseIndexTable.courseId))
         .where(
           and(
-            like(courseIndexTable.index, `%${input.phrase}%`),
             eq(coursesTable.code, input.courseCode),
             eq(coursesTable.ay, input.acadYear.yearCode),
             eq(coursesTable.semester, input.acadYear.semesterCode)
           )
         );
       return courseIndexes;
+      // if (input.phrase === "") {
+      //   const courseIndexes = await db
+      //     .select({
+      //       id: courseIndexTable.id,
+      //       index: courseIndexTable.index,
+      //     })
+      //     .from(courseIndexTable)
+      //     .innerJoin(
+      //       coursesTable,
+      //       eq(coursesTable.id, courseIndexTable.courseId)
+      //     )
+      //     .where(
+      //       and(
+      //         eq(coursesTable.code, input.courseCode),
+      //         eq(coursesTable.ay, input.acadYear.yearCode),
+      //         eq(coursesTable.semester, input.acadYear.semesterCode)
+      //       )
+      //     );
+      //   return courseIndexes;
+      // }
+      // const courseIndexes = await db
+      //   .select({
+      //     id: courseIndexTable.id,
+      //     index: courseIndexTable.index,
+      //   })
+      //   .from(courseIndexTable)
+      //   .innerJoin(coursesTable, eq(coursesTable.id, courseIndexTable.courseId))
+      //   .where(
+      //     and(
+      //       like(courseIndexTable.index, `%${input.phrase}%`),
+      //       eq(coursesTable.code, input.courseCode),
+      //       eq(coursesTable.ay, input.acadYear.yearCode),
+      //       eq(coursesTable.semester, input.acadYear.semesterCode)
+      //     )
+      //   );
+      // return courseIndexes;
+    }),
+  findAllCourses: publicProcedure
+    .input(
+      z.object({
+        acadYear: AcadYearSchema,
+      })
+    )
+    .query(async ({ input }) => {
+      return await db
+        .select()
+        .from(coursesTable)
+        .where(
+          and(
+            eq(coursesTable.ay, input.acadYear.yearCode),
+            eq(coursesTable.semester, input.acadYear.semesterCode)
+          )
+        );
     }),
   findCourses: publicProcedure
     .input(

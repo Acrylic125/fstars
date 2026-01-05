@@ -9,6 +9,7 @@ import {
   CommandInput,
   CommandItem,
   CommandItemBase,
+  CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
 import {
@@ -34,6 +35,9 @@ import {
 import { useShallow } from "zustand/react/shallow";
 import { useMutation } from "@tanstack/react-query";
 import { Config } from "@/lib/config";
+import { useMemo, useRef } from "react";
+import Fuse from "fuse.js";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 const skeletons = Array.from({ length: 5 }, (_, i) => i);
 
@@ -57,12 +61,12 @@ export function SelectCourseCombobox({
   const [open, setOpen] = React.useState(false);
 
   const [phrase, setPhrase] = React.useState("");
-  const [debouncedPhrase] = useDebounce(phrase, 300);
+  const [debouncedSearch] = useDebounce(phrase, 300);
   const utils = trpc.useUtils();
 
-  const findCoursesRes = trpc.findCourses.useQuery(
+  const findCoursesRes = trpc.findAllCourses.useQuery(
     {
-      phrase: debouncedPhrase,
+      // phrase: debouncedPhrase,
       // program,
       acadYear,
     },
@@ -108,7 +112,41 @@ export function SelectCourseCombobox({
     },
   });
 
-  const courseOptions = findCoursesRes.data ?? [];
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const fuse = useMemo(() => {
+    return new Fuse(findCoursesRes.data ?? [], {
+      keys: [
+        {
+          name: "code",
+          weight: 2,
+        },
+        {
+          name: "name",
+          weight: 1,
+        },
+      ],
+    });
+  }, [findCoursesRes.data]);
+  const filteredOptions = useMemo(() => {
+    if (parentRef.current) {
+      parentRef.current.scrollTo({
+        top: 0,
+        behavior: "instant",
+      });
+    }
+    if (debouncedSearch === "") {
+      return findCoursesRes.data ?? [];
+    }
+    return fuse.search(debouncedSearch).map((r) => r.item);
+  }, [fuse, debouncedSearch, findCoursesRes.data]);
+
+  const virtualizer = useVirtualizer({
+    count: filteredOptions.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 36,
+  });
+  const virtualOptions = virtualizer.getVirtualItems();
 
   const errorEle = [];
   let hasReachedLimit = false;
@@ -149,7 +187,14 @@ export function SelectCourseCombobox({
             onValueChange={setPhrase}
             value={phrase}
           />
-          <ScrollArea>
+          <CommandList
+            ref={parentRef}
+            style={{
+              // height: `200px`,
+              width: "100%",
+              overflow: "auto",
+            }}
+          >
             <CommandEmpty>
               {findCoursesRes.isError ? (
                 <div className="px-4">
@@ -169,14 +214,21 @@ export function SelectCourseCombobox({
                 </div>
               )}
             </CommandEmpty>
-            <CommandGroup className="max-h-72 overflow-y-auto">
+            <CommandGroup
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: "100%",
+                position: "relative",
+              }}
+            >
               {findCoursesRes.isLoading &&
                 skeletons.map((i) => (
                   <CommandItem key={i} className="animate-pulse">
                     <Skeleton className="h-6 w-full" />
                   </CommandItem>
                 ))}
-              {courseOptions.map((course) => {
+              {virtualOptions.map((virtualItem) => {
+                const course = filteredOptions[virtualItem.index];
                 const isSelected = timetableStore.planCourses?.has(course.code);
                 return (
                   <CommandItemBase
@@ -186,6 +238,11 @@ export function SelectCourseCombobox({
                       addCourseMutation.isPending ||
                       (!isSelected && hasReachedLimit)
                     }
+                    style={{
+                      height: `${virtualItem.size}px`,
+                      transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                    className="py-0 absolute top-0 left-0 right-0"
                     selected={isSelected}
                     onSelect={() => {
                       if (isSelected) {
@@ -204,7 +261,8 @@ export function SelectCourseCombobox({
                 );
               })}
             </CommandGroup>
-          </ScrollArea>
+          </CommandList>
+          <ScrollArea></ScrollArea>
           {errorEle.length > 0 && (
             <>
               <CommandSeparator />
