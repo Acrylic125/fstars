@@ -51,7 +51,7 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
       name: locationsTable.name,
       floorName: locationsTable.floorName,
       area: locationsTable.building,
-      location: locationsTable.mapIndoorsRoomId,
+      mazeMapIdentifier: locationsTable.mazeMapIdentifier,
     })
     .from(locationAltNamesTable)
     .innerJoin(
@@ -92,7 +92,7 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
           asChild
         >
           <a
-            href={`https://maps.ntu.edu.sg/#/ntu/d386ffa80e4e46f286d17f08/poi/details/${location.location}`}
+            href={`https://maps.ntu.edu.sg/#/ntu/d386ffa80e4e46f286d17f08/poi/details/${location.mazeMapIdentifier}`}
             target="_blank"
             rel="noopener noreferrer"
           >

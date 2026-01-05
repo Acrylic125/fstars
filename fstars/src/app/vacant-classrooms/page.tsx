@@ -63,7 +63,7 @@ async function TableLoader({
         .select({
           venue: locationAltNamesTable.altName,
           area: locationsTable.building,
-          location: locationsTable.mapIndoorsRoomId,
+          mazeMapIdentifier: locationsTable.mazeMapIdentifier,
         })
         .from(locationAltNamesTable)
         .innerJoin(
@@ -245,7 +245,7 @@ async function TableLoader({
           freeUntil: freeUntil,
           classEndTime: currentClassEndTime,
           area: translateBuilding(venue.location?.area ?? ""),
-          location: venue.location?.location ?? "",
+          location: venue.location?.mazeMapIdentifier ?? "",
           // remarks: venue.info?.remarks ?? "",
         };
       })}
