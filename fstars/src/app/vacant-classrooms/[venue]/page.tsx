@@ -52,6 +52,10 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
       floorName: locationsTable.floorName,
       area: locationsTable.building,
       mazeMapIdentifier: locationsTable.mazeMapIdentifier,
+      z: locationsTable.z,
+      longitude: locationsTable.longitude,
+      latitude: locationsTable.latitude,
+      campusId: locationsTable.campusId,
     })
     .from(locationAltNamesTable)
     .innerJoin(
@@ -86,19 +90,22 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
         <p className="text-base text-muted-foreground">{components.join("")}</p>
       </div>
       <div className="flex flex-row gap-2 items-center">
-        <Button
-          variant="outline"
-          className="flex flex-row gap-2 items-center"
-          asChild
-        >
-          <a
-            href={`https://maps.ntu.edu.sg/#/ntu/d386ffa80e4e46f286d17f08/poi/details/${location.mazeMapIdentifier}`}
-            target="_blank"
-            rel="noopener noreferrer"
+        {!!location.mazeMapIdentifier && (
+          <Button
+            variant="outline"
+            className="flex flex-row gap-2 items-center"
+            asChild
           >
-            NTU Map <ExternalLinkIcon className="size-4" />
-          </a>
-        </Button>
+            <a
+              href={`https://maps.ntu.edu.sg/?mazemap_share_url=https%3A%2F%2Fuse.mazemap.com%2F%3Futm_medium%3Dlongurl%23v%3D1%26config%3Dntu-sg%26zlevel%3D${location.z}%26center%3D${location.longitude}%2C${location.latitude}%26zoom%3D18%26sharepoitype%3Didentifier%26sharepoi%3D${encodeURIComponent(encodeURIComponent(location.mazeMapIdentifier))}%26campusid%3D${location.campusId}`}
+              // href={`https://maps.ntu.edu.sg/#/ntu/d386ffa80e4e46f286d17f08/poi/details/${location.mazeMapIdentifier}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              NTU Map <ExternalLinkIcon className="size-4" />
+            </a>
+          </Button>
+        )}
       </div>
     </div>
   );
