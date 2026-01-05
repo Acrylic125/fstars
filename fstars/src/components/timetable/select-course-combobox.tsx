@@ -45,7 +45,7 @@ export type RequestAddCourse = (
   course: inferRouterOutputs<AppRouter>["findCourses"][number]
 ) => void;
 
-export function SelectCourseCombobox({
+function SelectCourseCommand({
   programs,
   acadYear,
   timetableId,
@@ -58,22 +58,9 @@ export function SelectCourseCombobox({
   selectedPlanId: PlanId;
   disabled?: boolean;
 }) {
-  const [open, setOpen] = React.useState(false);
-
   const [phrase, setPhrase] = React.useState("");
   const [debouncedSearch] = useDebounce(phrase, 300);
   const utils = trpc.useUtils();
-
-  const findCoursesRes = trpc.findAllCourses.useQuery(
-    {
-      // phrase: debouncedPhrase,
-      // program,
-      acadYear,
-    },
-    {
-      enabled: !disabled,
-    }
-  );
 
   const timetableStore = useTimetableStore(
     useShallow((state) => {
@@ -85,6 +72,14 @@ export function SelectCourseCombobox({
           ?.plans.get(selectedPlanId)?.courses,
       };
     })
+  );
+  const findCoursesRes = trpc.findAllCourses.useQuery(
+    {
+      acadYear,
+    },
+    {
+      enabled: !disabled,
+    }
   );
 
   const addCourseMutation = useMutation({
@@ -115,7 +110,8 @@ export function SelectCourseCombobox({
   const parentRef = useRef<HTMLDivElement>(null);
 
   const fuse = useMemo(() => {
-    return new Fuse(findCoursesRes.data ?? [], {
+    const courses = findCoursesRes.data ?? [];
+    return new Fuse(courses, {
       keys: [
         {
           name: "code",
@@ -172,6 +168,114 @@ export function SelectCourseCombobox({
   }
 
   return (
+    <Command shouldFilter={false}>
+      <CommandInput
+        placeholder="Search course..."
+        className="h-10"
+        onValueChange={setPhrase}
+        value={phrase}
+      />
+      <CommandList
+        ref={parentRef}
+        style={{
+          // height: `200px`,
+          width: "100%",
+          overflow: "auto",
+        }}
+      >
+        <CommandEmpty>
+          {findCoursesRes.isError ? (
+            <div className="px-4">
+              <Alert variant="error" className="flex flex-col gap-1 text-base">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>
+                  {findCoursesRes.error.message}
+                </AlertDescription>
+              </Alert>
+            </div>
+          ) : (
+            <div className="px-4 text-base py-4 text-muted-foreground mx-auto max-w-64">
+              No course found.
+            </div>
+          )}
+        </CommandEmpty>
+        <CommandGroup
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          {findCoursesRes.isLoading &&
+            skeletons.map((i) => (
+              <CommandItem key={i} className="animate-pulse">
+                <Skeleton className="h-6 w-full" />
+              </CommandItem>
+            ))}
+          {virtualOptions.map((virtualItem) => {
+            const course = filteredOptions[virtualItem.index];
+            const isSelected = timetableStore.planCourses?.has(course.code);
+            return (
+              <CommandItemBase
+                key={course.id}
+                value={course.name}
+                disabled={
+                  addCourseMutation.isPending ||
+                  (!isSelected && hasReachedLimit)
+                }
+                style={{
+                  height: `${virtualItem.size}px`,
+                  transform: `translateY(${virtualItem.start}px)`,
+                }}
+                className="py-0 absolute top-0 left-0 right-0"
+                selected={isSelected}
+                onSelect={() => {
+                  if (isSelected) {
+                    timetableStore.removeCourseFromPlan({
+                      timetableId,
+                      planId: selectedPlanId,
+                      courseCode: course.code,
+                    });
+                  } else {
+                    addCourseMutation.mutate(course.code);
+                  }
+                }}
+              >
+                {course.code} {course.name}
+              </CommandItemBase>
+            );
+          })}
+        </CommandGroup>
+      </CommandList>
+      <ScrollArea></ScrollArea>
+      {errorEle.length > 0 && (
+        <>
+          <CommandSeparator />
+          <div className="flex flex-row items-center justify-between px-2.5 py-4">
+            {errorEle}
+          </div>
+        </>
+      )}
+    </Command>
+  );
+}
+
+export function SelectCourseCombobox({
+  programs,
+  acadYear,
+  timetableId,
+  selectedPlanId,
+  disabled,
+}: {
+  programs: Program[];
+  acadYear: AcadYear;
+  timetableId: TimetableId;
+  selectedPlanId: PlanId;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = React.useState(false);
+
+  return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="secondary" size="icon" disabled={disabled}>
@@ -180,98 +284,13 @@ export function SelectCourseCombobox({
       </PopoverTrigger>
       {/* https://github.com/shadcn-ui/ui/issues/1690 */}
       <PopoverContent className="p-0 w-md">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Search course..."
-            className="h-10"
-            onValueChange={setPhrase}
-            value={phrase}
-          />
-          <CommandList
-            ref={parentRef}
-            style={{
-              // height: `200px`,
-              width: "100%",
-              overflow: "auto",
-            }}
-          >
-            <CommandEmpty>
-              {findCoursesRes.isError ? (
-                <div className="px-4">
-                  <Alert
-                    variant="error"
-                    className="flex flex-col gap-1 text-base"
-                  >
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>
-                      {findCoursesRes.error.message}
-                    </AlertDescription>
-                  </Alert>
-                </div>
-              ) : (
-                <div className="px-4 text-base py-4 text-muted-foreground mx-auto max-w-64">
-                  No course found.
-                </div>
-              )}
-            </CommandEmpty>
-            <CommandGroup
-              style={{
-                height: `${virtualizer.getTotalSize()}px`,
-                width: "100%",
-                position: "relative",
-              }}
-            >
-              {findCoursesRes.isLoading &&
-                skeletons.map((i) => (
-                  <CommandItem key={i} className="animate-pulse">
-                    <Skeleton className="h-6 w-full" />
-                  </CommandItem>
-                ))}
-              {virtualOptions.map((virtualItem) => {
-                const course = filteredOptions[virtualItem.index];
-                const isSelected = timetableStore.planCourses?.has(course.code);
-                return (
-                  <CommandItemBase
-                    key={course.id}
-                    value={course.name}
-                    disabled={
-                      addCourseMutation.isPending ||
-                      (!isSelected && hasReachedLimit)
-                    }
-                    style={{
-                      height: `${virtualItem.size}px`,
-                      transform: `translateY(${virtualItem.start}px)`,
-                    }}
-                    className="py-0 absolute top-0 left-0 right-0"
-                    selected={isSelected}
-                    onSelect={() => {
-                      if (isSelected) {
-                        timetableStore.removeCourseFromPlan({
-                          timetableId,
-                          planId: selectedPlanId,
-                          courseCode: course.code,
-                        });
-                      } else {
-                        addCourseMutation.mutate(course.code);
-                      }
-                    }}
-                  >
-                    {course.code} {course.name}
-                  </CommandItemBase>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-          <ScrollArea></ScrollArea>
-          {errorEle.length > 0 && (
-            <>
-              <CommandSeparator />
-              <div className="flex flex-row items-center justify-between px-2.5 py-4">
-                {errorEle}
-              </div>
-            </>
-          )}
-        </Command>
+        <SelectCourseCommand
+          programs={programs}
+          acadYear={acadYear}
+          timetableId={timetableId}
+          selectedPlanId={selectedPlanId}
+          disabled={disabled}
+        />
       </PopoverContent>
     </Popover>
   );

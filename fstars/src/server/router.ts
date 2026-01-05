@@ -26,6 +26,7 @@ const CourseIndexSchema = z
 
 const CoursesSchema = z
   .object({
+    id: z.number(),
     code: z.string(),
     name: z.string(),
   })
@@ -601,13 +602,14 @@ export const appRouter = createTRPCRouter({
       const key = `allCourses:${input.acadYear.yearCode}_${input.acadYear.semesterCode}`;
       const cached = await redis.get(key);
       if (typeof cached === "string") {
-        const parsed = z.array(CoursesSchema).safeParse(JSON.parse(cached));
+        const parsed = CoursesSchema.safeParse(JSON.parse(cached));
         if (parsed.success) {
           return parsed.data;
         }
       }
       const courses = await db
         .select({
+          id: coursesTable.id,
           code: coursesTable.code,
           name: coursesTable.name,
         })

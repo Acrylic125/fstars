@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, PlusIcon } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -18,7 +18,7 @@ import { trpc } from "@/server/client";
 import { ScrollArea } from "../ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Skeleton } from "../ui/skeleton";
-import { AcadYear, Program } from "@/lib/types";
+import { AcadYear } from "@/lib/types";
 import { PlanId, TimetableId, useTimetableStore } from "./timetable-store";
 import { Checkbox } from "../ui/checkbox";
 import { useShallow } from "zustand/react/shallow";
@@ -61,7 +61,6 @@ export function SelectIndexCombobox({
   const [open, setOpen] = useState(false);
   const findIndexesRes = trpc.findCourseIndexes.useQuery(
     {
-      // phrase: "",
       courseCode,
       acadYear,
     },
