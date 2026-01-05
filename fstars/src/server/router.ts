@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure, router } from "./trpc";
+import { createTRPCRouter, publicProcedure } from "./trpc";
 import { db } from "@/db";
 import {
   campusTable,
@@ -11,25 +11,25 @@ import {
   locationsTable,
   programsTable,
 } from "@/db/schema";
-import {
-  and,
-  eq,
-  exists,
-  inArray,
-  isNull,
-  like,
-  not,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { AcadYearSchema, ProgramSchema } from "@/lib/types";
 import { CourseCode } from "@/components/timetable/timetable-store";
-import {
-  CourseClasses,
-  IndexClass,
-  Time,
-  toTimeAsArray,
-} from "@/generator/utils";
+import { CourseClasses, IndexClass, toTimeAsArray } from "@/generator/utils";
+import { redis } from "@/cache/upstash";
+
+const CourseIndexSchema = z
+  .object({
+    id: z.string(),
+    index: z.string(),
+  })
+  .array();
+
+const CoursesSchema = z
+  .object({
+    code: z.string(),
+    name: z.string(),
+  })
+  .array();
 
 export const appRouter = createTRPCRouter({
   getCoursesByCodes: publicProcedure
@@ -556,6 +556,14 @@ export const appRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
+      const key = `courseIndexes:${input.courseCode}_${input.acadYear.yearCode}_${input.acadYear.semesterCode}`;
+      const cached = await redis.get(key);
+      if (typeof cached === "string") {
+        const parsed = CourseIndexSchema.safeParse(JSON.parse(cached));
+        if (parsed.success) {
+          return parsed.data;
+        }
+      }
       const courseIndexes = await db
         .select({
           id: courseIndexTable.id,
@@ -570,43 +578,18 @@ export const appRouter = createTRPCRouter({
             eq(coursesTable.semester, input.acadYear.semesterCode)
           )
         );
+      // Expires in 1 hour.
+      try {
+        const res = await redis.set(key, JSON.stringify(courseIndexes), {
+          ex: 3600,
+        });
+        if (res !== "OK") {
+          console.error("Failed to set cache:", res);
+        }
+      } catch (e) {
+        console.error("Failed to set cache:", e);
+      }
       return courseIndexes;
-      // if (input.phrase === "") {
-      //   const courseIndexes = await db
-      //     .select({
-      //       id: courseIndexTable.id,
-      //       index: courseIndexTable.index,
-      //     })
-      //     .from(courseIndexTable)
-      //     .innerJoin(
-      //       coursesTable,
-      //       eq(coursesTable.id, courseIndexTable.courseId)
-      //     )
-      //     .where(
-      //       and(
-      //         eq(coursesTable.code, input.courseCode),
-      //         eq(coursesTable.ay, input.acadYear.yearCode),
-      //         eq(coursesTable.semester, input.acadYear.semesterCode)
-      //       )
-      //     );
-      //   return courseIndexes;
-      // }
-      // const courseIndexes = await db
-      //   .select({
-      //     id: courseIndexTable.id,
-      //     index: courseIndexTable.index,
-      //   })
-      //   .from(courseIndexTable)
-      //   .innerJoin(coursesTable, eq(coursesTable.id, courseIndexTable.courseId))
-      //   .where(
-      //     and(
-      //       like(courseIndexTable.index, `%${input.phrase}%`),
-      //       eq(coursesTable.code, input.courseCode),
-      //       eq(coursesTable.ay, input.acadYear.yearCode),
-      //       eq(coursesTable.semester, input.acadYear.semesterCode)
-      //     )
-      //   );
-      // return courseIndexes;
     }),
   findAllCourses: publicProcedure
     .input(
@@ -615,8 +598,19 @@ export const appRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      return await db
-        .select()
+      const key = `allCourses:${input.acadYear.yearCode}_${input.acadYear.semesterCode}`;
+      const cached = await redis.get(key);
+      if (typeof cached === "string") {
+        const parsed = z.array(CoursesSchema).safeParse(JSON.parse(cached));
+        if (parsed.success) {
+          return parsed.data;
+        }
+      }
+      const courses = await db
+        .select({
+          code: coursesTable.code,
+          name: coursesTable.name,
+        })
         .from(coursesTable)
         .where(
           and(
@@ -624,6 +618,17 @@ export const appRouter = createTRPCRouter({
             eq(coursesTable.semester, input.acadYear.semesterCode)
           )
         );
+      try {
+        const res = await redis.set(key, JSON.stringify(courses), {
+          ex: 3600,
+        });
+        if (res !== "OK") {
+          console.error("Failed to set cache:", res);
+        }
+      } catch (e) {
+        console.error("Failed to set cache:", e);
+      }
+      return courses;
     }),
   findCourses: publicProcedure
     .input(
