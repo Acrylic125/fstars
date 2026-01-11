@@ -156,6 +156,9 @@ export function CalendarViewWeekSelectorView({
     >
       <p className="text-sm text-muted-foreground pointer-events-none">
         <span className="lg:hidden">Wk</span>
+        <p className="text-sm text-yellow-500">
+          {weekSelector.selectedWeeksBitMask} {getNow().toFormat("yyyy-MM-dd")}
+        </p>
         <span className="hidden lg:inline">Week</span>
       </p>
       <div className="mx-2 md:mx-4 w-[1px] h-full bg-border" />
