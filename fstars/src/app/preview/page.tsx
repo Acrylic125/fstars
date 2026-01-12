@@ -22,6 +22,8 @@ import {
 import { cn } from "@/lib/utils";
 import { usePreviewViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
 
+export const revalidate = 300;
+
 function TimetableViewWeekSelector() {
   const weekSelector = usePreviewViewWeekSelector();
   return (
