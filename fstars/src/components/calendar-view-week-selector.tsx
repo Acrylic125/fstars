@@ -6,11 +6,11 @@ import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { getAcadWeek, getNow } from "@/lib/acad";
-
-export type CalendarViewWeekSelector = {
-  selectedWeeksBitMask: number;
-  setSelectedBitMask: (selectedBitMask: number) => void;
-};
+import {
+  CalendarViewWeekSelector,
+  usePreviewViewWeekSelector,
+} from "./timetable/timetable-view-week-selector";
+import { useShallow } from "zustand/react/shallow";
 
 export function isWeekSelected(mask: number, week: number) {
   return (mask & (1 << (week - 1))) > 0;
@@ -134,6 +134,21 @@ export function CalendarViewWeeksRow({
       </div>
       <ScrollBar orientation="horizontal" />
     </ScrollArea>
+  );
+}
+
+export function TimetableViewWeekSelector() {
+  const weekSelector = usePreviewViewWeekSelector(
+    useShallow((state) => ({
+      selectedWeeksBitMask: state.selectedWeeksBitMask,
+      setSelectedBitMask: state.setSelectedBitMask,
+    }))
+  );
+  return (
+    <CalendarViewWeekSelectorView
+      className="absolute bottom-4 md:bottom-8 lg:bottom-12 left-1/2 -translate-x-1/2"
+      weekSelector={weekSelector}
+    />
   );
 }
 
