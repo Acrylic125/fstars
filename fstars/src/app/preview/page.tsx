@@ -16,6 +16,14 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
+
+const TimetableViewWeekSelectorDynamic = dynamic(
+  () => Promise.resolve(TimetableViewWeekSelector),
+  {
+    ssr: false,
+  }
+);
 
 // export default async function Home(props: { params: Promise<{}> }) {
 export default function Home(props: { params: Promise<{}> }) {
@@ -42,7 +50,7 @@ export default function Home(props: { params: Promise<{}> }) {
               <div className="w-full h-20 md:h-24 lg:h-28" />
             </div>
             <ScrollBar orientation="horizontal" />
-            <TimetableViewWeekSelector />
+            <TimetableViewWeekSelectorDynamic />
             <div className="absolute top-0 right-0 hidden lg:flex z-10">
               <Button
                 variant="secondary"
