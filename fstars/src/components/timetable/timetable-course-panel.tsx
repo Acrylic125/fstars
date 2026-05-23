@@ -103,6 +103,16 @@ function ExportCalendarButton({ id }: { id: string }) {
     }
 
     const events: EventAttributes[] = [];
+    const acadWeekByNumber = new Map(weeks.map((w) => [w.week, w]));
+    const dateToLocalArray = (
+      d: Date
+    ): [number, number, number, number, number] => [
+      d.getFullYear(),
+      d.getMonth() + 1,
+      d.getDate(),
+      d.getHours(),
+      d.getMinutes(),
+    ];
 
     for (const courseClass of selectedCourseClasses.data) {
       const {
@@ -121,55 +131,89 @@ function ExportCalendarButton({ id }: { id: string }) {
         continue;
       }
 
-      for (const weekNumber of classWeeks) {
-        const acadWeek = weeks.find((w) => w.week === weekNumber);
+      const classDates: { start: Date; end: Date }[] = [];
+      for (const weekNumber of [...classWeeks].sort((a, b) => a - b)) {
+        const acadWeek = acadWeekByNumber.get(weekNumber);
         if (!acadWeek) {
           continue;
         }
-
         const [startYear, startMonth, startDay] = acadWeek.start;
-
-        const startDate = new Date(
-          startYear,
-          startMonth - 1,
-          startDay + day,
-          from.hour,
-          from.minute
-        );
-
-        const endDate = new Date(
-          startYear,
-          startMonth - 1,
-          startDay + day,
-          to.hour,
-          to.minute
-        );
-
-        const event: EventAttributes = {
-          start: [
-            startDate.getFullYear(),
-            startDate.getMonth() + 1,
-            startDate.getDate(),
-            startDate.getHours(),
-            startDate.getMinutes(),
-          ],
-          end: [
-            endDate.getFullYear(),
-            endDate.getMonth() + 1,
-            endDate.getDate(),
-            endDate.getHours(),
-            endDate.getMinutes(),
-          ],
-          title: `${course.code} ${course.name} (${index})`,
-          description: remarks ?? undefined,
-          location: location?.location ?? venue ?? undefined,
-          startInputType: "local",
-          endInputType: "local",
-          productId: "fstars-timetable",
-        };
-
-        events.push(event);
+        classDates.push({
+          start: new Date(
+            startYear,
+            startMonth - 1,
+            startDay + day,
+            from.hour,
+            from.minute
+          ),
+          end: new Date(
+            startYear,
+            startMonth - 1,
+            startDay + day,
+            to.hour,
+            to.minute
+          ),
+        });
       }
+
+      if (classDates.length === 0) {
+        continue;
+      }
+
+      const firstClass = classDates[0];
+      const lastClass = classDates[classDates.length - 1];
+
+      const baseEvent = {
+        title: `${course.code} ${course.name} (${index})`,
+        description: remarks ?? undefined,
+        location: location?.location ?? venue ?? undefined,
+        startInputType: "local" as const,
+        endInputType: "local" as const,
+        productId: "fstars-timetable",
+        start: dateToLocalArray(firstClass.start),
+        end: dateToLocalArray(firstClass.end),
+      };
+
+      if (classDates.length === 1) {
+        events.push(baseEvent);
+        continue;
+      }
+
+      // Number of weekly slots between the first and last class (inclusive).
+      // Use day-based diff so a 1-hour DST offset in the user's local timezone
+      // doesn't throw the count off.
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const dayDiff = Math.round(
+        (lastClass.start.getTime() - firstClass.start.getTime()) / msPerDay
+      );
+      const count = Math.round(dayDiff / 7) + 1;
+
+      const classDateTimes = new Set(
+        classDates.map((c) => c.start.getTime())
+      );
+
+      const exclusionDates: [number, number, number, number, number][] = [];
+      for (let i = 1; i < count - 1; i++) {
+        // Construct each candidate from local-time components so it lines up
+        // with classDates (also constructed from local-time components),
+        // even across DST boundaries.
+        const candidate = new Date(
+          firstClass.start.getFullYear(),
+          firstClass.start.getMonth(),
+          firstClass.start.getDate() + i * 7,
+          firstClass.start.getHours(),
+          firstClass.start.getMinutes()
+        );
+        if (!classDateTimes.has(candidate.getTime())) {
+          exclusionDates.push(dateToLocalArray(candidate));
+        }
+      }
+
+      events.push({
+        ...baseEvent,
+        recurrenceRule: `FREQ=WEEKLY;COUNT=${count}`,
+        ...(exclusionDates.length > 0 ? { exclusionDates } : {}),
+      });
     }
 
     if (events.length === 0) {
