@@ -4,6 +4,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useTimetableStore } from "./timetable-store";
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { downloadObjectAsJSONFile } from "./timetable-export-utils";
 import { exportTimetable } from "./timetable-export-utils";
@@ -12,6 +13,14 @@ import { Indicator, useIndicator } from "../ui/indicator";
 import { useTimetableGeneratorStore } from "./timetable-generator-store";
 import { Dialog, DialogTrigger } from "../ui/dialog";
 import { TimetableImportModal } from "./timetable-import";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 
 export function TimetableListHeader() {
   const controls = useIndicator();
@@ -25,8 +34,8 @@ export function TimetableListHeader() {
 
   return (
     <div className="flex flex-row justify-between items-center">
-      <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
-        Timetable
+      <h1 className="text-xl md:text-2xl font-bold text-foreground">
+        Timetables
       </h1>
       <div className="flex flex-row gap-2">
         <Dialog
@@ -80,6 +89,7 @@ export function TimetableListHeader() {
 }
 
 export function TimetableList() {
+  const router = useRouter();
   const { timetables } = useTimetableStore(
     useShallow((state) => {
       return {
@@ -97,22 +107,50 @@ export function TimetableList() {
   }, [timetables]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
-      {timetablesCached.map((timetable) => (
-        <Link
-          key={timetable.id}
-          href={`/timetable/${timetable.id}`}
-          className="w-full border border-border rounded-md p-4 bg-card transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ring-secondary hover:ring-[3px]"
-        >
-          <h3 className="text-lg font-semibold text-card-foreground">
-            {timetable.name}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            AY{timetable.acadYear.yearCode} Semester{" "}
-            {timetable.acadYear.semesterCode}
-          </p>
-        </Link>
-      ))}
+    <div className="border border-border rounded-md bg-card overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Acad Year</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {timetablesCached.map((timetable) => {
+            const href = `/timetable/${timetable.id}`;
+            return (
+              <TableRow
+                key={timetable.id}
+                role="link"
+                tabIndex={0}
+                onClick={() => router.push(href)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    router.push(href);
+                  }
+                }}
+                className="cursor-pointer focus-visible:bg-muted/50 outline-none"
+              >
+                <TableCell className="font-medium">
+                  {/* Inner Link preserves middle-click, open-in-new-tab, and right-click. */}
+                  <Link
+                    href={href}
+                    className="outline-none"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    {timetable.name}
+                  </Link>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  AY{timetable.acadYear.yearCode} Semester{" "}
+                  {timetable.acadYear.semesterCode}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 }
