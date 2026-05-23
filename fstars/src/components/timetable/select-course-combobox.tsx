@@ -18,6 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { trpc } from "@/server/client";
 import { useDebounce } from "use-debounce";
 import { ScrollArea } from "../ui/scroll-area";
@@ -241,7 +242,16 @@ function SelectCourseCommand({
                   }
                 }}
               >
-                {course.code} {course.name}
+                <span className="flex flex-row items-center gap-2 min-w-0">
+                  <span className="truncate">
+                    {course.code} {course.name}
+                  </span>
+                  {course.exam ? (
+                    <Badge variant="destructive" className="shrink-0">
+                      Exam
+                    </Badge>
+                  ) : null}
+                </span>
               </CommandItemBase>
             );
           })}

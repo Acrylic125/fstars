@@ -7,11 +7,12 @@ import {
   courseIndexSourcesTable,
   courseIndexTable,
   coursesTable,
+  examsTable,
   locationAltNamesTable,
   locationsTable,
   programsTable,
 } from "@/db/schema";
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
 import { AcadYearSchema, ProgramSchema } from "@/lib/types";
 import { CourseCode } from "@/components/timetable/timetable-store";
 import { CourseClasses, IndexClass, toTimeAsArray } from "@/generator/utils";
@@ -24,23 +25,51 @@ const CourseIndexSchema = z
   })
   .array();
 
+const ExamSchema = z
+  .object({
+    date: z.string(),
+    timeHour: z.number(),
+    timeMinute: z.number(),
+    duration: z.number(),
+  })
+  .nullable();
+
 const CoursesSchema = z
   .object({
     id: z.number(),
     code: z.string(),
     name: z.string(),
+    exam: ExamSchema,
   })
   .array();
 
 export const appRouter = createTRPCRouter({
   getCoursesByCodes: publicProcedure
-    .input(z.object({ codes: z.array(z.string()).max(10) }))
+    .input(z.object({ ay: AcadYearSchema, codes: z.array(z.string()).max(10) }))
     .query(async ({ input }) => {
       if (input.codes.length === 0) return [];
       const courses = await db
-        .select()
+        .select({
+          id: coursesTable.id,
+          code: coursesTable.code,
+          name: coursesTable.name,
+          au: coursesTable.au,
+          exam: {
+            date: examsTable.date,
+            timeHour: examsTable.timeHour,
+            timeMinute: examsTable.timeMinute,
+            duration: examsTable.duration,
+          },
+        })
         .from(coursesTable)
-        .where(inArray(coursesTable.code, input.codes));
+        .leftJoin(examsTable, eq(examsTable.courseId, coursesTable.id))
+        .where(
+          and(
+            inArray(coursesTable.code, input.codes),
+            eq(coursesTable.ay, input.ay.yearCode),
+            eq(coursesTable.semester, input.ay.semesterCode)
+          )
+        );
       return courses;
     }),
   getCourseIndexPairs: publicProcedure
@@ -598,7 +627,8 @@ export const appRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      const key = `allCourses:${input.acadYear.yearCode}_${input.acadYear.semesterCode}`;
+      // Cache key is versioned (v2) because the response shape changed.
+      const key = `allCourses:v2:${input.acadYear.yearCode}_${input.acadYear.semesterCode}`;
       const cached = await redis.get(key);
       if (typeof cached === "string") {
         const parsed = CoursesSchema.safeParse(JSON.parse(cached));
@@ -611,8 +641,15 @@ export const appRouter = createTRPCRouter({
           id: coursesTable.id,
           code: coursesTable.code,
           name: coursesTable.name,
+          exam: {
+            date: examsTable.date,
+            timeHour: examsTable.timeHour,
+            timeMinute: examsTable.timeMinute,
+            duration: examsTable.duration,
+          },
         })
         .from(coursesTable)
+        .leftJoin(examsTable, eq(examsTable.courseId, coursesTable.id))
         .where(
           and(
             eq(coursesTable.ay, input.acadYear.yearCode),

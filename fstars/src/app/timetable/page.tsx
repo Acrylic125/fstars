@@ -24,21 +24,6 @@ export default function Home() {
             <TimetableListHeader />
             <TimetableList />
           </div>
-
-          {/* <Alert variant="info">
-            <AlertTitle>
-              <h2 className="text-lg font-bold">Export to backup!</h2>
-            </AlertTitle>
-            <AlertDescription>
-              <p className="text-base text-neutral-700 dark:text-neutral-300">
-                Your timetables are stored in your browser.{" "}
-                <span className="text-foreground font-bold inline">
-                  Remember to Export
-                </span>{" "}
-                to backup your timetables.
-              </p>
-            </AlertDescription>
-          </Alert> */}
         </div>
       </ScrollArea>
     </main>

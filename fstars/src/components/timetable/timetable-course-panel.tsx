@@ -6,6 +6,8 @@ import { SelectPlanCombobox } from "./select-plan-combobox";
 import { SelectCourseCombobox } from "./select-course-combobox";
 import { trpc } from "@/server/client";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { DateTime } from "luxon";
 import {
   Collapsible,
   CollapsibleContent,
@@ -188,9 +190,7 @@ function ExportCalendarButton({ id }: { id: string }) {
       );
       const count = Math.round(dayDiff / 7) + 1;
 
-      const classDateTimes = new Set(
-        classDates.map((c) => c.start.getTime())
-      );
+      const classDateTimes = new Set(classDates.map((c) => c.start.getTime()));
 
       const exclusionDates: [number, number, number, number, number][] = [];
       for (let i = 1; i < count - 1; i++) {
@@ -268,7 +268,6 @@ export function TimetableHeader({ id }: { id: string }) {
     })
   );
   const backupControls = useIndicator();
-  const exportCalendarControls = useIndicator();
 
   const exportTimetableFile = useCallback(() => {
     if (!timetableStore) {
@@ -347,7 +346,28 @@ export function TimetableHeader({ id }: { id: string }) {
   );
 }
 
-type Course = inferRouterOutputs<AppRouter>["findCourses"][number];
+type Course = inferRouterOutputs<AppRouter>["getCoursesByCodes"][number];
+
+function formatExamDuration(hours: number) {
+  const totalMinutes = Math.round(hours * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+function formatExamSchedule(exam: NonNullable<Course["exam"]>) {
+  const dt = DateTime.fromISO(exam.date).set({
+    hour: exam.timeHour,
+    minute: exam.timeMinute,
+  });
+  return {
+    date: dt.toFormat("EEE, d LLL yyyy"),
+    time: dt.toFormat("h:mm a"),
+    duration: formatExamDuration(exam.duration),
+  };
+}
 
 export function TimetableCoursesRow({
   id,
@@ -435,6 +455,23 @@ export function TimetableCoursesRow({
               <span className="text-muted-foreground font-medium text-sm flex-1">
                 {course.name}
               </span>
+
+              {course.exam ? (
+                <div className="flex flex-row flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                  <Badge variant="secondary">Exam</Badge>
+                  <span className="text-foreground">
+                    {formatExamSchedule(course.exam).date}
+                  </span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-foreground">
+                    {formatExamSchedule(course.exam).time}
+                  </span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-muted-foreground">
+                    {formatExamSchedule(course.exam).duration}
+                  </span>
+                </div>
+              ) : null}
 
               <div className="">
                 <p className="text-foreground text-sm inline">{course.au} </p>
@@ -574,6 +611,10 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
   const selectedPlanCourses = trpc.getCoursesByCodes.useQuery(
     {
       codes: selectedPlanCoursesArray,
+      ay: timetableStore?.acadYear ?? {
+        yearCode: "",
+        semesterCode: "",
+      },
     },
     {
       enabled:
