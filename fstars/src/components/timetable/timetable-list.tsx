@@ -1,8 +1,8 @@
 "use client";
 
 import { useShallow } from "zustand/react/shallow";
-import { useTimetableStore } from "./timetable-store";
-import { useMemo, useState } from "react";
+import { TimetableId, useTimetableStore } from "./timetable-store";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
@@ -21,6 +21,21 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import {
+  DownloadIcon,
+  EllipsisIcon,
+  ImportIcon,
+  PlusIcon,
+  TrashIcon,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { DeleteTimetableModal } from "./delete-timetable";
 
 export function TimetableListHeader() {
   const controls = useIndicator();
@@ -55,14 +70,18 @@ export function TimetableListHeader() {
           }}
         >
           <DialogTrigger asChild>
-            <Button variant="outline">Import</Button>
+            <Button variant="outline" size="sm">
+              <ImportIcon className="w-4 h-4" />
+              Import
+            </Button>
           </DialogTrigger>
           <TimetableImportModal key={modalKey.key} />
         </Dialog>
         <div className="relative flex flex-row gap-2 w-fit">
           <Indicator controls={controls} className="w-48 z-10" />
           <Button
-            variant="default"
+            variant="outline"
+            size="sm"
             onClick={() => {
               const timetables = useTimetableStore.getState().timetables;
               const generators =
@@ -80,9 +99,16 @@ export function TimetableListHeader() {
               );
             }}
           >
+            <DownloadIcon className="w-4 h-4" />
             Export
           </Button>
         </div>
+        <Button variant="default" asChild size="sm">
+          <Link href="/new">
+            <PlusIcon className="w-4 h-4" />
+            New
+          </Link>
+        </Button>
       </div>
     </div>
   );
@@ -113,6 +139,9 @@ export function TimetableList() {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Acad Year</TableHead>
+            <TableHead className="w-12">
+              <span className="sr-only">Actions</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -146,11 +175,79 @@ export function TimetableList() {
                   AY{timetable.acadYear.yearCode} Semester{" "}
                   {timetable.acadYear.semesterCode}
                 </TableCell>
+                <TableCell
+                  className="text-right w-12"
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
+                  <TimetableRowActions
+                    timetableId={timetable.id}
+                    timetableName={timetable.name}
+                  />
+                </TableCell>
               </TableRow>
             );
           })}
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+function TimetableRowActions({
+  timetableId,
+  timetableName,
+}: {
+  timetableId: TimetableId;
+  timetableName: string;
+}) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const handleExport = useCallback(() => {
+    const timetableState = useTimetableStore
+      .getState()
+      .timetables.get(timetableId);
+    if (!timetableState) {
+      return;
+    }
+    const generators = useTimetableGeneratorStore.getState().generators;
+    const json = exportTimetable({
+      version: 1,
+      timetables: new Map([[timetableId, timetableState]]),
+      generators,
+    });
+    const filename = `${timetableState.name} ${nanoid(8)}.json`;
+    downloadObjectAsJSONFile(json, filename);
+  }, [timetableId]);
+
+  return (
+    <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <EllipsisIcon className="h-4 w-4" />
+            <span className="sr-only">Open actions for {timetableName}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={handleExport}>
+            <DownloadIcon className="h-4 w-4" /> Export
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() => setDeleteOpen(true)}
+          >
+            <TrashIcon className="h-4 w-4" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DeleteTimetableModal timetableId={timetableId} />
+    </Dialog>
   );
 }
