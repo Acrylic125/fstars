@@ -35,6 +35,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "../ui/context-menu";
 import { DeleteTimetableModal } from "./delete-timetable";
 
 export function TimetableListHeader() {
@@ -115,7 +122,6 @@ export function TimetableListHeader() {
 }
 
 export function TimetableList() {
-  const router = useRouter();
   const { timetables } = useTimetableStore(
     useShallow((state) => {
       return {
@@ -145,63 +151,35 @@ export function TimetableList() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {timetablesCached.map((timetable) => {
-            const href = `/timetable/${timetable.id}`;
-            return (
-              <TableRow
-                key={timetable.id}
-                role="link"
-                tabIndex={0}
-                onClick={() => router.push(href)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    router.push(href);
-                  }
-                }}
-                className="cursor-pointer focus-visible:bg-muted/50 outline-none"
-              >
-                <TableCell className="font-medium">
-                  {/* Inner Link preserves middle-click, open-in-new-tab, and right-click. */}
-                  <Link
-                    href={href}
-                    className="outline-none"
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    {timetable.name}
-                  </Link>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  AY{timetable.acadYear.yearCode} Semester{" "}
-                  {timetable.acadYear.semesterCode}
-                </TableCell>
-                <TableCell
-                  className="text-right w-12"
-                  onClick={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => event.stopPropagation()}
-                >
-                  <TimetableRowActions
-                    timetableId={timetable.id}
-                    timetableName={timetable.name}
-                  />
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          {timetablesCached.map((timetable) => (
+            <TimetableRow
+              key={timetable.id}
+              timetableId={timetable.id}
+              timetableName={timetable.name}
+              acadYearCode={timetable.acadYear.yearCode}
+              semesterCode={timetable.acadYear.semesterCode}
+            />
+          ))}
         </TableBody>
       </Table>
     </div>
   );
 }
 
-function TimetableRowActions({
+function TimetableRow({
   timetableId,
   timetableName,
+  acadYearCode,
+  semesterCode,
 }: {
   timetableId: TimetableId;
   timetableName: string;
+  acadYearCode: string | number;
+  semesterCode: string | number;
 }) {
+  const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const href = `/timetable/${timetableId}`;
 
   const handleExport = useCallback(() => {
     const timetableState = useTimetableStore
@@ -220,33 +198,79 @@ function TimetableRowActions({
     downloadObjectAsJSONFile(json, filename);
   }, [timetableId]);
 
+  const openDelete = useCallback(() => setDeleteOpen(true), []);
+
   return (
     <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            onClick={(event) => event.stopPropagation()}
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <TableRow
+            role="link"
+            tabIndex={0}
+            onClick={() => router.push(href)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                router.push(href);
+              }
+            }}
+            className="cursor-pointer focus-visible:bg-muted/50 outline-none"
           >
-            <EllipsisIcon className="h-4 w-4" />
-            <span className="sr-only">Open actions for {timetableName}</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={handleExport}>
+            <TableCell className="font-medium">
+              {/* Inner Link preserves middle-click and open-in-new-tab. */}
+              <Link
+                href={href}
+                className="outline-none"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {timetableName}
+              </Link>
+            </TableCell>
+            <TableCell className="text-muted-foreground">
+              AY{acadYearCode} Semester {semesterCode}
+            </TableCell>
+            <TableCell
+              className="text-right w-12"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <EllipsisIcon className="h-4 w-4" />
+                    <span className="sr-only">
+                      Open actions for {timetableName}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={handleExport}>
+                    <DownloadIcon className="h-4 w-4" /> Export
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onSelect={openDelete}>
+                    <TrashIcon className="h-4 w-4" /> Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onSelect={handleExport}>
             <DownloadIcon className="h-4 w-4" /> Export
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            onSelect={() => setDeleteOpen(true)}
-          >
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem variant="destructive" onSelect={openDelete}>
             <TrashIcon className="h-4 w-4" /> Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
       <DeleteTimetableModal timetableId={timetableId} />
     </Dialog>
   );
