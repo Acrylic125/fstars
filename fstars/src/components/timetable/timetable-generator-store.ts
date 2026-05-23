@@ -167,7 +167,11 @@ export const TimetableGeneratorStateSchema = z.object({
 
 type TimetableGeneratorState = z.infer<typeof TimetableGeneratorStateSchema>;
 
-export const GeneratorTemplateTypes = ["default", "empty"] as const;
+export const GeneratorTemplateTypes = [
+  "default",
+  "empty",
+  "freetime-maxing",
+] as const;
 
 export type GeneratorTemplateType = (typeof GeneratorTemplateTypes)[number];
 
@@ -244,22 +248,12 @@ const storage: PersistStorage<TimetableGeneratorStore> = {
   removeItem: (name) => localStorage.removeItem(name),
 };
 
-function defaultGenerator(
+function emptyGenerator(
   id: TimetableGeneratorId,
-  name: string,
-  templateType: GeneratorTemplateType = "default"
+  name: string
 ): TimetableGenerator {
-  if (templateType === "default") {
-    const generator = TimetableGeneratorSchema.parse({
-      id: id,
-      name,
-      factors: {}, // We will rely on zod to generate the default values.
-    });
-    return generator;
-  }
-
   const nonePriority = asPriorityNumber("None");
-  const generator: TimetableGenerator = {
+  return {
     id,
     name,
     factors: {
@@ -292,7 +286,7 @@ function defaultGenerator(
       },
       classDistribution: {
         distribution: "Even",
-        priority: asPriorityNumber("None"),
+        priority: nonePriority,
       },
       skippableClassTypes: {
         types: [],
@@ -302,7 +296,36 @@ function defaultGenerator(
       },
     },
   };
-  return generator;
+}
+
+function defaultGenerator(
+  id: TimetableGeneratorId,
+  name: string,
+  templateType: GeneratorTemplateType = "default"
+): TimetableGenerator {
+  switch (templateType) {
+    case "default": {
+      return TimetableGeneratorSchema.parse({
+        id: id,
+        name,
+        factors: {}, // We will rely on zod to generate the default values.
+      });
+    }
+    case "empty": {
+      return emptyGenerator(id, name);
+    }
+    case "freetime-maxing": {
+      const generator = emptyGenerator(id, name);
+      generator.factors.dayDuration.noClass.priority =
+        asPriorityNumber("Important");
+      generator.factors.skippableClassTypes.types = [
+        "TUT",
+        "SEM",
+        "LEC/STUDIO",
+      ];
+      return generator;
+    }
+  }
 }
 
 export const useTimetableGeneratorStore = create<TimetableGeneratorStore>()(

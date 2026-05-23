@@ -74,6 +74,10 @@ function ExportCalendarButton({ id }: { id: string }) {
       })
     );
   }, [timetableStore?.courses]);
+  const planCourseCodes = useMemo(
+    () => courseCodes.map((c) => c.courseCode),
+    [courseCodes]
+  );
   const selectedCourseClasses = trpc.getCourseIndexClasses.useQuery(
     {
       courses: courseCodes,
@@ -84,6 +88,18 @@ function ExportCalendarButton({ id }: { id: string }) {
     },
     {
       enabled: !!courseCodes,
+    }
+  );
+  const planCourses = trpc.getCoursesByCodes.useQuery(
+    {
+      codes: planCourseCodes,
+      ay: timetableStore?.acadYear ?? {
+        yearCode: "",
+        semesterCode: "",
+      },
+    },
+    {
+      enabled: planCourseCodes.length > 0,
     }
   );
   const exportCalendarFile = useCallback(() => {
@@ -216,6 +232,40 @@ function ExportCalendarButton({ id }: { id: string }) {
       });
     }
 
+    for (const course of planCourses.data ?? []) {
+      const { exam } = course;
+      if (!exam) {
+        continue;
+      }
+
+      // exam.date is an ISO date string (YYYY-MM-DD). Build a local-time Date
+      // so the resulting tuple stays consistent with class events and is not
+      // shifted by the user's timezone.
+      const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(exam.date);
+      if (!dateMatch) {
+        continue;
+      }
+      const [, yearStr, monthStr, dayStr] = dateMatch;
+      const examStart = new Date(
+        Number(yearStr),
+        Number(monthStr) - 1,
+        Number(dayStr),
+        exam.timeHour,
+        exam.timeMinute
+      );
+      const examEnd = new Date(examStart.getTime());
+      examEnd.setMinutes(examEnd.getMinutes() + Math.round(exam.duration * 60));
+
+      events.push({
+        title: `${course.code} ${course.name} - Exam`,
+        startInputType: "local",
+        endInputType: "local",
+        productId: "fstars-timetable",
+        start: dateToLocalArray(examStart),
+        end: dateToLocalArray(examEnd),
+      });
+    }
+
     if (events.length === 0) {
       return;
     }
@@ -240,7 +290,13 @@ function ExportCalendarButton({ id }: { id: string }) {
       `Exported calendar to downloads!`,
       "success"
     );
-  }, [timetableStore, selectedCourseClasses, id, exportCalendarControls]);
+  }, [
+    timetableStore,
+    selectedCourseClasses,
+    planCourses,
+    id,
+    exportCalendarControls,
+  ]);
 
   return (
     <div className="relative flex flex-row gap-2">

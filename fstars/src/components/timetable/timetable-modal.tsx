@@ -39,7 +39,6 @@ import {
   CheckCircleIcon,
   XIcon,
 } from "lucide-react";
-import { nanoid } from "nanoid";
 import {
   GeneratorTemplateTypeSchema,
   TimetableGeneratorId,
@@ -385,11 +384,11 @@ export function CreateGeneratorDialog({ close }: { close: () => void }) {
               <FormItem>
                 <FormLabel>Template</FormLabel>
                 <FormControl>
-                  <div className="flex flex-row gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Button
                       variant="outline"
                       className={cn(
-                        "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full",
+                        "justify-start items-start flex flex-col gap-1 p-3 h-full w-full",
                         {
                           "border-primary dark:border-primary":
                             field.value === "default",
@@ -409,7 +408,26 @@ export function CreateGeneratorDialog({ close }: { close: () => void }) {
                     <Button
                       variant="outline"
                       className={cn(
-                        "flex-1 justify-start items-start flex flex-col gap-1 p-3 h-full",
+                        "justify-start items-start flex flex-col gap-1 p-3 h-full w-full",
+                        {
+                          "border-primary dark:border-primary":
+                            field.value === "freetime-maxing",
+                        }
+                      )}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        field.onChange("freetime-maxing");
+                      }}
+                    >
+                      <h3 className="font-medium">Freetime maxing</h3>
+                      <p className="text-left text-muted-foreground wrap-break-word whitespace-normal">
+                        Squeeze Lab/Design/Project classes.
+                      </p>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "justify-start items-start flex flex-col gap-1 p-3 h-full w-full",
                         {
                           "border-primary dark:border-primary":
                             field.value === "empty",
