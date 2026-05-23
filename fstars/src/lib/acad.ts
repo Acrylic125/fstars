@@ -6,7 +6,7 @@ export type RawDayDate = [number, number, number];
 const acadYearWeeks: {
   [key: string]: {
     ay: `${number}/${number}`;
-    semester: "1" | "2";
+    semester: "1" | "2" | "S";
     start: RawDayDate;
     end: RawDayDate;
     weeks: {
@@ -247,6 +247,74 @@ const acadYearWeeks: {
         week: 14,
         start: [2026, 4, 19],
         end: [2026, 4, 25],
+      },
+    ],
+  },
+  "25/26 SS": {
+    ay: "25/26",
+    semester: "S",
+    start: [2026, 5, 1],
+    end: [2026, 5, 31],
+    weeks: [
+      {
+        week: 1,
+        start: [2026, 5, 10],
+        end: [2026, 5, 16],
+      },
+      {
+        week: 2,
+        start: [2026, 5, 17],
+        end: [2026, 5, 23],
+      },
+      {
+        week: 3,
+        start: [2026, 5, 24],
+        end: [2026, 5, 30],
+      },
+      {
+        week: 4,
+        start: [2026, 5, 31],
+        end: [2026, 6, 6],
+      },
+      {
+        week: 5,
+        start: [2026, 6, 7],
+        end: [2026, 6, 13],
+      },
+      {
+        week: 6,
+        start: [2026, 6, 14],
+        end: [2026, 6, 20],
+      },
+      {
+        week: 7,
+        start: [2026, 6, 21],
+        end: [2026, 6, 27],
+      },
+      {
+        week: 8,
+        start: [2026, 6, 28],
+        end: [2026, 7, 4],
+      },
+      {
+        week: 9,
+        start: [2026, 7, 5],
+        end: [2026, 7, 11],
+      },
+      {
+        week: 10,
+        start: [2026, 7, 12],
+        end: [2026, 7, 18],
+      },
+      {
+        week: 11,
+        start: [2026, 7, 19],
+        end: [2026, 7, 25],
+      },
+      {
+        week: 12,
+        start: [2026, 7, 26],
+        end: [2026, 8, 1],
       },
     ],
   },
