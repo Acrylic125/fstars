@@ -53,7 +53,7 @@ import Link from "next/link";
 import { usePreviewViewWeekSelector } from "./timetable-view-week-selector";
 import { useShallow } from "zustand/react/shallow";
 
-type Course = inferRouterOutputs<AppRouter>["findCourses"][number];
+type Course = inferRouterOutputs<AppRouter>["getCoursesByCodes"][number];
 
 export function useQueryParamsAcadYear() {
   const [acadYear] = useQueryState(
@@ -469,6 +469,10 @@ export function TimetableCoursesSharedPanel() {
   const selectedPlanCourses = trpc.getCoursesByCodes.useQuery(
     {
       codes: selectedPlanCoursesArray,
+      ay: {
+        yearCode: acadYear,
+        semesterCode,
+      },
     },
     {
       enabled:
