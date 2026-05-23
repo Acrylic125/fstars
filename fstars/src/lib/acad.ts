@@ -6,7 +6,7 @@ export type RawDayDate = [number, number, number];
 const acadYearWeeks: {
   [key: string]: {
     ay: `${number}/${number}`;
-    semester: "1" | "2";
+    semester: "1" | "2" | "S";
     start: RawDayDate;
     end: RawDayDate;
     weeks: {
@@ -176,7 +176,7 @@ const acadYearWeeks: {
     ay: "25/26",
     semester: "2",
     start: [2026, 1, 2],
-    end: [2026, 5, 31],
+    end: [2026, 4, 25],
     weeks: [
       {
         week: 1,
@@ -250,6 +250,74 @@ const acadYearWeeks: {
       },
     ],
   },
+  "25/26 SS": {
+    ay: "25/26",
+    semester: "S",
+    start: [2026, 5, 10],
+    end: [2026, 8, 1],
+    weeks: [
+      {
+        week: 1,
+        start: [2026, 5, 10],
+        end: [2026, 5, 16],
+      },
+      {
+        week: 2,
+        start: [2026, 5, 17],
+        end: [2026, 5, 23],
+      },
+      {
+        week: 3,
+        start: [2026, 5, 24],
+        end: [2026, 5, 30],
+      },
+      {
+        week: 4,
+        start: [2026, 5, 31],
+        end: [2026, 6, 6],
+      },
+      {
+        week: 5,
+        start: [2026, 6, 7],
+        end: [2026, 6, 13],
+      },
+      {
+        week: 6,
+        start: [2026, 6, 14],
+        end: [2026, 6, 20],
+      },
+      {
+        week: 7,
+        start: [2026, 6, 21],
+        end: [2026, 6, 27],
+      },
+      {
+        week: 8,
+        start: [2026, 6, 28],
+        end: [2026, 7, 4],
+      },
+      {
+        week: 9,
+        start: [2026, 7, 5],
+        end: [2026, 7, 11],
+      },
+      {
+        week: 10,
+        start: [2026, 7, 12],
+        end: [2026, 7, 18],
+      },
+      {
+        week: 11,
+        start: [2026, 7, 19],
+        end: [2026, 7, 25],
+      },
+      {
+        week: 12,
+        start: [2026, 7, 26],
+        end: [2026, 8, 1],
+      },
+    ],
+  },
 };
 
 export function getAcadWeeks(acadYear: AcadYear) {
@@ -260,31 +328,25 @@ export function getAcadWeeks(acadYear: AcadYear) {
   return acadYearWeeks[acadYearKey].weeks;
 }
 
+function rawDateKey([year, month, day]: RawDayDate): number {
+  return year * 10000 + month * 100 + day;
+}
+
 export function getAcadWeek(date: DateTime<boolean>) {
-  const day = date.day;
-  const month = date.month;
-  const year = date.year;
+  const dateKey = date.year * 10000 + date.month * 100 + date.day;
 
   for (const [key, value] of Object.entries(acadYearWeeks)) {
-    // Check which academic year this date is in
-    const first = value.start;
-    const end = value.end;
+    const startKey = rawDateKey(value.start);
+    const endKey = rawDateKey(value.end);
 
-    const isLaterThanStart =
-      year >= first[0] && month >= first[1] && day >= first[2];
-    const isEarlierThanEnd = year <= end[0] && month <= end[1] && day <= end[2];
-    if (!(isLaterThanStart && isEarlierThanEnd)) {
+    if (dateKey < startKey || dateKey > endKey) {
       continue;
     }
 
     for (const week of value.weeks) {
       if (
-        year >= week.start[0] &&
-        month >= week.start[1] &&
-        day >= week.start[2] &&
-        year <= week.end[0] &&
-        month <= week.end[1] &&
-        day <= week.end[2]
+        dateKey >= rawDateKey(week.start) &&
+        dateKey <= rawDateKey(week.end)
       ) {
         return {
           acadYearKey: key,

@@ -6,6 +6,8 @@ import { SelectPlanCombobox } from "./select-plan-combobox";
 import { SelectCourseCombobox } from "./select-course-combobox";
 import { trpc } from "@/server/client";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { DateTime } from "luxon";
 import {
   Collapsible,
   CollapsibleContent,
@@ -72,6 +74,10 @@ function ExportCalendarButton({ id }: { id: string }) {
       })
     );
   }, [timetableStore?.courses]);
+  const planCourseCodes = useMemo(
+    () => courseCodes.map((c) => c.courseCode),
+    [courseCodes]
+  );
   const selectedCourseClasses = trpc.getCourseIndexClasses.useQuery(
     {
       courses: courseCodes,
@@ -82,6 +88,18 @@ function ExportCalendarButton({ id }: { id: string }) {
     },
     {
       enabled: !!courseCodes,
+    }
+  );
+  const planCourses = trpc.getCoursesByCodes.useQuery(
+    {
+      codes: planCourseCodes,
+      ay: timetableStore?.acadYear ?? {
+        yearCode: "",
+        semesterCode: "",
+      },
+    },
+    {
+      enabled: planCourseCodes.length > 0,
     }
   );
   const exportCalendarFile = useCallback(() => {
@@ -103,6 +121,16 @@ function ExportCalendarButton({ id }: { id: string }) {
     }
 
     const events: EventAttributes[] = [];
+    const acadWeekByNumber = new Map(weeks.map((w) => [w.week, w]));
+    const dateToLocalArray = (
+      d: Date
+    ): [number, number, number, number, number] => [
+      d.getFullYear(),
+      d.getMonth() + 1,
+      d.getDate(),
+      d.getHours(),
+      d.getMinutes(),
+    ];
 
     for (const courseClass of selectedCourseClasses.data) {
       const {
@@ -121,55 +149,121 @@ function ExportCalendarButton({ id }: { id: string }) {
         continue;
       }
 
-      for (const weekNumber of classWeeks) {
-        const acadWeek = weeks.find((w) => w.week === weekNumber);
+      const classDates: { start: Date; end: Date }[] = [];
+      for (const weekNumber of [...classWeeks].sort((a, b) => a - b)) {
+        const acadWeek = acadWeekByNumber.get(weekNumber);
         if (!acadWeek) {
           continue;
         }
-
         const [startYear, startMonth, startDay] = acadWeek.start;
-
-        const startDate = new Date(
-          startYear,
-          startMonth - 1,
-          startDay + day,
-          from.hour,
-          from.minute
-        );
-
-        const endDate = new Date(
-          startYear,
-          startMonth - 1,
-          startDay + day,
-          to.hour,
-          to.minute
-        );
-
-        const event: EventAttributes = {
-          start: [
-            startDate.getFullYear(),
-            startDate.getMonth() + 1,
-            startDate.getDate(),
-            startDate.getHours(),
-            startDate.getMinutes(),
-          ],
-          end: [
-            endDate.getFullYear(),
-            endDate.getMonth() + 1,
-            endDate.getDate(),
-            endDate.getHours(),
-            endDate.getMinutes(),
-          ],
-          title: `${course.code} ${course.name} (${index})`,
-          description: remarks ?? undefined,
-          location: location?.location ?? venue ?? undefined,
-          startInputType: "local",
-          endInputType: "local",
-          productId: "fstars-timetable",
-        };
-
-        events.push(event);
+        classDates.push({
+          start: new Date(
+            startYear,
+            startMonth - 1,
+            startDay + day,
+            from.hour,
+            from.minute
+          ),
+          end: new Date(
+            startYear,
+            startMonth - 1,
+            startDay + day,
+            to.hour,
+            to.minute
+          ),
+        });
       }
+
+      if (classDates.length === 0) {
+        continue;
+      }
+
+      const firstClass = classDates[0];
+      const lastClass = classDates[classDates.length - 1];
+
+      const baseEvent = {
+        title: `${course.code} ${course.name} (${index})`,
+        description: remarks ?? undefined,
+        location: location?.location ?? venue ?? undefined,
+        startInputType: "local" as const,
+        endInputType: "local" as const,
+        productId: "fstars-timetable",
+        start: dateToLocalArray(firstClass.start),
+        end: dateToLocalArray(firstClass.end),
+      };
+
+      if (classDates.length === 1) {
+        events.push(baseEvent);
+        continue;
+      }
+
+      // Number of weekly slots between the first and last class (inclusive).
+      // Use day-based diff so a 1-hour DST offset in the user's local timezone
+      // doesn't throw the count off.
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const dayDiff = Math.round(
+        (lastClass.start.getTime() - firstClass.start.getTime()) / msPerDay
+      );
+      const count = Math.round(dayDiff / 7) + 1;
+
+      const classDateTimes = new Set(classDates.map((c) => c.start.getTime()));
+
+      const exclusionDates: [number, number, number, number, number][] = [];
+      for (let i = 1; i < count - 1; i++) {
+        // Construct each candidate from local-time components so it lines up
+        // with classDates (also constructed from local-time components),
+        // even across DST boundaries.
+        const candidate = new Date(
+          firstClass.start.getFullYear(),
+          firstClass.start.getMonth(),
+          firstClass.start.getDate() + i * 7,
+          firstClass.start.getHours(),
+          firstClass.start.getMinutes()
+        );
+        if (!classDateTimes.has(candidate.getTime())) {
+          exclusionDates.push(dateToLocalArray(candidate));
+        }
+      }
+
+      events.push({
+        ...baseEvent,
+        recurrenceRule: `FREQ=WEEKLY;COUNT=${count}`,
+        ...(exclusionDates.length > 0 ? { exclusionDates } : {}),
+      });
+    }
+
+    for (const course of planCourses.data ?? []) {
+      const { exam } = course;
+      if (!exam) {
+        continue;
+      }
+
+      // exam.date is an ISO date string (YYYY-MM-DD). Build a local-time Date
+      // so the resulting tuple stays consistent with class events and is not
+      // shifted by the user's timezone.
+      const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(exam.date);
+      if (!dateMatch) {
+        continue;
+      }
+      const [, yearStr, monthStr, dayStr] = dateMatch;
+      const examStart = new Date(
+        Number(yearStr),
+        Number(monthStr) - 1,
+        Number(dayStr),
+        exam.timeHour,
+        exam.timeMinute
+      );
+      const examEnd = new Date(examStart.getTime());
+      examEnd.setMinutes(examEnd.getMinutes() + Math.round(exam.duration * 60));
+
+      events.push({
+        title: `${course.code} ${course.name} - Exam`,
+        startInputType: "local",
+        endInputType: "local",
+        productId: "fstars-timetable",
+        start: dateToLocalArray(examStart),
+        end: dateToLocalArray(examEnd),
+      });
     }
 
     if (events.length === 0) {
@@ -196,7 +290,13 @@ function ExportCalendarButton({ id }: { id: string }) {
       `Exported calendar to downloads!`,
       "success"
     );
-  }, [timetableStore, selectedCourseClasses, id, exportCalendarControls]);
+  }, [
+    timetableStore,
+    selectedCourseClasses,
+    planCourses,
+    id,
+    exportCalendarControls,
+  ]);
 
   return (
     <div className="relative flex flex-row gap-2">
@@ -224,7 +324,6 @@ export function TimetableHeader({ id }: { id: string }) {
     })
   );
   const backupControls = useIndicator();
-  const exportCalendarControls = useIndicator();
 
   const exportTimetableFile = useCallback(() => {
     if (!timetableStore) {
@@ -303,7 +402,28 @@ export function TimetableHeader({ id }: { id: string }) {
   );
 }
 
-type Course = inferRouterOutputs<AppRouter>["findCourses"][number];
+type Course = inferRouterOutputs<AppRouter>["getCoursesByCodes"][number];
+
+function formatExamDuration(hours: number) {
+  const totalMinutes = Math.round(hours * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+function formatExamSchedule(exam: NonNullable<Course["exam"]>) {
+  const dt = DateTime.fromISO(exam.date).set({
+    hour: exam.timeHour,
+    minute: exam.timeMinute,
+  });
+  return {
+    date: dt.toFormat("EEE, d LLL yyyy"),
+    time: dt.toFormat("h:mm a"),
+    duration: formatExamDuration(exam.duration),
+  };
+}
 
 export function TimetableCoursesRow({
   id,
@@ -391,6 +511,23 @@ export function TimetableCoursesRow({
               <span className="text-muted-foreground font-medium text-sm flex-1">
                 {course.name}
               </span>
+
+              {course.exam ? (
+                <div className="flex flex-row flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                  <Badge variant="secondary">Exam</Badge>
+                  <span className="text-foreground">
+                    {formatExamSchedule(course.exam).date}
+                  </span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-foreground">
+                    {formatExamSchedule(course.exam).time}
+                  </span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-muted-foreground">
+                    {formatExamSchedule(course.exam).duration}
+                  </span>
+                </div>
+              ) : null}
 
               <div className="">
                 <p className="text-foreground text-sm inline">{course.au} </p>
@@ -530,6 +667,10 @@ export function TimetableCoursesPanel({ id }: { id: string }) {
   const selectedPlanCourses = trpc.getCoursesByCodes.useQuery(
     {
       codes: selectedPlanCoursesArray,
+      ay: timetableStore?.acadYear ?? {
+        yearCode: "",
+        semesterCode: "",
+      },
     },
     {
       enabled:
