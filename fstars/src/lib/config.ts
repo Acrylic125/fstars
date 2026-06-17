@@ -3,6 +3,7 @@ export const Config = {
   currentAcademicYear: {
     ay: "26/27",
     year: 2026,
+    //
     semester: "1",
   },
   limits: {
