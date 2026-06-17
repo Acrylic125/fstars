@@ -1,10 +1,10 @@
 export const Config = {
   lastWeek: 14,
   currentAcademicYear: {
-    ay: "25/26",
-    year: 2025,
-    semester: "S",
-    // semester: 1,
+    ay: "26/27",
+    year: 2026,
+    //
+    semester: "1",
   },
   limits: {
     timetables: 10,
