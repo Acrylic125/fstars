@@ -75,11 +75,11 @@ export class GeneticGenerator {
       priorityScore(this.factors.gapsBetweenClasses.between3hAnd4h.priority),
       priorityScore(this.factors.gapsBetweenClasses.after4h.priority)
     );
-    const defaultStartAfterScore = priorityScore(
-      this.factors.startAfterAndEndBefore.startAfter.priority
+    const startAfterWeight = Math.abs(
+      priorityScore(this.factors.startAfterAndEndBefore.startAfter.priority)
     );
-    const defaultEndBeforeScore = priorityScore(
-      this.factors.startAfterAndEndBefore.endBefore.priority
+    const endBeforeWeight = Math.abs(
+      priorityScore(this.factors.startAfterAndEndBefore.endBefore.priority)
     );
 
     const daysInAWeek = 7;
@@ -209,18 +209,17 @@ export class GeneticGenerator {
             score += priorityScore(this.factors.dayDuration.above8h.priority);
           }
 
-          if (
-            firstClassStartTime <
-            toMinutes(this.factors.startAfterAndEndBefore.startAfter)
-          ) {
-            score += defaultStartAfterScore;
-          }
-          if (
-            lastClassEndTime >
-            toMinutes(this.factors.startAfterAndEndBefore.endBefore)
-          ) {
-            score += defaultEndBeforeScore;
-          }
+          const startsAfterPreferredTime =
+            firstClassStartTime >=
+            toMinutes(this.factors.startAfterAndEndBefore.startAfter);
+          const endsBeforePreferredTime =
+            lastClassEndTime <=
+            toMinutes(this.factors.startAfterAndEndBefore.endBefore);
+
+          score += startsAfterPreferredTime
+            ? startAfterWeight
+            : -startAfterWeight;
+          score += endsBeforePreferredTime ? endBeforeWeight : -endBeforeWeight;
         } else {
           // Factor in no class days.
           if (
@@ -230,8 +229,8 @@ export class GeneticGenerator {
             score += priorityScore(this.factors.dayDuration.noClass.priority);
           }
           // Factor in start after and end before.
-          score += defaultStartAfterScore;
-          score += defaultEndBeforeScore;
+          score += startAfterWeight;
+          score += endBeforeWeight;
         }
       }
 
