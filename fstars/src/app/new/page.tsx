@@ -1,24 +1,10 @@
 import { CreateTimetable } from "@/components/timetable/create";
 import { MainNavbar } from "@/components/nav/main-navbar";
-import { db } from "@/db";
-import { programsTable } from "@/db/schema";
-import { eq, not } from "drizzle-orm";
+import { getPrograms } from "@/server/programs";
 import { Suspense } from "react";
 
-export const revalidate = 86400; // 24 hours
-
 export default async function Home() {
-  const programs = await db
-    .select({
-      name: programsTable.name,
-      code: programsTable.code,
-      subCode: programsTable.subCode,
-      year: programsTable.year,
-      type: programsTable.type,
-    })
-    .from(programsTable)
-    // We exclude BDES / Global Load because they are not real programs
-    .where(not(eq(programsTable.code, "GLOAD")));
+  const programs = await getPrograms();
   return (
     <main className="flex flex-col w-full">
       <MainNavbar />

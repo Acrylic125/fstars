@@ -19,7 +19,6 @@ import {
   not,
   sql,
 } from "drizzle-orm";
-import { DateTime } from "luxon";
 import {
   VacantTable,
   VacantTableHeader,
@@ -28,14 +27,17 @@ import { getAcadWeek, getNow, translateBuilding } from "@/lib/acad";
 import { Badge } from "@/components/ui/badge";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-export const dynamic = "force-dynamic";
+import { connection } from "next/server";
 
 async function TableLoader({
-  currentDateTime,
+  currentDay,
+  currentHour,
+  currentMinute,
   acadWeek,
 }: {
-  currentDateTime: DateTime;
+  currentDay: number;
+  currentHour: number;
+  currentMinute: number;
   acadWeek: {
     acadSem: {
       ay: string;
@@ -44,9 +46,6 @@ async function TableLoader({
     week?: number;
   } | null;
 }) {
-  const currentDay = currentDateTime.weekday;
-  const currentHour = currentDateTime.hour;
-  const currentMinute = currentDateTime.minute;
   const ignoreVenues = ["ONLINE", ""];
 
   const [allVenues, classroomsInUseNow] = await Promise.all([
@@ -88,7 +87,7 @@ async function TableLoader({
       if (acadWeek === null || acadWeek.week === undefined) {
         return [];
       }
-      let classroomsInUseNow = await db
+      const classroomsInUseNow = await db
         .selectDistinctOn([courseIndexClassesTable.venue], {
           venue: courseIndexClassesTable.venue,
           weeks: courseIndexClassesTable.weeks,
@@ -253,47 +252,70 @@ async function TableLoader({
   );
 }
 
-export default async function VacentClassroomsPage() {
+async function VacantClassroomsContent() {
+  await connection();
   const currentDateTime = getNow();
   const acadWeek = getAcadWeek(currentDateTime);
 
   return (
-    <main className="flex flex-col w-full">
-      <MainNavbar />
-      <ScrollArea className="relative w-full flex flex-col h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] overflow-x-auto">
-        <div className="w-full flex flex-col items-center">
-          <div className="w-full flex flex-col items-center max-w-ui mx-auto px-4 py-8 md:px-8 gap-4">
-            <div className="w-full flex flex-col gap-1">
-              <h1 className="w-full text-2xl font-bold">
-                Vacant Classrooms{" "}
-                {acadWeek
-                  ? `- ${acadWeek.acadSem.ay} S${acadWeek.acadSem.semester}`
-                  : ""}
-              </h1>
-              <div className="w-full flex flex-row items-center gap-2">
-                <p className="text-muted-foreground">
-                  As of {currentDateTime.toFormat("dd MMMM yyyy HH:mm:ss")}
-                </p>
-                {acadWeek?.week !== undefined ? (
-                  <Badge>Wk {acadWeek.week}</Badge>
-                ) : (
-                  <Badge variant="secondary">Free Week</Badge>
-                )}
-              </div>
-            </div>
-            <div className="w-full flex flex-col gap-4">
-              <VacantTableHeader />
-              <Suspense fallback={<Skeleton className="w-full aspect-video" />}>
-                <TableLoader
-                  currentDateTime={currentDateTime}
-                  acadWeek={acadWeek}
-                />
-              </Suspense>
+    <ScrollArea className="relative w-full flex flex-col h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] overflow-x-auto">
+      <div className="w-full flex flex-col items-center">
+        <div className="w-full flex flex-col items-center max-w-ui mx-auto px-4 py-8 md:px-8 gap-4">
+          <div className="w-full flex flex-col gap-1">
+            <h1 className="w-full text-2xl font-bold">
+              Vacant Classrooms{" "}
+              {acadWeek
+                ? `- ${acadWeek.acadSem.ay} S${acadWeek.acadSem.semester}`
+                : ""}
+            </h1>
+            <div className="w-full flex flex-row items-center gap-2">
+              <p className="text-muted-foreground">
+                As of {currentDateTime.toFormat("dd MMMM yyyy HH:mm:ss")}
+              </p>
+              {acadWeek?.week !== undefined ? (
+                <Badge>Wk {acadWeek.week}</Badge>
+              ) : (
+                <Badge variant="secondary">Free Week</Badge>
+              )}
             </div>
           </div>
+          <div className="w-full flex flex-col gap-4">
+            <VacantTableHeader />
+            <Suspense fallback={<Skeleton className="w-full aspect-video" />}>
+              <TableLoader
+                currentDay={currentDateTime.weekday}
+                currentHour={currentDateTime.hour}
+                currentMinute={currentDateTime.minute}
+                acadWeek={acadWeek}
+              />
+            </Suspense>
+          </div>
         </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      </div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
+  );
+}
+
+function VacantClassroomsSkeleton() {
+  return (
+    <div className="w-full max-w-ui mx-auto px-4 py-8 md:px-8 space-y-4">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-72" />
+        <Skeleton className="h-5 w-64" />
+      </div>
+      <Skeleton className="w-full aspect-video" />
+    </div>
+  );
+}
+
+export default function VacentClassroomsPage() {
+  return (
+    <main className="flex flex-col w-full">
+      <MainNavbar />
+      <Suspense fallback={<VacantClassroomsSkeleton />}>
+        <VacantClassroomsContent />
+      </Suspense>
     </main>
   );
 }

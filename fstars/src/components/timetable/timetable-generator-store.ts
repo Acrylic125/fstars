@@ -230,9 +230,8 @@ const RawSchema = z.object({
 
 const storage: PersistStorage<TimetableGeneratorStore> = {
   getItem: (name) => {
-    console.log(localStorage);
-    if (localStorage === undefined) return null;
-    const str = localStorage.getItem(name);
+    if (typeof window === "undefined") return null;
+    const str = window.localStorage.getItem(name);
     if (!str) return null;
     const raw = superjson.parse(str);
     const res = RawSchema.safeParse(raw);
@@ -243,9 +242,13 @@ const storage: PersistStorage<TimetableGeneratorStore> = {
     return { state: res.data.state } as { state: TimetableGeneratorStore };
   },
   setItem: (name, value) => {
-    localStorage.setItem(name, superjson.stringify(value));
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(name, superjson.stringify(value));
   },
-  removeItem: (name) => localStorage.removeItem(name),
+  removeItem: (name) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.removeItem(name);
+  },
 };
 
 function emptyGenerator(

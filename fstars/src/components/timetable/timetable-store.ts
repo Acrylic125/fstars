@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, PersistStorage } from "zustand/middleware";
 import superjson from "superjson";
-import { AcadYear, AcadYearSchema, Program, ProgramSchema } from "@/lib/types";
+import { AcadYearSchema, Program, ProgramSchema } from "@/lib/types";
 import { nanoid } from "nanoid";
 import z from "zod";
 import { fallback, injectDefaults } from "@/lib/zod";
@@ -194,8 +194,8 @@ const RawSchema = z.object({
 
 const storage: PersistStorage<TimetableStore> = {
   getItem: (name) => {
-    if (localStorage === undefined) return null;
-    const str = localStorage.getItem(name);
+    if (typeof window === "undefined") return null;
+    const str = window.localStorage.getItem(name);
     if (!str) return null;
     const raw = superjson.parse(str);
     const res = RawSchema.safeParse(raw);
@@ -206,9 +206,13 @@ const storage: PersistStorage<TimetableStore> = {
     return { state: res.data.state } as { state: TimetableStore };
   },
   setItem: (name, value) => {
-    localStorage.setItem(name, superjson.stringify(value));
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(name, superjson.stringify(value));
   },
-  removeItem: (name) => localStorage.removeItem(name),
+  removeItem: (name) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.removeItem(name);
+  },
 };
 
 export const useTimetableStore = create<TimetableStore>()(

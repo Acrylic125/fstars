@@ -4,29 +4,21 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
 import { EditTimetable } from "@/components/timetable/edit-timetable";
-import { programsTable } from "@/db/schema";
-import { eq, not } from "drizzle-orm";
-import { db } from "@/db";
 import { DeleteTimetable } from "@/components/timetable/delete-timetable";
+import { getPrograms } from "@/server/programs";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export const revalidate = 86400; // 24 hours
+async function SettingsContent({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const programs = await getPrograms();
 
-export default async function Home(props: { params: Promise<{ id: string }> }) {
-  const { id } = await props.params;
-  const programs = await db
-    .select({
-      name: programsTable.name,
-      code: programsTable.code,
-      subCode: programsTable.subCode,
-      year: programsTable.year,
-      type: programsTable.type,
-    })
-    .from(programsTable)
-    // We exclude BDES / Global Load because they are not real programs
-    .where(not(eq(programsTable.code, "GLOAD")));
   return (
-    <main className="flex flex-col w-full ">
-      <MainNavbar />
+    <>
       <div className="flex flex-col items-center gap-8 py-8 md:py-12">
         <div className="w-full flex flex-col gap-6 md:gap-8 max-w-5xl px-12 md:px-20">
           <div className="flex flex-col gap-1">
@@ -50,6 +42,35 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
           <DeleteTimetable timetableId={id} />
         </div>
       </div>
+    </>
+  );
+}
+
+function SettingsSkeleton() {
+  return (
+    <div className="flex flex-col items-center gap-8 py-8 md:py-12">
+      <div className="w-full flex flex-col gap-6 md:gap-8 max-w-5xl px-12 md:px-20">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-9 w-40" />
+        </div>
+        <Skeleton className="h-32 w-full" />
+      </div>
+      <div className="w-full border-t border-border border-dashed" />
+      <div className="w-full max-w-5xl px-8 md:px-16">
+        <Skeleton className="h-28 w-full" />
+      </div>
+    </div>
+  );
+}
+
+export default function Home(props: { params: Promise<{ id: string }> }) {
+  return (
+    <main className="flex flex-col w-full">
+      <MainNavbar />
+      <Suspense fallback={<SettingsSkeleton />}>
+        <SettingsContent params={props.params} />
+      </Suspense>
       <TimetableModal />
     </main>
   );

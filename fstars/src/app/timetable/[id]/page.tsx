@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTimetableViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
 import { useShallow } from "zustand/react/shallow";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function TimetableViewWeekSelector() {
   const weekSelector = useTimetableViewWeekSelector(
@@ -37,67 +38,89 @@ function TimetableViewWeekSelector() {
   );
 }
 
-export default function Home(props: { params: Promise<{ id: string }> }) {
-  // export default function Home(props: { params: { id: string } }) {
-  const { id } = use(props.params);
+function TimetableContent({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
 
   const [isSidebarClosed, setSidebarClosed] = useState(false);
   return (
-    <main className="flex flex-col w-full">
-      <MainNavbar />
-      <div className="flex flex-col items-center">
-        <div className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] lg:h-fit">
-          <ScrollArea
-            className={cn("relative w-full flex flex-col overflow-x-auto", {
-              "h-1/2 lg:h-[calc(100svh-4rem)]": !isSidebarClosed,
-              "h-full lg:h-[calc(100svh-4rem)]": isSidebarClosed,
-            })}
-          >
-            {/* <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4"> */}
-            <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
-              <TimetableHeader id={id} />
-              <Suspense>
-                <TimetableSelfView id={id} />
-              </Suspense>
-              <div className="w-full h-20 md:h-24 lg:h-28" />
-            </div>
-            <ScrollBar orientation="horizontal" />
-            <div className="absolute top-0 right-0 hidden lg:flex z-10">
-              <Button
-                variant="secondary"
-                onClick={() => setSidebarClosed(!isSidebarClosed)}
-              >
-                {isSidebarClosed ? <ChevronLeft /> : <ChevronRight />}
-              </Button>
-            </div>
-            <div className="absolute bottom-4 md:bottom-8 lg:bottom-12 right-8 lg:hidden z-10">
-              <Button
-                variant="secondary"
-                onClick={() => setSidebarClosed(!isSidebarClosed)}
-              >
-                {isSidebarClosed ? <ChevronUp /> : <ChevronDown />}
-              </Button>
-            </div>
-            <TimetableViewWeekSelector />
-          </ScrollArea>
-          <ScrollArea
-            className={cn(
-              "w-full lg:w-xl relative group flex flex-col border-t border-border lg:border-0",
-              {
-                "h-1/2 lg:h-[calc(100svh-4rem)] lg:w-xl": !isSidebarClosed,
-                "h-0 lg:h-[calc(100svh-4rem)] lg:w-0": isSidebarClosed,
-              }
-            )}
-          >
-            <div className="flex flex-col gap-2 md:gap-4 items-center p-2 pb-32 lg:py-8 lg:pl-4 lg:pr-8">
-              <Suspense>
-                <TimetableCoursesPanel id={id} />
-                <TimetableGeneratorPanel timetableId={id} />
-              </Suspense>
-            </div>
-          </ScrollArea>
+    <div className="flex flex-col items-center">
+      <div className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] lg:h-fit">
+        <ScrollArea
+          className={cn("relative w-full flex flex-col overflow-x-auto", {
+            "h-1/2 lg:h-[calc(100svh-4rem)]": !isSidebarClosed,
+            "h-full lg:h-[calc(100svh-4rem)]": isSidebarClosed,
+          })}
+        >
+          {/* <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4"> */}
+          <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
+            <TimetableHeader id={id} />
+            <Suspense>
+              <TimetableSelfView id={id} />
+            </Suspense>
+            <div className="w-full h-20 md:h-24 lg:h-28" />
+          </div>
+          <ScrollBar orientation="horizontal" />
+          <div className="absolute top-0 right-0 hidden lg:flex z-10">
+            <Button
+              variant="secondary"
+              onClick={() => setSidebarClosed(!isSidebarClosed)}
+            >
+              {isSidebarClosed ? <ChevronLeft /> : <ChevronRight />}
+            </Button>
+          </div>
+          <div className="absolute bottom-4 md:bottom-8 lg:bottom-12 right-8 lg:hidden z-10">
+            <Button
+              variant="secondary"
+              onClick={() => setSidebarClosed(!isSidebarClosed)}
+            >
+              {isSidebarClosed ? <ChevronUp /> : <ChevronDown />}
+            </Button>
+          </div>
+          <TimetableViewWeekSelector />
+        </ScrollArea>
+        <ScrollArea
+          className={cn(
+            "w-full lg:w-xl relative group flex flex-col border-t border-border lg:border-0",
+            {
+              "h-1/2 lg:h-[calc(100svh-4rem)] lg:w-xl": !isSidebarClosed,
+              "h-0 lg:h-[calc(100svh-4rem)] lg:w-0": isSidebarClosed,
+            }
+          )}
+        >
+          <div className="flex flex-col gap-2 md:gap-4 items-center p-2 pb-32 lg:py-8 lg:pl-4 lg:pr-8">
+            <Suspense>
+              <TimetableCoursesPanel id={id} />
+              <TimetableGeneratorPanel timetableId={id} />
+            </Suspense>
+          </div>
+        </ScrollArea>
+      </div>
+    </div>
+  );
+}
+
+function TimetableSkeleton() {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)]">
+        <div className="w-full p-4 md:p-8">
+          <Skeleton className="h-full min-h-96 w-full" />
+        </div>
+        <div className="w-full lg:w-xl p-4 md:p-8">
+          <Skeleton className="h-full min-h-80 w-full" />
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function Home(props: { params: Promise<{ id: string }> }) {
+  return (
+    <main className="flex flex-col w-full">
+      <MainNavbar />
+      <Suspense fallback={<TimetableSkeleton />}>
+        <TimetableContent params={props.params} />
+      </Suspense>
       <TimetableModal />
     </main>
   );

@@ -22,6 +22,7 @@ import { translateBuilding } from "@/lib/acad";
 import { Button } from "@/components/ui/button";
 import { ExternalLinkIcon } from "lucide-react";
 import { Config } from "@/lib/config";
+import { connection } from "next/server";
 
 function getEventDate(
   dayOffset: number,
@@ -30,7 +31,7 @@ function getEventDate(
 ) {
   // Create a new DateTime in the same timezone as nowDateTime
   // Note: Add 7 days cus luxon uses monday as the first day of the week.
-  let eventDate = startOfWeek.plus({ days: 7 }).set({
+  const eventDate = startOfWeek.plus({ days: 7 }).set({
     weekday: dayOffset === 0 ? 7 : (dayOffset as WeekdayNumbers),
     hour: Math.floor(timeInMinutes / 60),
     minute: timeInMinutes % 60,
@@ -125,10 +126,11 @@ async function ClassroomHeaderLoader(props: { venue: string }) {
   );
 }
 
-export default async function VacentClassroomPage(props: {
+async function VacantClassroomContent(props: {
   params: Promise<{ venue: string }>;
   searchParams: Promise<{ ay?: string; sem?: string }>;
 }) {
+  await connection();
   const { venue: _venue } = await props.params;
   const {
     ay = Config.currentAcademicYear.ay,
@@ -169,8 +171,8 @@ export default async function VacentClassroomPage(props: {
   const startOfWeek = nowDateTime.startOf("week", { useLocaleWeeks: true });
 
   for (const event of events) {
-    let from = getEventDate(event.day, event.from, startOfWeek);
-    let to = getEventDate(event.day, event.to, startOfWeek);
+    const from = getEventDate(event.day, event.from, startOfWeek);
+    const to = getEventDate(event.day, event.to, startOfWeek);
 
     const key =
       `${event.for.code} ${event.for.name} ${event.day}-${from.hour}:${from.minute}-${to.hour}:${to.minute}` as const;
@@ -203,25 +205,45 @@ export default async function VacentClassroomPage(props: {
   const endDate = startOfWeek.plus({ days: 7 }).toFormat("yyyy-MM-dd");
 
   return (
+    <div className="flex flex-col items-center">
+      <ScrollArea className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)]">
+        {/* <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 pb-20 gap-4"> */}
+        <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 pb-20 gap-4">
+          <Suspense fallback={<Skeleton className="w-full h-48" />}>
+            <ClassroomHeaderLoader venue={venue} />
+          </Suspense>
+          <VacantClassroomViewWeekSelector />
+          <VacantClassroomCalendar
+            events={eventsWithDates}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    </div>
+  );
+}
+
+function VacantClassroomSkeleton() {
+  return (
+    <div className="w-full max-w-ui mx-auto px-4 py-8 md:px-8 space-y-4">
+      <Skeleton className="w-full h-24" />
+      <Skeleton className="w-full min-h-96" />
+    </div>
+  );
+}
+
+export default function VacentClassroomPage(props: {
+  params: Promise<{ venue: string }>;
+  searchParams: Promise<{ ay?: string; sem?: string }>;
+}) {
+  return (
     <main className="flex flex-col w-full">
       <MainNavbar />
-      <div className="flex flex-col items-center">
-        <ScrollArea className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)]">
-          {/* <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 pb-20 gap-4"> */}
-          <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 pb-20 gap-4">
-            <Suspense fallback={<Skeleton className="w-full h-48" />}>
-              <ClassroomHeaderLoader venue={venue} />
-            </Suspense>
-            <VacantClassroomViewWeekSelector />
-            <VacantClassroomCalendar
-              events={eventsWithDates}
-              startDate={startDate}
-              endDate={endDate}
-            />
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      </div>
+      <Suspense fallback={<VacantClassroomSkeleton />}>
+        <VacantClassroomContent {...props} />
+      </Suspense>
     </main>
   );
 }
