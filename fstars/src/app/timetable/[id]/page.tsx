@@ -10,17 +10,16 @@ import { TimetableGeneratorPanel } from "@/components/timetable/timetable-genera
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CalendarViewWeekSelectorView } from "@/components/calendar-view-week-selector";
 import { Suspense, use, useState } from "react";
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronUp,
-  ChevronRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTimetableViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
 import { useShallow } from "zustand/react/shallow";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  TimetableMobileNav,
+  type TimetableMobileView,
+} from "@/components/timetable/timetable-mobile-nav";
 
 function TimetableViewWeekSelector() {
   const weekSelector = useTimetableViewWeekSelector(
@@ -42,14 +41,22 @@ function TimetableContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
 
   const [isSidebarClosed, setSidebarClosed] = useState(false);
+  const [mobileView, setMobileView] =
+    useState<TimetableMobileView>("calendar");
+  const weekSelector = useTimetableViewWeekSelector(
+    useShallow((state) => ({
+      setSelectedBitMask: state.setSelectedBitMask,
+      selectedWeeksBitMask: state.selectedWeeksBitMask,
+    }))
+  );
   return (
     <div className="flex flex-col items-center">
-      <div className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] lg:h-fit">
+      <div className="relative w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] lg:h-fit">
         <ScrollArea
-          className={cn("relative w-full flex flex-col overflow-x-auto", {
-            "h-1/2 lg:h-[calc(100svh-4rem)]": !isSidebarClosed,
-            "h-full lg:h-[calc(100svh-4rem)]": isSidebarClosed,
-          })}
+          className={cn(
+            "relative h-full w-full flex-col overflow-x-auto lg:flex lg:h-[calc(100svh-4rem)]",
+            mobileView === "calendar" ? "flex" : "hidden"
+          )}
         >
           {/* <div className="w-full flex flex-col h-[50rem] md:h-[64rem] lg:h-[80rem] xl:h-[96rem] min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4"> */}
           <div className="w-full flex flex-col min-w-5xl pl-4 pr-2 md:pl-8 md:pr-4 py-8 gap-4">
@@ -68,22 +75,17 @@ function TimetableContent({ params }: { params: Promise<{ id: string }> }) {
               {isSidebarClosed ? <ChevronLeft /> : <ChevronRight />}
             </Button>
           </div>
-          <div className="absolute bottom-4 md:bottom-8 lg:bottom-12 right-8 lg:hidden z-10">
-            <Button
-              variant="secondary"
-              onClick={() => setSidebarClosed(!isSidebarClosed)}
-            >
-              {isSidebarClosed ? <ChevronUp /> : <ChevronDown />}
-            </Button>
+          <div className="hidden lg:block">
+            <TimetableViewWeekSelector />
           </div>
-          <TimetableViewWeekSelector />
         </ScrollArea>
         <ScrollArea
           className={cn(
-            "w-full lg:w-xl relative group flex flex-col border-t border-border lg:border-0",
+            "relative h-full w-full flex-col lg:flex lg:h-[calc(100svh-4rem)] lg:border-0",
+            mobileView === "edit" ? "flex" : "hidden",
             {
-              "h-1/2 lg:h-[calc(100svh-4rem)] lg:w-xl": !isSidebarClosed,
-              "h-0 lg:h-[calc(100svh-4rem)] lg:w-0": isSidebarClosed,
+              "lg:w-xl": !isSidebarClosed,
+              "lg:w-0": isSidebarClosed,
             }
           )}
         >
@@ -94,6 +96,11 @@ function TimetableContent({ params }: { params: Promise<{ id: string }> }) {
             </Suspense>
           </div>
         </ScrollArea>
+        <TimetableMobileNav
+          activeView={mobileView}
+          onViewChange={setMobileView}
+          weekSelector={weekSelector}
+        />
       </div>
     </div>
   );

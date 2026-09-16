@@ -9,14 +9,15 @@ import {
 } from "@/components/timetable/preview-timetable";
 import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
+import {
+  TimetableMobileNav,
+  type TimetableMobileView,
+} from "@/components/timetable/timetable-mobile-nav";
+import { usePreviewViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
+import { useShallow } from "zustand/react/shallow";
 
 const TimetableViewWeekSelectorDynamic = dynamic(
   () => Promise.resolve(TimetableViewWeekSelector),
@@ -25,20 +26,27 @@ const TimetableViewWeekSelectorDynamic = dynamic(
   }
 );
 
-// export default async function Home(props: { params: Promise<{}> }) {
-export default function Home(props: { params: Promise<{}> }) {
+export default function Home() {
   const [sidebarClosed, setSidebarClosed] = useState(false);
+  const [mobileView, setMobileView] =
+    useState<TimetableMobileView>("calendar");
+  const weekSelector = usePreviewViewWeekSelector(
+    useShallow((state) => ({
+      selectedWeeksBitMask: state.selectedWeeksBitMask,
+      setSelectedBitMask: state.setSelectedBitMask,
+    }))
+  );
 
   return (
     <main className="flex flex-col w-full">
       <MainNavbar />
       <div className="flex flex-col items-center">
-        <div className="w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] lg:h-fit">
+        <div className="relative w-full flex flex-col lg:flex-row max-w-ui h-[calc(100svh-3.5rem)] md:h-[calc(100svh-4rem)] lg:h-fit">
           <ScrollArea
-            className={cn("relative w-full flex flex-col overflow-x-auto", {
-              "h-1/2 lg:h-[calc(100svh-4rem)]": !sidebarClosed,
-              "h-full lg:h-[calc(100svh-4rem)]": sidebarClosed,
-            })}
+            className={cn(
+              "relative h-full w-full flex-col overflow-x-auto lg:flex lg:h-[calc(100svh-4rem)]",
+              mobileView === "calendar" ? "flex" : "hidden"
+            )}
           >
             <div className="pl-4 pr-2 md:pl-8 md:pr-4 py-1 text-xs md:text-sm bg-sky-100 dark:bg-sky-800">
               You are on a shared timetable. To use it, import it.
@@ -50,7 +58,9 @@ export default function Home(props: { params: Promise<{}> }) {
               <div className="w-full h-20 md:h-24 lg:h-28" />
             </div>
             <ScrollBar orientation="horizontal" />
-            <TimetableViewWeekSelectorDynamic />
+            <div className="hidden lg:block">
+              <TimetableViewWeekSelectorDynamic />
+            </div>
             <div className="absolute top-0 right-0 hidden lg:flex z-10">
               <Button
                 variant="secondary"
@@ -59,21 +69,14 @@ export default function Home(props: { params: Promise<{}> }) {
                 {sidebarClosed ? <ChevronLeft /> : <ChevronRight />}
               </Button>
             </div>
-            <div className="absolute bottom-4 md:bottom-8 lg:bottom-12 right-8 lg:hidden z-10">
-              <Button
-                variant="secondary"
-                onClick={() => setSidebarClosed(!sidebarClosed)}
-              >
-                {sidebarClosed ? <ChevronUp /> : <ChevronDown />}
-              </Button>
-            </div>
           </ScrollArea>
           <ScrollArea
             className={cn(
-              "w-full relative group flex flex-col border-t border-border lg:border-0",
+              "relative h-full w-full flex-col lg:flex lg:h-[calc(100svh-4rem)] lg:border-0",
+              mobileView === "edit" ? "flex" : "hidden",
               {
-                "h-1/2 lg:h-[calc(100svh-4rem)] lg:w-xl": !sidebarClosed,
-                "h-0 lg:h-[calc(100svh-4rem)] lg:w-0": sidebarClosed,
+                "lg:w-xl": !sidebarClosed,
+                "lg:w-0": sidebarClosed,
               }
             )}
           >
@@ -83,6 +86,11 @@ export default function Home(props: { params: Promise<{}> }) {
               </Suspense>
             </div>
           </ScrollArea>
+          <TimetableMobileNav
+            activeView={mobileView}
+            onViewChange={setMobileView}
+            weekSelector={weekSelector}
+          />
         </div>
       </div>
       <TimetableModal />
