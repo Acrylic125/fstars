@@ -9,7 +9,7 @@ import { TimetableModal } from "@/components/timetable/timetable-modal";
 import { TimetableGeneratorPanel } from "@/components/timetable/timetable-generator-panel";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CalendarViewWeekSelectorView } from "@/components/calendar-view-week-selector";
-import { Suspense, use, useState } from "react";
+import { Suspense, use, useState, useSyncExternalStore } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,16 @@ import {
   TimetableMobileNav,
   type TimetableMobileView,
 } from "@/components/timetable/timetable-mobile-nav";
+
+const subscribeToHydration = () => () => {};
+
+function useIsHydrated() {
+  return useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false
+  );
+}
 
 function TimetableViewWeekSelector() {
   const weekSelector = useTimetableViewWeekSelector(
@@ -122,12 +132,18 @@ function TimetableSkeleton() {
 }
 
 export default function Home(props: { params: Promise<{ id: string }> }) {
+  const isHydrated = useIsHydrated();
+
   return (
     <main className="flex flex-col w-full">
       <MainNavbar />
-      <Suspense fallback={<TimetableSkeleton />}>
-        <TimetableContent params={props.params} />
-      </Suspense>
+      {isHydrated ? (
+        <Suspense fallback={<TimetableSkeleton />}>
+          <TimetableContent params={props.params} />
+        </Suspense>
+      ) : (
+        <TimetableSkeleton />
+      )}
       <TimetableModal />
     </main>
   );

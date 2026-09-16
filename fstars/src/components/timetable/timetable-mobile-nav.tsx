@@ -1,7 +1,7 @@
 "use client";
 
-import { CalendarDays, ListFilter, PencilLine } from "lucide-react";
-import { useRef, type ReactNode } from "react";
+import { ListFilter } from "lucide-react";
+import { useRef } from "react";
 
 import { isWeekSelected } from "@/components/calendar-view-week-selector";
 import type { CalendarViewWeekSelector } from "@/components/timetable/timetable-view-week-selector";
@@ -72,30 +72,30 @@ export function TimetableMobileNav({
   return (
     <nav
       aria-label="Timetable views"
-      className="absolute inset-x-0 bottom-0 z-20 flex min-h-16 items-center border-t border-border bg-background/95 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgb(0_0_0/0.06)] backdrop-blur-md lg:hidden"
+      className="pointer-events-none absolute inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 h-12 md:bottom-8 lg:hidden"
     >
-      <div className="flex flex-1 items-center gap-1">
+      <div className="pointer-events-auto absolute left-1/2 flex h-12 w-[calc(100%-10rem)] max-w-52 -translate-x-1/2 items-center rounded-2xl border border-border bg-background/70 p-1 shadow-lg backdrop-blur-md dark:bg-neutral-800/30">
         <MobileViewButton
           active={activeView === "calendar"}
-          icon={<CalendarDays />}
           label="Calendar"
           onClick={() => onViewChange("calendar")}
         />
         <MobileViewButton
           active={activeView === "edit"}
-          icon={<PencilLine />}
           label="Edit"
           onClick={() => onViewChange("edit")}
         />
       </div>
 
-      <div className="mx-2 h-8 w-px bg-border" />
-
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-11 min-w-20 flex-col gap-0.5 px-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Filter weeks"
+            className="pointer-events-auto absolute right-4 size-12 rounded-2xl border border-border bg-background/70 shadow-lg backdrop-blur-md hover:bg-accent dark:bg-neutral-800/30 dark:hover:bg-neutral-800/60 md:right-8"
+          >
             <ListFilter className="size-4" />
-            <span className="text-xs leading-none">Filter</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -158,28 +158,25 @@ export function TimetableMobileNav({
 
 function MobileViewButton({
   active,
-  icon,
   label,
   onClick,
 }: {
   active: boolean;
-  icon: ReactNode;
   label: string;
   onClick: () => void;
 }) {
   return (
     <Button
       type="button"
-      variant="ghost"
+      variant={active ? "default" : "ghost"}
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "h-11 flex-1 flex-col gap-0.5 px-2 text-muted-foreground",
-        active && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+        "h-10 flex-1 rounded-xl px-3",
+        !active && "text-muted-foreground"
       )}
     >
-      {icon}
-      <span className="text-xs leading-none">{label}</span>
+      {label}
     </Button>
   );
 }
