@@ -4,7 +4,7 @@ export const Config = {
     ay: "26/27",
     year: 2026,
     //
-    semester: "1",
+    semester: "2",
   },
   limits: {
     timetables: 10,
