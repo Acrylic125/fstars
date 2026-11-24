@@ -80,7 +80,9 @@
   "pnpm": {
     "overrides": {
       "@types/react": "19.3.0",
-      "@types/react-dom": "19.3.0"
+      "@types/react-dom": "19.3.0",
+      "esbuild@<=0.24.2": ">=0.25.0",
+      "drizzle-orm@<0.45.2": ">=0.45.2"
     }
   }
 }
